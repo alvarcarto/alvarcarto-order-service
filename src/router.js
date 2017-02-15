@@ -2,13 +2,17 @@ const Joi = require('joi');
 const validate = require('express-validation');
 const express = require('express');
 const order = require('./http/order-http');
-const { addressSchema, stripeCreateTokenResponseSchema } = require('../util/validation');
+const {
+  addressSchema,
+  stripeCreateTokenResponseSchema,
+  cartSchema,
+} = require('./util/validation');
 
 function createRouter() {
   const router = express.Router();
   const orderSchema = {
     body: {
-      email: Joi.email().required(),
+      email: Joi.string().email().required(),
       emailSubscription: Joi.boolean().optional(),
       shippingAddress: addressSchema.required(),
       billingAddress: addressSchema.optional(),

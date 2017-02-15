@@ -1,3 +1,5 @@
+const Joi = require('joi');
+
 const stripeCreateTokenResponseSchema = Joi.object({
   id: Joi.string().required(),
   card: Joi.object({
@@ -10,7 +12,7 @@ const stripeCreateTokenResponseSchema = Joi.object({
   }).required(),
   livemode: Joi.boolean().required(),
   client_ip: Joi.string().required(),
-}).allowUnknown();
+}).unknown();
 
 const addressSchema = Joi.object({
   name: Joi.string().min(1).max(300).required(),
@@ -35,8 +37,8 @@ const cartItemSchema = Joi.object({
   mapStyle: Joi.string().required(),
   mapPitch: Joi.number().optional(),
   mapBearing: Joi.number().min(-360).max(360).optional(),
-  orientation: Joi.string().allowed(['landscape', 'portrait']).required(),
-  size: Joi.string().allowed(['30x40cm', '50x70cm', '70x100cm']).required(),
+  orientation: Joi.string().valid(['landscape', 'portrait']).required(),
+  size: Joi.string().valid(['30x40cm', '50x70cm', '70x100cm']).required(),
   labelsEnabled: Joi.boolean().required(),
   labelHeader: Joi.string().min(0).max(100).required(),
   labelSmallHeader: Joi.string().min(0).max(100).required(),
@@ -49,4 +51,5 @@ module.exports = {
   addressSchema,
   cartItemSchema,
   cartSchema,
+  stripeCreateTokenResponseSchema,
 };
