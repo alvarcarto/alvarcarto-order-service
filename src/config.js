@@ -13,6 +13,7 @@ const config = {
   LOG_LEVEL: process.env.LOG_LEVEL,
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+  ALLOW_HTTP: process.env.ALLOW_HTTP === 'true',
 };
 
 module.exports = config;

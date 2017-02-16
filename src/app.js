@@ -6,12 +6,20 @@ const cors = require('cors');
 const logger = require('./util/logger')(__filename);
 const errorResponder = require('./middleware/error-responder');
 const errorLogger = require('./middleware/error-logger');
+const requireHttps = require('./middleware/require-https');
 const createRouter = require('./router');
 const config = require('./config');
 
 function createApp() {
   const app = express();
   app.disable('x-powered-by');
+
+  if (!config.ALLOW_HTTP) {
+    logger.info('All requests require HTTPS.');
+    app.use(requireHttps());
+  } else {
+    logger.info('ALLOW_HTTP=true, unsafe requests are allowed. Don\'t use this in production.');
+  }
 
   if (config.NODE_ENV !== 'production') {
     app.use(morgan('dev'));
