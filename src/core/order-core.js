@@ -9,6 +9,7 @@ function createOrder(order) {
     _createOrder(order, { trx })
       .tap(orderRow => _createOrderedPosters(orderRow.id, order.cart, { trx }))
       .tap((orderRow) => {
+
         const address = _.merge({}, order.shippingAddress, {
           type: ADDRESS_TYPE.SHIPPING,
         });
@@ -33,12 +34,13 @@ function _createOrder(order, opts = {}) {
   return trx('orders').insert({
     customer_email: order.email,
     email_subscription: order.emailSubscription,
-    stripe_token_id: order.stripeResponse.id,
-    stripe_token_response: order.stripeResponse,
+    stripe_token_id: order.stripeTokenResponse.id,
+    stripe_token_response: order.stripeTokenResponse,
     charge_succeeded_at: moment().toISOString(),
     sent_to_production_at: null,
   })
-    .returning('*');
+    .returning('*')
+    .then(rows => rows[0]);
 }
 
 function _createAddress(orderId, address, opts = {}) {
@@ -56,30 +58,34 @@ function _createAddress(orderId, address, opts = {}) {
     state: address.state,
     contact_phone: address.phone,
   })
-    .returning('*');
+    .returning('*')
+    .then(rows => rows[0]);
 }
 
 function _createOrderedPosters(orderId, cart, opts = {}) {
   const trx = opts.trx || knex;
 
   return BPromise.map(cart, item =>
-    trx('ordered_posters').insert({
-      order_id: orderId,
-      quantity: item.quantity,
-      unit_customer_price: 1000,  // TODO
-      unit_internal_price: 100,  // TODO
-      map_center_lat: item.mapCenter.lat,
-      map_center_lng: item.mapCenter.lng,
-      map_zoom: item.mapZoom,
-      map_style: item.mapStyle,
-      map_pitch: item.mapPitch,
-      map_bearing: item.mapBearing,
-      size: item.size,
-      labels_enabled: item.labelsEnabled,
-      label_header: item.labelHeader,
-      label_small_header: item.labelSmallHeader,
-      label_text: item.labelText,
-    }),
+    trx('ordered_posters')
+      .insert({
+        order_id: orderId,
+        quantity: item.quantity,
+        unit_customer_price: 1000,  // TODO
+        unit_internal_price: 100,  // TODO
+        map_center_lat: item.mapCenter.lat,
+        map_center_lng: item.mapCenter.lng,
+        map_zoom: item.mapZoom,
+        map_style: item.mapStyle,
+        map_pitch: item.mapPitch,
+        map_bearing: item.mapBearing,
+        size: item.size,
+        labels_enabled: item.labelsEnabled,
+        label_header: item.labelHeader,
+        label_small_header: item.labelSmallHeader,
+        label_text: item.labelText,
+      })
+      .returning('*')
+      .then(rows => rows[0]),
     { concurrency: 1 },
   );
 }

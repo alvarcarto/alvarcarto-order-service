@@ -3,7 +3,6 @@ exports.up = function(knex, Promise) {
     table.bigIncrements('id').primary().index();
     table.string('customer_email', 512).notNullable();
     table.boolean('email_subscription').notNullable();
-    table.string('person_name', 512).notNullable();
     table.string('stripe_token_id', 64).notNullable().unique().index();
     table.jsonb('stripe_token_response').notNullable();
     table.timestamp('charge_succeeded_at').index().defaultTo(null);
@@ -24,7 +23,7 @@ exports.up = function(knex, Promise) {
       table.string('type', 128).notNullable();
       table.string('person_name', 512).notNullable();
       table.string('street_address', 512).notNullable();
-      table.string('street_address_extra', 512).notNullable();
+      table.string('street_address_extra', 512);
       table.string('city', 512).notNullable();
       table.string('postal_code', 32).notNullable();
       table.string('country_code', 4).notNullable();

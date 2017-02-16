@@ -16,7 +16,7 @@ function createRouter() {
       emailSubscription: Joi.boolean().optional(),
       shippingAddress: addressSchema.required(),
       billingAddress: addressSchema.optional(),
-      stripeResponse: stripeCreateTokenResponseSchema.required(),
+      stripeTokenResponse: stripeCreateTokenResponseSchema.required(),
       cart: cartSchema.required(),
     },
   };
