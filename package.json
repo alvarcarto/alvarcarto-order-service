@@ -6,11 +6,6 @@
   },
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "start": "nodemon --watch ./src -e js --exec \"babel-node --presets es2015 src/index.js\"",
-    "lint": "eslint ./src",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "Alvar Carto",
   "license": "UNLICENSED",
   "dependencies": {
@@ -38,5 +33,11 @@
     "eslint-config-airbnb-base": "^10.0.1",
     "eslint-plugin-import": "^2.2.0",
     "nodemon": "^1.11.0"
+  },
+  "scripts": {
+    "postinstall": "./tools/run-migrations.sh",
+    "start": "nodemon --watch ./src -e js --exec \"babel-node --presets es2015 src/index.js\"",
+    "lint": "eslint ./src",
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

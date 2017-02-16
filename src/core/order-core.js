@@ -9,7 +9,6 @@ function createOrder(order) {
     _createOrder(order, { trx })
       .tap(orderRow => _createOrderedPosters(orderRow.id, order.cart, { trx }))
       .tap((orderRow) => {
-
         const address = _.merge({}, order.shippingAddress, {
           type: ADDRESS_TYPE.SHIPPING,
         });
