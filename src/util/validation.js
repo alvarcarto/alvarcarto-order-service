@@ -32,8 +32,12 @@ const latLngSchema = Joi.object({
 
 const cartItemSchema = Joi.object({
   quantity: Joi.number().min(1).max(100000),
-  mapCenter: latLngSchema.required(),
-  mapZoom: Joi.number().min(0).max(25).required(),
+  mapBounds: Joi.object({
+    southWest: latLngSchema.required(),
+    northEast: latLngSchema.required(),
+  }).required(),
+  mapCenter: latLngSchema.optional(),
+  mapZoom: Joi.number().min(0).max(25).optional(),
   mapStyle: Joi.string().required(),
   mapPitch: Joi.number().optional(),
   mapBearing: Joi.number().min(-360).max(360).optional(),

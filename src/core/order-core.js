@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const moment = require('moment');
 const BPromise = require('bluebird');
 const ADDRESS_TYPE = require('../enums/address-type');
 const { knex } = require('../util/database');
@@ -30,12 +29,19 @@ function createOrder(order) {
 function _createOrder(order, opts = {}) {
   const trx = opts.trx || knex;
 
+  // https://support.stripe.com/questions/what-information-can-i-safely-store-about-my-users-payment-information
+  //  The only sensitive data that you want to avoid handling is your customers'
+  //  credit card number and CVC; other than that, you’re welcome to store
+  //  any other information on your local machines.
+  //  As a good rule, you can store anything returned by our API. In particular,
+  // you would not have any issues storing the last four digits of your
+  // customer’s card number or the expiration date for easy reference.
   return trx('orders').insert({
     customer_email: order.email,
     email_subscription: order.emailSubscription,
     stripe_token_id: order.stripeTokenResponse.id,
     stripe_token_response: order.stripeTokenResponse,
-    charge_succeeded_at: moment().toISOString(),
+    stripe_charge_response: order.stripeChargeResponse,
     sent_to_production_at: null,
   })
     .returning('*')
@@ -71,6 +77,10 @@ function _createOrderedPosters(orderId, cart, opts = {}) {
         quantity: item.quantity,
         unit_customer_price: 1000,  // TODO
         unit_internal_price: 100,  // TODO
+        map_south_west_lat: item.mapBounds.southWest.lat,
+        map_south_west_lng: item.mapBounds.southWest.lng,
+        map_north_east_lat: item.mapBounds.northEast.lat,
+        map_north_east_lng: item.mapBounds.northEast.lng,
         map_center_lat: item.mapCenter.lat,
         map_center_lng: item.mapCenter.lng,
         map_zoom: item.mapZoom,
@@ -78,6 +88,7 @@ function _createOrderedPosters(orderId, cart, opts = {}) {
         map_pitch: item.mapPitch,
         map_bearing: item.mapBearing,
         size: item.size,
+        orientation: item.orientation,
         labels_enabled: item.labelsEnabled,
         label_header: item.labelHeader,
         label_small_header: item.labelSmallHeader,

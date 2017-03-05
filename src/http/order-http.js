@@ -1,9 +1,10 @@
+const _ = require('lodash');
 const BPromise = require('bluebird');
 const ex = require('../util/express');
 const orderCore = require('../core/order-core');
 const stripe = require('../util/stripe');
 
-const postOrder = ex.createJsonRoute((req, res) => {
+const postOrder = ex.createJsonRoute((req) => {
   const price = { value: 1000, currency: 'eur' };
 
   return BPromise.resolve(stripe.charges.create({
@@ -15,9 +16,14 @@ const postOrder = ex.createJsonRoute((req, res) => {
     statement_descriptor: 'alvarcarto.com',
   }))
     .then((response) => {
-      console.log('Stripe charge succeeded');
-      return orderCore.createOrder(req.body);
-    });
+      const order = _.merge({}, req.body, {
+        stripeChargeResponse: response,
+      });
+
+      return orderCore.createOrder(order);
+    })
+    // Return with empty body
+    .then(() => undefined);
 });
 
 module.exports = {
