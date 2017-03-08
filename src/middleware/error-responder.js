@@ -34,7 +34,7 @@ function createErrorResponder(opts) {
 
     var httpMessage = http.STATUS_CODES[status];
     if (opts.isErrorSafeToRespond(status)) {
-      message = httpMessage + ': ' + err.message;
+      message = err.message;
     } else {
       message = httpMessage;
     }
