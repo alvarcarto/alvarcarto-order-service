@@ -24,6 +24,7 @@ const postOrder = ex.createJsonRoute((req) => {
     amount: price.value,
     currency: price.currency.toLowerCase(),
     source: req.body.stripeTokenResponse.id,
+    metadata: req.body,
     receipt_email: req.body.email,
     description: `Charge for ${req.body.email}`,
     statement_descriptor: 'alvarcarto.com',
