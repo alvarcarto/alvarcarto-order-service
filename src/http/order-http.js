@@ -6,9 +6,10 @@ const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
 const stripe = require('../util/stripe');
 
+const STRIPE_META_MAX_KEYS = 20;
 const STRIPE_META_KEY_MAX_LEN = 40;
 const STRIPE_META_VALUE_MAX_LEN = 500;
-const SAFE_LIMIT_MIN = 20 * 100;
+const SAFE_LIMIT_MIN = 25 * 100;
 const SAFE_LIMIT_MAX = 10000 * 100;
 
 const postOrder = ex.createJsonRoute((req) => {
@@ -22,41 +23,52 @@ const postOrder = ex.createJsonRoute((req) => {
     ex.throwStatus(500, 'Internal price calculation failed');
   }
 
-  return BPromise.resolve(stripe.charges.create({
+  const shippingAddress = req.body.shippingAddress;
+  const stripeCharge = {
     amount: price.value,
     currency: price.currency.toLowerCase(),
     source: req.body.stripeTokenResponse.id,
     metadata: fixStripeMeta({
-      posterCount: _.reduce(req.body.cart, (memo, item) => memo + item.quantity, 0),
-      postersSummary: _.map(req.body.cart, item => `${item.quantity}x ${item.labelHeader}`).join(', '),
-      sizes: _.map(req.body.cart, item => item.size).join(', '),
-      styles: _.map(req.body.cart, item => item.mapStyle).join(', '),
-      headers: _.map(req.body.cart, item => item.labelHeader).join(', '),
-      smallHeaders: _.map(req.body.cart, item => item.labelSmallHeader).join(', '),
-      texts: _.map(req.body.cart, item => item.labelText).join(', '),
-      shippingName: req.body.shippingAddress.name,
-      shippingAddress: req.body.shippingAddress.address,
-      shippingAddressExtra: req.body.shippingAddress.addressExtra,
-      shippingCity: req.body.shippingAddress.city,
-      shippingPostalCode: req.body.shippingAddress.postalCode,
-      shippingCountry: req.body.shippingAddress.country,
-      shippingState: req.body.shippingAddress.state,
-      shippingPhone: req.body.shippingAddress.phone,
+      posterQuantities: _.map(req.body.cart, item => `${item.quantity}x`).join('; '),
+      sizes: _.map(req.body.cart, item => item.size).join('; '),
+      orientations: _.map(req.body.cart, item => item.orientation).join('; '),
+      styles: _.map(req.body.cart, item => item.mapStyle).join('; '),
+      headers: _.map(req.body.cart, item => item.labelHeader).join('; '),
+      smallHeaders: _.map(req.body.cart, item => item.labelSmallHeader).join('; '),
+      texts: _.map(req.body.cart, item => item.labelText).join('; '),
+      coords: _.map(req.body.cart, item => mapBoundsToStr(item.mapBounds)).join('; '),
+      shippingName: shippingAddress.name,
+      shippingAddress: shippingAddress.address,
+      shippingAddressExtra: shippingAddress.addressExtra,
+      shippingCountry: `${shippingAddress.country}, state: ${shippingAddress.state}`,
+      shippingCity: `${shippingAddress.postalCode}, ${shippingAddress.city}`,
+      shippingPhone: shippingAddress.phone,
     }),
     receipt_email: req.body.email,
     description: `Charge for ${req.body.email}`,
     statement_descriptor: 'alvarcarto.com',
-  }))
+  };
+
+  return BPromise.resolve(stripe.charges.create(stripeCharge))
     .then((response) => {
       const order = _.merge({}, req.body, {
+        chargedPrice: price,  // Saved in case of failures
+        stripeChargeRequest: stripeCharge,
         stripeChargeResponse: response,
       });
 
       return orderCore.createOrder(order);
     })
-    // Return with empty body
-    .then(() => undefined);
+    .then(obj => ({
+      orderId: obj.orderId,
+    }));
 });
+
+function mapBoundsToStr(bounds) {
+  let coordStr = `${bounds.southWest.lat} ${bounds.southWest.lng}`;
+  coordStr += `, ${bounds.northEast.lat} ${bounds.northEast.lng}`;
+  return coordStr;
+}
 
 function fixStripeMeta(obj) {
   const newObj = {};

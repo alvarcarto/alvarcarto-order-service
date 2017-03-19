@@ -1,6 +1,7 @@
 exports.up = function(knex, Promise) {
   return knex.schema.createTable('orders', function(table) {
     table.bigIncrements('id').primary().index();
+    table.string('pretty_order_id', 512).unique().notNullable();
     table.string('customer_email', 512).notNullable();
     table.boolean('email_subscription').notNullable();
     table.string('stripe_token_id', 64).notNullable().unique().index();
@@ -10,6 +11,18 @@ exports.up = function(knex, Promise) {
     table.timestamp('created_at').index().notNullable().defaultTo(knex.fn.now());
     table.timestamp('updated_at').index().notNullable().defaultTo(knex.fn.now());
   })
+  .then(() =>
+    knex.schema.createTable('failed_orders', function(table) {
+      table.bigIncrements('id').primary().index();
+      table.string('pretty_order_id', 512);
+      table.jsonb('full_order');
+      table.text('error_message');
+      table.text('error_stack');
+      table.string('error_code');
+      table.timestamp('created_at').index().notNullable().defaultTo(knex.fn.now());
+      table.timestamp('updated_at').index().notNullable().defaultTo(knex.fn.now());
+    })
+  )
   .then(() =>
     knex.schema.createTable('addresses', function(table) {
       table.bigIncrements('id').primary().index();
@@ -43,8 +56,6 @@ exports.up = function(knex, Promise) {
         .onDelete('RESTRICT')
         .onUpdate('CASCADE');
       table.integer('quantity').notNullable();
-      table.integer('unit_customer_price').notNullable();
-      table.integer('unit_internal_price').notNullable();
       table.float('map_south_west_lat', 8).notNullable();
       table.float('map_south_west_lng', 8).notNullable();
       table.float('map_north_east_lat', 8).notNullable();
@@ -70,5 +81,6 @@ exports.up = function(knex, Promise) {
 exports.down = function(knex, Promise) {
   return knex.schema.dropTable('addresses')
     .then(() => knex.schema.dropTable('ordered_posters'))
-    .then(() => knex.schema.dropTable('orders'));
+    .then(() => knex.schema.dropTable('orders'))
+    .then(() => knex.schema.dropTable('failed_orders'));
 };

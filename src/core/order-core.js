@@ -1,11 +1,26 @@
 const _ = require('lodash');
+const crypto = require('crypto');
+const moment = require('moment');
+const promiseRetryify = require('promise-retryify');
 const BPromise = require('bluebird');
+const logger = require('../util/logger')(__filename);
 const ADDRESS_TYPE = require('../enums/address-type');
 const { knex } = require('../util/database');
+const { retryingSaveFailedOrder } = require('./fail-safe-core');
 
 function createOrder(order) {
+  let fullOrder = _.merge({}, order, { prettyOrderId: 'NONE' });
+
   return knex.transaction(trx =>
-    _createOrder(order, { trx })
+    _createUniqueOrderId({ trx })
+      .then((prettyOrderId) => {
+        // Share to upper function scope to be able to log this
+        fullOrder = _.merge({}, order, {
+          prettyOrderId,
+        });
+
+        return _createOrder(fullOrder, { trx });
+      })
       .tap(orderRow => _createOrderedPosters(orderRow.id, order.cart, { trx }))
       .tap((orderRow) => {
         const address = _.merge({}, order.shippingAddress, {
@@ -22,8 +37,42 @@ function createOrder(order) {
           type: ADDRESS_TYPE.BILLING,
         });
         return _createAddress(orderRow.id, address, { trx });
-      }),
+      })
+      .then(() => ({
+        orderId: fullOrder.prettyOrderId,
+      }))
+      .catch(
+        _isUniqueConstraintError,
+        err => _logUniqueConstraintErrorAndRethrow(err),
+      )
+      .catch(err => _saveErrorInBackgroundAndRethrow(err, fullOrder)),
   );
+}
+
+// Yes, not good.. but knex doesn't provide better options.
+// https://github.com/tgriesser/knex/issues/272
+function _isUniqueConstraintError(err) {
+  if (!err) {
+    return false;
+  }
+
+  const re = /^duplicate key value violates unique constraint/;
+  return re.test(err.message);
+}
+
+function _logUniqueConstraintErrorAndRethrow(err) {
+  logger.error(`alert-1h VERY RARE! Order creation failed to unique constraint error: ${err}`);
+  logger.error(err);
+  throw err;
+}
+
+function _saveErrorInBackgroundAndRethrow(err, fullOrder) {
+  // Save failed order to make debugging easier later
+  // This is on purpose launched separately from promise
+  // chain so we can return the error ASAP to user
+  retryingSaveFailedOrder(fullOrder, err);
+
+  throw err;
 }
 
 function _createOrder(order, opts = {}) {
@@ -37,6 +86,7 @@ function _createOrder(order, opts = {}) {
   // you would not have any issues storing the last four digits of your
   // customer’s card number or the expiration date for easy reference.
   return trx('orders').insert({
+    pretty_order_id: order.prettyOrderId,
     customer_email: order.email,
     email_subscription: order.emailSubscription,
     stripe_token_id: order.stripeTokenResponse.id,
@@ -75,8 +125,6 @@ function _createOrderedPosters(orderId, cart, opts = {}) {
       .insert({
         order_id: orderId,
         quantity: item.quantity,
-        unit_customer_price: 1000,  // TODO
-        unit_internal_price: 100,  // TODO
         map_south_west_lat: item.mapBounds.southWest.lat,
         map_south_west_lng: item.mapBounds.southWest.lng,
         map_north_east_lat: item.mapBounds.northEast.lat,
@@ -98,6 +146,77 @@ function _createOrderedPosters(orderId, cart, opts = {}) {
       .then(rows => rows[0]),
     { concurrency: 1 },
   );
+}
+
+// Creates a guaranteed unique ID by checking that it's not written to orders
+// table yet. Retries to create a new order ID if the previously generated was
+// reserved.
+//
+// NOTE: Race-condition "vulnerable".
+//       This method guarantees that the returned ID *was* unique some
+//       milliseconds ago. It is still possible with very bad luck that
+//       a concurrent request created the same ID also thinking that the
+//       ID is unique.
+//       This is a risk I'm willing to take. Other option would be to
+//       wrap the whole order creation in a retry, but there's a risk to
+//       write orders twice in the database.
+const _createUniqueOrderId = promiseRetryify((opts = {}) => {
+  const trx = opts.trx || knex;
+
+  const newOrderId = _createOrderId();
+  return trx('orders')
+    .select('*')
+    .where({
+      pretty_order_id: newOrderId,
+    })
+    .limit(1)
+    .then((orders) => {
+      if (!_.isEmpty(orders)) {
+        logger.warn(`alert-1h Order ID already exists: ${newOrderId}`);
+        throw new Error(`Order id already exists: ${newOrderId}`);
+      }
+
+      return newOrderId;
+    })
+    .catch((err) => {
+      logger.warn(`Unique order id creation failed (#${newOrderId}). Error: ${err}`);
+      throw err;
+    });
+}, {
+  maxRetries: 20,
+  // 10ms, 20ms, 40ms, 80ms, 160ms, 320ms, 640ms, 1000ms, 1000ms, 1000ms ...
+  retryTimeout: retryCount => Math.min(Math.pow(2, retryCount) * 10, 1000),
+  beforeRetry: retryCount => logger.warn(`Retrying to create unique id (${retryCount}) ..`),
+  onAllFailed: () => logger.error('alert-1h Critical order collision! All tries to create order id failed.'),
+});
+
+// TODO: move this id creation shit to another module
+
+function _createOrderId() {
+  const now = moment.utc();
+  return `${now.format('YYYY-MMDD')}-${rand4()}-${rand4()}`;
+}
+
+function rand4() {
+  const num = String(randomInteger(0, 9999));
+  return _.padStart(num, 4, '0');
+}
+
+const MAX_INT_32 = Math.pow(2, 32);
+function randomInteger(min, max) {
+  const buf = crypto.randomBytes(4);
+  const hex = buf.toString('hex');
+
+  // Enforce that MAX_INT_32 - 1 is the largest number
+  // generated. This biases the distribution a little
+  // but doesn't matter in practice
+  // when generating smaller numbers.
+  // Without this enforcement, we'd return too large numbers
+  // on the case when crypto generated MAX_INT_32
+  const int32 = Math.min(parseInt(hex, 16), MAX_INT_32 - 1);
+  const ratio = int32 / MAX_INT_32;
+  // eslint-disable-next-line
+  return Math.floor(ratio * (max - min + 1)) + min;
 }
 
 module.exports = {
