@@ -35,7 +35,7 @@ function createRouter() {
 
   const getOrderSchema = {
     params: {
-      orderId: Joi.string().required(),
+      orderId: Joi.string().regex(/^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/).required(),
     },
   };
   router.get('/api/orders/:orderId', apiLimiter, validate(getOrderSchema), order.getOrder);
