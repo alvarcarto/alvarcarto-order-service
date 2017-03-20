@@ -47,6 +47,9 @@ exports.up = function(knex, Promise) {
     })
   )
   .then(() =>
+    knex.raw('CREATE UNIQUE INDEX addresses_order_id_type_index ON addresses (order_id, type)')
+  )
+  .then(() =>
     knex.schema.createTable('ordered_posters', function(table) {
       table.bigIncrements('id').primary().index();
       table.bigInteger('order_id').notNullable().index();

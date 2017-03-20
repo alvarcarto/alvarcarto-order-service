@@ -12,9 +12,9 @@ const config = require('./config');
 
 function createApp() {
   const app = express();
-  // App is served behind Heroku's proxy
+  // App is served behind Heroku's router and CloudFlare proxy.
   // This is needed to be able to use req.ip or req.secure
-  app.enable('trust proxy', 1);
+  app.enable('trust proxy', 2);
   app.disable('x-powered-by');
 
   if (!config.ALLOW_HTTP) {

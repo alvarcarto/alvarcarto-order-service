@@ -49,6 +49,76 @@ function createOrder(order) {
   );
 }
 
+function getOrder(orderId) {
+  return knex.raw(`
+    SELECT
+      orders.pretty_order_id as pretty_order_id,
+      addresses.city as shipping_city,
+      addresses.country_code as shipping_country_code,
+      ordered_posters.quantity as quantity,
+      ordered_posters.map_south_west_lat as map_south_west_lat,
+      ordered_posters.map_south_west_lng as map_south_west_lng,
+      ordered_posters.map_north_east_lat as map_north_east_lat,
+      ordered_posters.map_north_east_lng as map_north_east_lng,
+      ordered_posters.map_style as map_style,
+      ordered_posters.map_bearing as map_bearing,
+      ordered_posters.map_pitch as map_pitch,
+      ordered_posters.size as size,
+      ordered_posters.orientation as orientation,
+      ordered_posters.labels_enabled as labels_enabled,
+      ordered_posters.label_header as label_header,
+      ordered_posters.label_small_header as label_small_header,
+      ordered_posters.label_text as label_text,
+      ordered_posters.map_center_lat as map_center_lat,
+      ordered_posters.map_center_lng as map_center_lng,
+      ordered_posters.map_zoom as map_zoom
+    FROM orders
+    LEFT JOIN ordered_posters as ordered_posters
+      ON ordered_posters.order_id = orders.id
+    LEFT JOIN addresses as addresses
+      ON addresses.order_id = orders.id AND
+         addresses.type = 'SHIPPING'
+    WHERE orders.pretty_order_id = :orderId
+  `, {
+    orderId,
+  })
+    .then((result) => {
+      if (_.isEmpty(result.rows)) {
+        return null;
+      }
+
+      const cart = _.map(result.rows, row => ({
+        quantity: row.quantity,
+        mapCenter: { lat: row.map_center_lat, lng: row.map_center_lng },
+        mapBounds: {
+          southWest: { lat: row.map_south_west_lat, lng: row.map_south_west_lng },
+          northEast: { lat: row.map_north_east_lat, lng: row.map_north_east_lng },
+        },
+        mapZoom: row.map_zoom,
+        mapStyle: row.map_style,
+        mapPitch: row.map_pitch,
+        mapBearing: row.map_bearing,
+        orientation: row.orientation,
+        size: row.size,
+        labelsEnabled: row.labels_enabled,
+        labelHeader: row.label_header,
+        labelSmallHeader: row.label_small_header,
+        labelText: row.label_text,
+      }));
+
+      // All rows should contain same info for all rows, so we just pick first
+      const firstRow = result.rows[0];
+      return {
+        orderId: firstRow.pretty_order_id,
+        cart,
+        shippingAddress: {
+          city: firstRow.shipping_city,
+          country: firstRow.shipping_country_code,
+        },
+      };
+    });
+}
+
 // Yes, not good.. but knex doesn't provide better options.
 // https://github.com/tgriesser/knex/issues/272
 function _isUniqueConstraintError(err) {
@@ -221,4 +291,5 @@ function randomInteger(min, max) {
 
 module.exports = {
   createOrder,
+  getOrder,
 };

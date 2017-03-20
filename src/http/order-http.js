@@ -6,7 +6,6 @@ const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
 const stripe = require('../util/stripe');
 
-const STRIPE_META_MAX_KEYS = 20;
 const STRIPE_META_KEY_MAX_LEN = 40;
 const STRIPE_META_VALUE_MAX_LEN = 500;
 const SAFE_LIMIT_MIN = 25 * 100;
@@ -64,6 +63,17 @@ const postOrder = ex.createJsonRoute((req) => {
     }));
 });
 
+const getOrder = ex.createJsonRoute((req) => {
+  return orderCore.getOrder(req.params.orderId)
+    .then((order) => {
+      if (!order) {
+        return ex.throwStatus(404, 'Order not found');
+      }
+
+      return order;
+    });
+});
+
 function mapBoundsToStr(bounds) {
   let coordStr = `${bounds.southWest.lat} ${bounds.southWest.lng}`;
   coordStr += `, ${bounds.northEast.lat} ${bounds.northEast.lng}`;
@@ -95,4 +105,5 @@ function ensureLength(text, length) {
 
 module.exports = {
   postOrder,
+  getOrder,
 };
