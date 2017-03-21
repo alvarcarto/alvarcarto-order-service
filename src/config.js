@@ -14,6 +14,7 @@ const config = {
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   ALLOW_HTTP: process.env.ALLOW_HTTP === 'true',
+  IP_LOGGER: process.env.IP_LOGGER === 'true',
 };
 
 module.exports = config;
