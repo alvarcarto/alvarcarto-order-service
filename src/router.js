@@ -28,9 +28,7 @@ function createRouter() {
   const apiLimiter = new RateLimit({
     windowMs: 10 * 60 * 1000,
     max: 50,
-    // num of connections during windowMs before starting to delay responses.
-    delayAfter: 25,
-    delayMs: 3000,
+    delayMs: 0,
   });
 
   const getOrderSchema = {
