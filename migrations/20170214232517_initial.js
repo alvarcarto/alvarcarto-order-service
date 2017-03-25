@@ -4,6 +4,7 @@ exports.up = function(knex, Promise) {
     table.string('pretty_order_id', 512).unique().notNullable();
     table.string('customer_email', 512).notNullable();
     table.boolean('email_subscription').notNullable();
+    table.boolean('different_billing_address').notNullable();
     table.string('stripe_token_id', 64).notNullable().unique().index();
     table.jsonb('stripe_token_response').notNullable();
     table.jsonb('stripe_charge_response').notNullable();

@@ -15,6 +15,7 @@ function createRouter() {
   const postOrderSchema = {
     body: {
       email: Joi.string().email().required(),
+      differentBillingAddress: Joi.boolean().optional(),
       emailSubscription: Joi.boolean().optional(),
       shippingAddress: addressSchema.required(),
       billingAddress: addressSchema.optional(),

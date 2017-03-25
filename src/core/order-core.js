@@ -158,7 +158,8 @@ function _createOrder(order, opts = {}) {
   return trx('orders').insert({
     pretty_order_id: order.prettyOrderId,
     customer_email: order.email,
-    email_subscription: order.emailSubscription,
+    different_billing_address: _.get(order, 'differentBillingAddress', false),
+    email_subscription: _.get(order, 'emailSubscription', false),
     stripe_token_id: order.stripeTokenResponse.id,
     stripe_token_response: order.stripeTokenResponse,
     stripe_charge_response: order.stripeChargeResponse,
