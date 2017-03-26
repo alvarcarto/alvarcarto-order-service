@@ -1,12 +1,13 @@
 const path = require('path');
 const winston = require('winston');
 const _ = require('lodash');
+const simpleEncryptor = require('simple-encryptor');
 const config = require('../config');
 
 const COLORIZE = config.NODE_ENV === 'development';
 
 function createLogger(filePath) {
-  var fileName = path.basename(filePath);
+  const fileName = path.basename(filePath);
 
   const logger = new winston.Logger({
     transports: [new winston.transports.Console({
@@ -15,6 +16,11 @@ function createLogger(filePath) {
       timestamp: true,
     })],
   });
+
+  const encryptor = simpleEncryptor(config.LOG_ENCRYPT_KEY);
+  logger.logEncrypted = function logEncrypted(level, plainText, secretObj) {
+    logger[level](plainText, `ENCRYPTED(${encryptor.encrypt(secretObj)})`);
+  };
 
   _setLevelForTransports(logger, config.LOG_LEVEL || 'info');
   return logger;

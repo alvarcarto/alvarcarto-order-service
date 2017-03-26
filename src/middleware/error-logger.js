@@ -12,11 +12,12 @@ function createErrorLogger(opts) {
   }, opts);
 
   return function errorHandler(err, req, res, next) {
-    var status = err.status ? err.status : 500;
-    var log = getLogFunc(status);
+    const status = err.status ? err.status : 500;
+    const logLevel = getLogLevel(status);
+    const log = logger[logLevel];
 
     if (opts.logRequest(status)) {
-      logRequestDetails(log, req, status);
+      logRequestDetails(logLevel, req, status);
     }
 
     if (opts.logStackTrace(status)) {
@@ -30,14 +31,14 @@ function createErrorLogger(opts) {
   };
 }
 
-function getLogFunc(status) {
-  return status >= 500 ? logger.error : logger.warn;
+function getLogLevel(status) {
+  return status >= 500 ? 'error' : 'warn';
 }
 
-function logRequestDetails(log, req, status) {
-  log('Request headers:', deepSupressLongStrings(req.headers));
-  log('Request parameters:', deepSupressLongStrings(req.params));
-  log('Request body:', deepSupressLongStrings(req.body));
+function logRequestDetails(logLevel, req, status) {
+  logger[logLevel]('Request headers:', deepSupressLongStrings(req.headers));
+  logger[logLevel]('Request parameters:', deepSupressLongStrings(req.params));
+  logger.logEncrypted(logLevel, 'Request body:', req.body);
 }
 
 function deepSupressLongStrings(obj) {
