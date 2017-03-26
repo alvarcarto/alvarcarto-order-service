@@ -48,9 +48,10 @@ const postOrder = ex.createJsonRoute((req) => {
     statement_descriptor: 'alvarcarto.com',
   };
 
+  let order;
   return BPromise.resolve(stripe.charges.create(stripeCharge))
     .then((response) => {
-      const order = _.merge({}, req.body, {
+      order = _.merge({}, req.body, {
         chargedPrice: price,  // Saved in case of failures
         stripeChargeRequest: stripeCharge,
         stripeChargeResponse: response,
@@ -60,7 +61,13 @@ const postOrder = ex.createJsonRoute((req) => {
     })
     .then(obj => ({
       orderId: obj.orderId,
-    }));
+    }))
+    .catch((err) => {
+      logger.error('alert-1h Creating order failed!');
+      logger.logEncrypted('error', 'Stripe charge:', stripeCharge);
+      logger.logEncrypted('error', 'Full order:', order);
+      throw err;
+    });
 });
 
 const getOrder = ex.createJsonRoute((req) => {

@@ -19,7 +19,11 @@ function createLogger(filePath) {
 
   const encryptor = simpleEncryptor(config.LOG_ENCRYPT_KEY);
   logger.logEncrypted = function logEncrypted(level, plainText, secretObj) {
-    logger[level](plainText, `ENCRYPTED(${encryptor.encrypt(secretObj)})`);
+    const secret = _.isPlainObject(secretObj)
+      ? JSON.stringify(secretObj)
+      : String(secretObj);
+
+    logger[level](plainText, `ENCRYPTED(${encryptor.encrypt(secret)})`);
   };
 
   _setLevelForTransports(logger, config.LOG_LEVEL || 'info');
