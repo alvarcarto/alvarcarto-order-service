@@ -3,6 +3,7 @@ const validate = require('express-validation');
 const RateLimit = require('express-rate-limit');
 const express = require('express');
 const order = require('./http/order-http');
+const health = require('./http/health-http');
 
 const {
   addressSchema,
@@ -12,6 +13,8 @@ const {
 
 function createRouter() {
   const router = express.Router();
+  router.get('/api/health', health.getHealth);
+
   const postOrderSchema = {
     body: {
       email: Joi.string().email().required(),
