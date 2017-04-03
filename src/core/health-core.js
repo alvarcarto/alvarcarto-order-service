@@ -3,7 +3,7 @@ const { knex } = require('../util/database');
 
 function assertHealth() {
   return knex.raw('SELECT * from migrations')
-    .then(result => {
+    .then((result) => {
       if (_.isEmpty(result.rows)) {
         throw new Error('Migrations table was empty');
       }

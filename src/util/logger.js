@@ -19,9 +19,16 @@ function createLogger(filePath) {
 
   const encryptor = simpleEncryptor(config.LOG_ENCRYPT_KEY);
   logger.logEncrypted = function logEncrypted(level, plainText, secretObj) {
-    const secret = _.isPlainObject(secretObj)
-      ? JSON.stringify(secretObj)
-      : String(secretObj);
+    let secret;
+    if (_.isObject(secretObj)) {
+      try {
+        secret = JSON.stringify(secretObj);
+      } catch (e) {
+        secret = String(secretObj);
+      }
+    } else {
+      secret = String(secretObj);
+    }
 
     logger[level](plainText, `ENCRYPTED(${encryptor.encrypt(secret)})`);
   };

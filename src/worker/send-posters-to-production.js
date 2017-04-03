@@ -1,5 +1,4 @@
 const BPromise = require('bluebird');
-const _ = require('lodash');
 const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
 const printmotorCore = require('../core/printmotor-core');
@@ -10,11 +9,15 @@ function main() {
 
   return orderCore.getOrdersReadyToProduction()
     .then((orders) => {
-      console.log('Found orders:', orders);
-      return BPromise.each(orders, order =>
-        printmotorCore.createOrder(order)
-          .then(() => logger.info(`Sent order to Printmotor (#${order.orderId})`))
-      );
+      logger.logEncrypted('info', 'Found orders:', orders);
+      logger.info(`Found ${orders.length} orders ready for Printmotor ..`);
+
+      return BPromise.each(orders, (order) => {
+        logger.info(`Creating order to Printmotor (#${order.orderId}) ..`);
+
+        return printmotorCore.createOrder(order)
+          .then(() => logger.info(`Sent order to Printmotor (#${order.orderId})`));
+      });
     })
     .catch((err) => {
       logError(err);

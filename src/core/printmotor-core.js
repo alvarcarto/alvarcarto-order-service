@@ -1,9 +1,10 @@
+const BPromise = require('bluebird');
 const _ = require('lodash');
 const { calculateItemPrice } = require('alvarcarto-price-util');
 const request = require('request-promise');
 const config = require('../config');
 const logger = require('../util/logger')(__filename);
-const { createPosterImageUrl } = require('../util');
+const { uploadPoster } = require('./bucket-core');
 
 const BASE_URL = [
   'https://',
@@ -15,23 +16,28 @@ const BASE_URL = [
 ].join('');
 
 function createOrder(internalOrder) {
-  return request({
-    method: 'POST',
-    url: `${BASE_URL}/api/v1/order`,
-    json: true,
-    headers: {
-      'X-Printmotor-Service': config.PRINTMOTOR_SERVICE_ID,
-    },
-    body: _internalOrderToPrintmotorOrder(internalOrder),
+  return BPromise.map(internalOrder.cart, (item, i) => uploadPoster(internalOrder, item, i), {
+    concurrency: 3,
   })
-  .catch((err) => {
-    const msg = `${err}, body: ${_.get(err, 'response.body')}`;
-    logger.error(`Error creating order to Printmotor (#${internalOrder.orderId}): ${msg}`);
-    throw err;
-  });
+    .then(uploadResponses =>
+      request({
+        method: 'POST',
+        url: `${BASE_URL}/api/v1/order`,
+        json: true,
+        headers: {
+          'X-Printmotor-Service': config.PRINTMOTOR_SERVICE_ID,
+        },
+        body: _internalOrderToPrintmotorOrder(internalOrder, uploadResponses),
+      })
+    )
+    .catch((err) => {
+      const msg = `${err}, body: ${_.get(err, 'response.body')}`;
+      logger.error(`Error creating order to Printmotor (#${internalOrder.orderId}): ${msg}`);
+      throw err;
+    });
 }
 
-function _internalOrderToPrintmotorOrder(internalOrder) {
+function _internalOrderToPrintmotorOrder(internalOrder, uploadResponses) {
   const nameParts = _splitFullName(internalOrder.shippingAddress.personName);
   return {
     address: {
@@ -49,13 +55,15 @@ function _internalOrderToPrintmotorOrder(internalOrder) {
       emailAddress: internalOrder.customerEmail,
       firstName: nameParts.first,
       lastName: nameParts.last,
-      phone: internalOrder.shippingAddress.phone
+      phone: internalOrder.shippingAddress.phone,
     },
-    products: _.map(internalOrder.cart, item => ())
-  }
+    products: _.map(internalOrder.cart, (item, i) =>
+      _internalCartItemToPrintmotorProduct(item, uploadResponses[i])
+    ),
+  };
 }
 
-function _internalCartItemToPrintmotorProduct(item) {
+function _internalCartItemToPrintmotorProduct(item, uploadResponse) {
   const price = calculateItemPrice(item, { onlyUnitPrice: true });
   return {
     amount: item.quantity,
@@ -63,8 +71,8 @@ function _internalCartItemToPrintmotorProduct(item) {
     customization: [
       {
         fieldName: 'image',
-        value: createPosterImageUrl(item),
-      }
+        value: uploadResponse.Location,
+      },
     ],
     endUserPrice: {
       currencyIso4217: price.currency.toUpperCase(),

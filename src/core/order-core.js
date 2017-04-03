@@ -254,7 +254,7 @@ function _createAddress(orderId, address, opts = {}) {
 
 function _createOrderedPosters(orderId, cart, opts = {}) {
   const trx = opts.trx || knex;
-
+  // TODO: Insert unit price too for book keeping
   return BPromise.map(cart, item =>
     trx('ordered_posters')
       .insert({
