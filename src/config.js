@@ -35,6 +35,7 @@ const config = {
   AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME,
   AWS_REGION: process.env.AWS_REGION || 'eu-west-1',
   AWS_DEBUG: process.env.AWS_DEBUG === 'true',
+  SEND_TO_PRODUCTION_AFTER: process.env.SEND_TO_PRODUCTION_AFTER || '3 hours',
 };
 
 module.exports = config;

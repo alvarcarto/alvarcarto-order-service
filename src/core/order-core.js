@@ -6,6 +6,7 @@ const BPromise = require('bluebird');
 const logger = require('../util/logger')(__filename);
 const ADDRESS_TYPE = require('../enums/address-type');
 const { knex } = require('../util/database');
+const config = require('../config');
 const { retryingSaveFailedOrder } = require('./fail-safe-core');
 
 function createOrder(order) {
@@ -74,7 +75,7 @@ function getOrdersReadyToProduction(orderId, opts = {}) {
   return selectOrders({
     // TODO: Check if express shipping and then make minimal
     addQuery: `WHERE orders.sent_to_production_at is NULL AND
-      orders.created_at < NOW() - INTERVAL '3 hours'
+      orders.created_at < NOW() - INTERVAL '${config.SEND_TO_PRODUCTION_AFTER}'
     `,
     trx,
   });
