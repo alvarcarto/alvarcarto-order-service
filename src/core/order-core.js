@@ -41,20 +41,66 @@ function createOrder(order) {
       .then(() => ({
         orderId: fullOrder.prettyOrderId,
       }))
-      .catch(
-        _isUniqueConstraintError,
-        err => _logUniqueConstraintErrorAndRethrow(err),
-      )
-      .catch(err => _saveErrorInBackgroundAndRethrow(err, fullOrder)),
+      .catch(_isUniqueConstraintError, err => _logUniqueConstraintErrorAndRethrow(err))
+      .catch(err => _saveErrorInBackgroundAndRethrow(err, fullOrder))
   );
 }
 
-function getOrder(orderId) {
-  return knex.raw(`
+function getOrder(orderId, opts = {}) {
+  const trx = opts.trx || knex;
+
+  return selectOrders({
+    addQuery: 'WHERE orders.pretty_order_id = :orderId',
+    params: { orderId },
+    trx,
+  })
+    .then((orders) => {
+      if (_.isEmpty(orders)) {
+        return null;
+      }
+
+      const order = orders[0];
+      return {
+        orderId: order.orderId,
+        cart: order.cart,
+        shippingAddress: _.pick(order.shippingAddress, ['city', 'countryCode']),
+      };
+    });
+}
+
+function getOrdersReadyToProduction(orderId, opts = {}) {
+  const trx = opts.trx || knex;
+
+  return selectOrders({
+    // TODO: Check if express shipping and then make minimal
+    addQuery: `WHERE orders.sent_to_production_at is NULL AND
+      orders.created_at < NOW() - INTERVAL '3 hours'
+    `,
+    trx,
+  });
+}
+
+// opts.addQuery MUST BE SAFE INPUT, DO NOT USE USER INPUT FOR THAT VALUE
+function selectOrders(_opts = {}) {
+  const opts = _.merge({
+    params: {},
+  }, _opts);
+  const trx = opts.trx || knex;
+
+  return trx.raw(`
     SELECT
+      orders.customer_email as customer_email,
+      orders.email_subscription as email_subscription,
       orders.pretty_order_id as pretty_order_id,
+      orders.stripe_charge_response as stripe_charge_response,
+      addresses.person_name as shipping_person_name,
+      addresses.street_address as shipping_street_address,
+      addresses.street_address_extra as shipping_street_address_extra,
       addresses.city as shipping_city,
+      addresses.postal_code as shipping_postal_code,
       addresses.country_code as shipping_country_code,
+      addresses.state as shipping_state,
+      addresses.contact_phone as shipping_contact_phone,
       ordered_posters.quantity as quantity,
       ordered_posters.map_south_west_lat as map_south_west_lat,
       ordered_posters.map_south_west_lng as map_south_west_lng,
@@ -78,45 +124,63 @@ function getOrder(orderId) {
     LEFT JOIN addresses as addresses
       ON addresses.order_id = orders.id AND
          addresses.type = 'SHIPPING'
-    WHERE orders.pretty_order_id = :orderId
-  `, {
-    orderId,
-  })
+    ${opts.addQuery}
+  `, opts.params)
     .then((result) => {
-      if (_.isEmpty(result.rows)) {
-        return null;
-      }
+      // Each ordered poster is in its own row
+      const grouped = _.groupBy(result.rows, row => row.pretty_order_id);
 
-      const cart = _.map(result.rows, row => ({
-        quantity: row.quantity,
-        mapCenter: { lat: row.map_center_lat, lng: row.map_center_lng },
-        mapBounds: {
-          southWest: { lat: row.map_south_west_lat, lng: row.map_south_west_lng },
-          northEast: { lat: row.map_north_east_lat, lng: row.map_north_east_lng },
-        },
-        mapZoom: row.map_zoom,
-        mapStyle: row.map_style,
-        mapPitch: row.map_pitch,
-        mapBearing: row.map_bearing,
-        orientation: row.orientation,
-        size: row.size,
-        labelsEnabled: row.labels_enabled,
-        labelHeader: row.label_header,
-        labelSmallHeader: row.label_small_header,
-        labelText: row.label_text,
-      }));
+      const orders = {};
+      _.each(grouped, (rows, orderId) => {
+        const orderObj = _rowsToOrderObject(rows);
+        orders[orderId] = orderObj;
+      });
 
-      // All rows should contain same info for all rows, so we just pick first
-      const firstRow = result.rows[0];
-      return {
-        orderId: firstRow.pretty_order_id,
-        cart,
-        shippingAddress: {
-          city: firstRow.shipping_city,
-          country: firstRow.shipping_country_code,
-        },
-      };
+      // Make sure the order of returned rows is not changed
+      return _.map(result.rows, row => orders[row.pretty_order_id]);
     });
+}
+
+// Each cart item is its own row
+function _rowsToOrderObject(rows) {
+  const cart = _.map(rows, row => ({
+    quantity: row.quantity,
+    mapCenter: { lat: row.map_center_lat, lng: row.map_center_lng },
+    mapBounds: {
+      southWest: { lat: row.map_south_west_lat, lng: row.map_south_west_lng },
+      northEast: { lat: row.map_north_east_lat, lng: row.map_north_east_lng },
+    },
+    mapZoom: row.map_zoom,
+    mapStyle: row.map_style,
+    mapPitch: row.map_pitch,
+    mapBearing: row.map_bearing,
+    orientation: row.orientation,
+    size: row.size,
+    labelsEnabled: row.labels_enabled,
+    labelHeader: row.label_header,
+    labelSmallHeader: row.label_small_header,
+    labelText: row.label_text,
+  }));
+
+  // All rows should contain same info for all rows, so we just pick first
+  const firstRow = rows[0];
+  return {
+    customerEmail: firstRow.customer_email,
+    emailSubscription: firstRow.email_subscription,
+    stripeChargeResponse: firstRow.stripe_charge_response,
+    orderId: firstRow.pretty_order_id,
+    cart,
+    shippingAddress: {
+      personName: firstRow.shipping_person_name,
+      streetAddress: firstRow.shipping_street_address,
+      streetAddressExtra: firstRow.shipping_street_address_extra,
+      city: firstRow.shipping_city,
+      postalCode: firstRow.shipping_postal_code,
+      countryCode: firstRow.shipping_country_code,
+      state: firstRow.shipping_state,
+      contactPhone: firstRow.shipping_contact_phone,
+    },
+  };
 }
 
 // Yes, not good.. but knex doesn't provide better options.
@@ -190,7 +254,7 @@ function _createAddress(orderId, address, opts = {}) {
 
 function _createOrderedPosters(orderId, cart, opts = {}) {
   const trx = opts.trx || knex;
-
+  // TODO: Insert unit price too for book keeping
   return BPromise.map(cart, item =>
     trx('ordered_posters')
       .insert({
@@ -215,7 +279,7 @@ function _createOrderedPosters(orderId, cart, opts = {}) {
       })
       .returning('*')
       .then(rows => rows[0]),
-    { concurrency: 1 },
+    { concurrency: 1 }
   );
 }
 
@@ -293,4 +357,5 @@ function randomInteger(min, max) {
 module.exports = {
   createOrder,
   getOrder,
+  getOrdersReadyToProduction,
 };
