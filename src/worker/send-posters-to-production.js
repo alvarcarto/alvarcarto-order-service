@@ -16,7 +16,11 @@ function main() {
         logger.info(`Creating order to Printmotor (#${order.orderId}) ..`);
 
         return printmotorCore.createOrder(order)
-          .then(() => logger.info(`Sent order to Printmotor (#${order.orderId})`));
+          .tap(() => logger.info(`Sent order to Printmotor (#${order.orderId})`))
+          .then(result =>
+            orderCore.markOrderSentToProduction(order.orderId, result.requestParams)
+          )
+          .then(() => logger.info(`Marked order as sent to production (#${order.orderId})`));
       });
     })
     .catch((err) => {

@@ -19,8 +19,8 @@ function createOrder(internalOrder) {
   return BPromise.map(internalOrder.cart, (item, i) => uploadPoster(internalOrder, item, i), {
     concurrency: 3,
   })
-    .then(uploadResponses =>
-      request({
+    .then((uploadResponses) => {
+      const params = {
         method: 'POST',
         url: `${BASE_URL}/api/v1/order`,
         json: true,
@@ -28,11 +28,26 @@ function createOrder(internalOrder) {
           'X-Printmotor-Service': config.PRINTMOTOR_SERVICE_ID,
         },
         body: _internalOrderToPrintmotorOrder(internalOrder, uploadResponses),
-      })
-    )
+      };
+
+      logger.logEncrypted(
+        'info',
+        `Printmotor request (#${internalOrder.orderId}):`,
+        params
+      );
+
+      return BPromise.props({
+        response: request(params),
+        requestParams: params,
+      });
+    })
     .catch((err) => {
-      const msg = `${err}, body: ${_.get(err, 'response.body')}`;
-      logger.error(`Error creating order to Printmotor (#${internalOrder.orderId}): ${msg}`);
+      logger.error(
+        `Error creating order to Printmotor (#${internalOrder.orderId}):`,
+        err,
+        _.get(err, 'response.body')
+      );
+
       throw err;
     });
 }

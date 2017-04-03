@@ -142,6 +142,18 @@ function selectOrders(_opts = {}) {
     });
 }
 
+function markOrderSentToProduction(orderId, requestParams) {
+  return knex.raw(`
+    UPDATE orders
+      SET sent_to_production_at = now(),
+          printmotor_order_request = :requestParams
+    WHERE pretty_order_id = :orderId
+  `, {
+    orderId,
+    requestParams: JSON.stringify(requestParams),
+  });
+}
+
 // Each cart item is its own row
 function _rowsToOrderObject(rows) {
   const cart = _.map(rows, row => ({
@@ -359,4 +371,5 @@ module.exports = {
   createOrder,
   getOrder,
   getOrdersReadyToProduction,
+  markOrderSentToProduction,
 };
