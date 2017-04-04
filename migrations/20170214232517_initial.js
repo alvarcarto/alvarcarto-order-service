@@ -66,7 +66,7 @@ exports.up = function(knex, Promise) {
       table.float('map_north_east_lng', 8).notNullable();
       table.float('map_center_lat', 8);
       table.float('map_center_lng', 8);
-      table.integer('map_zoom');
+      table.float('map_zoom');
       table.string('map_style').notNullable();
       table.integer('map_pitch');
       table.integer('map_bearing');
