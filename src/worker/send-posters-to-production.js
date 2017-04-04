@@ -20,13 +20,23 @@ function main() {
           .then(result =>
             orderCore.markOrderSentToProduction(order.orderId, result.requestParams)
           )
-          .then(() => logger.info(`Marked order as sent to production (#${order.orderId})`));
+          .then(() => logger.info(`Marked order as sent to production (#${order.orderId})`))
+          .catch((err) => {
+            logSingleProcessError(err, order);
+            logger.info('Continuing with next order ..');
+            // Ignore error for single order creation
+          });
       });
     })
     .catch((err) => {
       logError(err);
       throw err;
     });
+}
+
+function logSingleProcessError(err, order) {
+  logger.error(`alert-1h Error when creating order to Printmotor (#${order.orderId}): ${err}`);
+  logger.error(err.stack || err);
 }
 
 function logError(err) {
