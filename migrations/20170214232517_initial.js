@@ -9,6 +9,7 @@ exports.up = function(knex, Promise) {
     table.jsonb('stripe_token_response').notNullable();
     table.jsonb('stripe_charge_response').notNullable();
     table.timestamp('sent_to_production_at').index().defaultTo(null);
+    table.jsonb('printmotor_order_request').defaultTo(null);
     table.timestamp('created_at').index().notNullable().defaultTo(knex.fn.now());
     table.timestamp('updated_at').index().notNullable().defaultTo(knex.fn.now());
   })
@@ -60,6 +61,9 @@ exports.up = function(knex, Promise) {
         .onDelete('RESTRICT')
         .onUpdate('CASCADE');
       table.integer('quantity').notNullable();
+      // Integer, value as in Stripe
+      table.integer('customer_unit_price_value').notNullable();
+      table.string('customer_unit_price_currency').notNullable();
       table.float('map_south_west_lat', 8).notNullable();
       table.float('map_south_west_lng', 8).notNullable();
       table.float('map_north_east_lat', 8).notNullable();

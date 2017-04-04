@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const crypto = require('crypto');
 const moment = require('moment');
+const { calculateItemPrice } = require('alvarcarto-price-util');
 const promiseRetryify = require('promise-retryify');
 const BPromise = require('bluebird');
 const logger = require('../util/logger')(__filename);
@@ -267,12 +268,17 @@ function _createAddress(orderId, address, opts = {}) {
 
 function _createOrderedPosters(orderId, cart, opts = {}) {
   const trx = opts.trx || knex;
+
   // TODO: Insert unit price too for book keeping
-  return BPromise.map(cart, item =>
-    trx('ordered_posters')
+  return BPromise.map(cart, item => {
+    const unitPrice = calculateItemPrice(item, { onlyUnitPrice: true });
+
+    return trx('ordered_posters')
       .insert({
         order_id: orderId,
         quantity: item.quantity,
+        customer_unit_price_value: unitPrice.value,
+        customer_unit_price_currency: unitPrice.currency,
         map_south_west_lat: item.mapBounds.southWest.lat,
         map_south_west_lng: item.mapBounds.southWest.lng,
         map_north_east_lat: item.mapBounds.northEast.lat,
@@ -291,9 +297,10 @@ function _createOrderedPosters(orderId, cart, opts = {}) {
         label_text: item.labelText,
       })
       .returning('*')
-      .then(rows => rows[0]),
-    { concurrency: 1 }
-  );
+      .then(rows => rows[0]);
+  }, {
+    concurrency: 1,
+  });
 }
 
 // Creates a guaranteed unique ID by checking that it's not written to orders
