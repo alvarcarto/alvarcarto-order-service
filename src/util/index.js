@@ -1,5 +1,6 @@
-const config = require('../config');
+const _ = require('lodash');
 const { oneLineTrim } = require('common-tags');
+const config = require('../config');
 
 function createPosterImageUrl(mapItem) {
   return oneLineTrim`
@@ -18,6 +19,19 @@ function createPosterImageUrl(mapItem) {
   `;
 }
 
+function toLog(obj) {
+  if (_.isObject(obj)) {
+    try {
+      return JSON.stringify(obj);
+    } catch (e) {
+      return String(obj);
+    }
+  }
+
+  return String(obj);
+}
+
 module.exports = {
   createPosterImageUrl,
+  toLog,
 };

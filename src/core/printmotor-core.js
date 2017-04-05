@@ -4,6 +4,7 @@ const { calculateItemPrice } = require('alvarcarto-price-util');
 const request = require('request-promise');
 const config = require('../config');
 const logger = require('../util/logger')(__filename);
+const { toLog } = require('../util');
 const { uploadPoster } = require('./bucket-core');
 
 const BASE_URL = [
@@ -42,10 +43,10 @@ function createOrder(internalOrder) {
       });
     })
     .catch((err) => {
-      logger.error(
-        `Error creating order to Printmotor (#${internalOrder.orderId}):`,
-        err,
-        _.get(err, 'response.body')
+      logger.logEncrypted(
+        'error',
+        `Error creating order to Printmotor (#${internalOrder.orderId}): ${err}`,
+        `Detailed error: ${err}, body: ${toLog(_.get(err, 'response.body'))}`
       );
 
       throw err;
