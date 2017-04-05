@@ -138,8 +138,9 @@ function selectOrders(_opts = {}) {
         orders[orderId] = orderObj;
       });
 
+      const uniqueOrderIds = _.uniq(_.keys(grouped));
       // Make sure the order of returned rows is not changed
-      return _.map(result.rows, row => orders[row.pretty_order_id]);
+      return _.map(uniqueOrderIds, orderId => orders[orderId]);
     });
 }
 
