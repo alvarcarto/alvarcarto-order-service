@@ -1,10 +1,13 @@
 const _ = require('lodash');
+const moment = require('moment');
 const BPromise = require('bluebird');
 const { calculateCartPrice } = require('alvarcarto-price-util');
 const ex = require('../util/express');
 const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
+const emailCore = require('../core/email-core');
 const stripe = require('../util/stripe');
+const config = require('../config');
 
 const STRIPE_META_KEY_MAX_LEN = 40;
 const STRIPE_META_VALUE_MAX_LEN = 500;
@@ -45,7 +48,7 @@ const postOrder = ex.createJsonRoute((req) => {
     }),
     receipt_email: req.body.email,
     description: `Charge for ${req.body.email}`,
-    statement_descriptor: 'alvarcarto.com',
+    statement_descriptor: config.CREDIT_CARD_STATEMENT_NAME,
   };
 
   let order;
@@ -59,8 +62,15 @@ const postOrder = ex.createJsonRoute((req) => {
 
       return orderCore.createOrder(order);
     })
-    .then(obj => ({
-      orderId: obj.orderId,
+    .tap((createdOrder) => {
+      const orderWithId = _.merge({
+        orderId: createdOrder.orderId,
+        createdAt: moment(),
+      }, order);
+      return emailCore.sendOrderConfirmation(orderWithId);
+    })
+    .then(createdOrder => ({
+      orderId: createdOrder.orderId,
     }))
     .catch((err) => {
       logger.error('alert-1h Creating order failed!');

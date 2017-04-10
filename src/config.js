@@ -12,6 +12,7 @@ requireEnvs([
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
   'AWS_S3_BUCKET_NAME',
+  'POSTMARK_API_KEY',
 ]);
 
 // Env vars should be casted to correct types
@@ -24,6 +25,7 @@ const config = {
   IP_LOGGER: process.env.IP_LOGGER === 'true',
   LOG_ENCRYPT_KEY: process.env.LOG_ENCRYPT_KEY,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+  POSTMARK_API_KEY: process.env.POSTMARK_API_KEY,
   // Printmotor hostname without any url details
   PRINTMOTOR_HOST: process.env.PRINTMOTOR_HOST || 'test.printmotor.io',
   PRINTMOTOR_USER: process.env.PRINTMOTOR_USER,
@@ -36,6 +38,7 @@ const config = {
   AWS_REGION: process.env.AWS_REGION || 'eu-west-1',
   AWS_DEBUG: process.env.AWS_DEBUG === 'true',
   SEND_TO_PRODUCTION_AFTER: process.env.SEND_TO_PRODUCTION_AFTER || '3 hours',
+  CREDIT_CARD_STATEMENT_NAME: process.env.CREDIT_CARD_STATEMENT_NAME || 'alvarcarto.com',
 };
 
 module.exports = config;
