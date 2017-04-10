@@ -3,12 +3,19 @@ const postmark = require('postmark');
 const _ = require('lodash');
 const moment = require('moment');
 const countries = require('i18n-iso-countries');
+const logger = require('../util/logger')(__filename);
 const { calculateItemPrice, calculateCartPrice, getCurrencySymbol } = require('alvarcarto-price-util');
 const config = require('../config');
 
 // This can be found from Postmark web UI
 const POSTMARK_ORDER_CONFIRMATION_TEMPLATE_ID = 1488101;
 const client = new postmark.Client(config.POSTMARK_API_KEY);
+
+function mockSendOrderConfirmation(order) {
+  logger.info(`Mock email enabled, skipping send to ${order.email} .. `);
+  logger.logEncrypted('info', 'Order', order);
+  return BPromise.resolve();
+}
 
 function sendOrderConfirmation(order) {
   const customerName = order.differentBillingAddress
@@ -110,5 +117,7 @@ function sendEmailWithTemplateAsync(messageObject) {
 }
 
 module.exports = {
-  sendOrderConfirmation,
+  sendOrderConfirmation: config.MOCK_EMAIL
+    ? mockSendOrderConfirmation
+    : sendOrderConfirmation,
 };

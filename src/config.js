@@ -12,7 +12,6 @@ requireEnvs([
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
   'AWS_S3_BUCKET_NAME',
-  'POSTMARK_API_KEY',
 ]);
 
 // Env vars should be casted to correct types
@@ -39,6 +38,11 @@ const config = {
   AWS_DEBUG: process.env.AWS_DEBUG === 'true',
   SEND_TO_PRODUCTION_AFTER: process.env.SEND_TO_PRODUCTION_AFTER || '3 hours',
   CREDIT_CARD_STATEMENT_NAME: process.env.CREDIT_CARD_STATEMENT_NAME || 'alvarcarto.com',
+  MOCK_EMAIL: process.env.MOCK_EMAIL === 'true',
 };
+
+if (!config.MOCK_EMAIL) {
+  requireEnvs(['POSTMARK_API_KEY']);
+}
 
 module.exports = config;
