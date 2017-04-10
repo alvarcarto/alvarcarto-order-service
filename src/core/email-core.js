@@ -9,7 +9,9 @@ const config = require('../config');
 
 // This can be found from Postmark web UI
 const POSTMARK_ORDER_CONFIRMATION_TEMPLATE_ID = 1488101;
-const client = new postmark.Client(config.POSTMARK_API_KEY);
+const client = config.MOCK_EMAIL
+  ? null
+  : new postmark.Client(config.POSTMARK_API_KEY);
 
 function mockSendOrderConfirmation(order) {
   logger.info(`Mock email enabled, skipping send to ${order.email} .. `);
