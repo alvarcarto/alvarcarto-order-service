@@ -67,7 +67,7 @@ const postOrder = ex.createJsonRoute((req) => {
         orderId: createdOrder.orderId,
         createdAt: moment(),
       }, order);
-      return emailCore.sendOrderConfirmation(orderWithId);
+      return emailCore.sendReceipt(orderWithId);
     })
     .then(createdOrder => ({
       orderId: createdOrder.orderId,

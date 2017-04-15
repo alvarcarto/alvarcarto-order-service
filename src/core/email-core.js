@@ -8,18 +8,19 @@ const { calculateItemPrice, calculateCartPrice, getCurrencySymbol } = require('a
 const config = require('../config');
 
 // This can be found from Postmark web UI
-const POSTMARK_ORDER_CONFIRMATION_TEMPLATE_ID = 1488101;
+const POSTMARK_RECEIPT_TEMPLATE_ID = 1488101;
+const VAT_PERCENTAGE = 24;
 const client = config.MOCK_EMAIL
   ? null
   : new postmark.Client(config.POSTMARK_API_KEY);
 
-function mockSendOrderConfirmation(order) {
+function mockSendReceipt(order) {
   logger.info(`Mock email enabled, skipping send to ${order.email} .. `);
   logger.logEncrypted('info', 'Order', order);
   return BPromise.resolve();
 }
 
-function sendOrderConfirmation(order) {
+function sendReceipt(order) {
   const customerName = order.differentBillingAddress
     ? _.get(order, 'billingAddress.name', 'Poster Designer')
     : _.get(order, 'shippingAddress.name', 'Poster Designer');
@@ -27,7 +28,7 @@ function sendOrderConfirmation(order) {
   return sendEmailWithTemplateAsync({
     From: 'help@alvarcarto.com',
     To: order.email,
-    TemplateId: POSTMARK_ORDER_CONFIRMATION_TEMPLATE_ID,
+    TemplateId: POSTMARK_RECEIPT_TEMPLATE_ID,
     TemplateModel: {
       purchase_date: order.createdAt.format('MMMM Do YYYY'),
       name: getFirstName(customerName),
@@ -42,9 +43,11 @@ function sendOrderConfirmation(order) {
       shipping_city: getCity(order),
       shipping_postal_code: getPostalCode(order),
       shipping_country: getCountry(order),
-      order_confirmation_url: getOrderUrl(order),
+      web_version_url: getOrderUrl(order),
       support_url: 'https://alvarcarto.com/help',
       year: moment().format('YYYY'),
+      vat_percentage: VAT_PERCENTAGE,
+      total_vat_amount: getTotalVatAmount(order.cart),
     },
   });
 }
@@ -58,6 +61,14 @@ function getUnitPrice(cartItem) {
   const value = (price.value / 100.0).toFixed(2);
   const symbol = getCurrencySymbol(price.currency);
   return `${value}${symbol}`;
+}
+
+function getTotalVatAmount(cart) {
+  const price = calculateCartPrice(cart);
+  const vatFactor = VAT_PERCENTAGE / 100.0;
+  const vatTotal = ((price.value * vatFactor) / 100.0).toFixed(2);
+  const symbol = getCurrencySymbol(price.currency);
+  return `${vatTotal}${symbol}`;
 }
 
 function getProductName(cartItem) {
@@ -119,7 +130,7 @@ function sendEmailWithTemplateAsync(messageObject) {
 }
 
 module.exports = {
-  sendOrderConfirmation: config.MOCK_EMAIL
-    ? mockSendOrderConfirmation
-    : sendOrderConfirmation,
+  sendReceipt: config.MOCK_EMAIL
+    ? mockSendReceipt
+    : sendReceipt,
 };
