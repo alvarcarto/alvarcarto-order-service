@@ -14,6 +14,9 @@ function uploadPoster(order, item, itemId) {
 
   return request({
     url: posterApiUrl,
+    headers: {
+      'x-api-key': config.RENDER_API_KEY,
+    },
     encoding: null,
     resolveWithFullResponse: true,
   })

@@ -3,6 +3,7 @@ const requireEnvs = require('./util/require-envs');
 
 requireEnvs([
   'DATABASE_URL',
+  'RENDER_API_KEY',
   'STRIPE_SECRET_KEY',
   'LOG_ENCRYPT_KEY',
   'PRINTMOTOR_HOST',
@@ -31,6 +32,7 @@ const config = {
   PRINTMOTOR_PASSWORD: process.env.PRINTMOTOR_PASSWORD,
   PRINTMOTOR_SERVICE_ID: process.env.PRINTMOTOR_SERVICE_ID,
   RENDER_API_URL: process.env.RENDER_API_URL || 'http://51.255.81.67:8001',
+  RENDER_API_KEY: process.env.RENDER_API_KEY,
   AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
   AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME,
