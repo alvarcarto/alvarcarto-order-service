@@ -8,6 +8,7 @@ const health = require('./http/health-http');
 const {
   addressSchema,
   stripeCreateTokenResponseSchema,
+  printmotorWebhookPayload,
   cartSchema,
 } = require('./util/validation');
 
@@ -41,6 +42,11 @@ function createRouter() {
     },
   };
   router.get('/api/orders/:orderId', apiLimiter, validate(getOrderSchema), order.getOrder);
+
+  const postWebHook = {
+    body: printmotorWebhookPayload,
+  };
+  router.post('/api/webhooks/printmotor', validate(postWebHook), order.postWebhook);
 
   return router;
 }

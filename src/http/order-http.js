@@ -80,6 +80,11 @@ const postOrder = ex.createJsonRoute((req) => {
     });
 });
 
+const postWebhook = ex.createJsonRoute((req) => {
+  logger.logEncrypted('info', 'alert-1h Webhook called:', req.body);
+  return BPromise.resolve(undefined);
+});
+
 const getOrder = ex.createJsonRoute((req) => {
   return orderCore.getOrder(req.params.orderId)
     .then((order) => {
@@ -122,5 +127,6 @@ function ensureLength(text, length) {
 
 module.exports = {
   postOrder,
+  postWebhook,
   getOrder,
 };

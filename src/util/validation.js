@@ -51,9 +51,21 @@ const cartItemSchema = Joi.object({
 
 const cartSchema = Joi.array().items(cartItemSchema).min(1).max(1000);
 
+const printmotorWebhookPayload = Joi.object({
+  eventType: Joi.string().required(),
+  userOrder: Joi.object({
+    orderNumber: Joi.number().required(),
+    meta: Joi.object(),
+    estimatedDeliveryTime: Joi.string().required(),
+    processingStatusDescription: Joi.string().required(),
+    postalClass: Joi.string().required(),
+  }).required().unknown(),
+}).unknown();
+
 module.exports = {
   addressSchema,
   cartItemSchema,
   cartSchema,
   stripeCreateTokenResponseSchema,
+  printmotorWebhookPayload,
 };
