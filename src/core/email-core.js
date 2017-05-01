@@ -46,6 +46,8 @@ function createReceiptTemplateModel(order) {
     purchase_date: order.createdAt.format('MMMM Do YYYY'),
     name: getFirstName(customerName),
     credit_card_statement_name: config.CREDIT_CARD_STATEMENT_NAME,
+    credit_card_brand: _.get(order.stripeChargeResponse, 'source.brand', 'Unknown'),
+    credit_card_last4: _.get(order.stripeChargeResponse, 'source.last4', 'XXXX'),
     order_id: order.orderId,
     receipt_details: _.map(order.cart, item => ({
       description: getProductName(item),
