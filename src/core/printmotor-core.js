@@ -57,6 +57,9 @@ function _internalOrderToPrintmotorOrder(internalOrder, uploadResponses) {
   const nameParts = _splitFullName(internalOrder.shippingAddress.personName);
   return {
     address: {
+      recipientName: internalOrder.shippingAddress.personName,
+      name: internalOrder.shippingAddress.personName,
+      recipientPhone: internalOrder.shippingAddress.contactPhone || '',
       address: internalOrder.shippingAddress.streetAddress,
       address2: internalOrder.shippingAddress.streetAddressExtra || '',
       countryIso2: internalOrder.shippingAddress.countryCode,
@@ -68,10 +71,10 @@ function _internalOrderToPrintmotorOrder(internalOrder, uploadResponses) {
       reference: internalOrder.orderId,
     },
     orderer: {
-      emailAddress: internalOrder.customerEmail,
+      emailAddress: internalOrder.email,
       firstName: nameParts.first,
       lastName: nameParts.last,
-      phone: internalOrder.shippingAddress.phone,
+      phone: internalOrder.shippingAddress.contactPhone || '',
     },
     products: _.map(internalOrder.cart, (item, i) =>
       _internalCartItemToPrintmotorProduct(item, uploadResponses[i])

@@ -62,6 +62,10 @@ function getOrder(orderId, opts = {}) {
       }
 
       const order = orders[0];
+      if (opts.allFields) {
+        return order;
+      }
+
       return {
         orderId: order.orderId,
         cart: order.cart,
@@ -91,6 +95,7 @@ function selectOrders(_opts = {}) {
 
   return trx.raw(`
     SELECT
+      orders.created_at as created_at,
       orders.customer_email as customer_email,
       orders.email_subscription as email_subscription,
       orders.pretty_order_id as pretty_order_id,
@@ -180,7 +185,7 @@ function _rowsToOrderObject(rows) {
   // All rows should contain same info for all rows, so we just pick first
   const firstRow = rows[0];
   return {
-    customerEmail: firstRow.customer_email,
+    email: firstRow.customer_email,
     emailSubscription: firstRow.email_subscription,
     stripeChargeResponse: firstRow.stripe_charge_response,
     orderId: firstRow.pretty_order_id,
@@ -195,6 +200,7 @@ function _rowsToOrderObject(rows) {
       state: firstRow.shipping_state,
       contactPhone: firstRow.shipping_contact_phone,
     },
+    createdAt: moment(firstRow.created_at),
   };
 }
 
@@ -254,14 +260,14 @@ function _createAddress(orderId, address, opts = {}) {
   return trx('addresses').insert({
     type: address.type,
     order_id: orderId,
-    person_name: address.name,
-    street_address: address.address,
-    street_address_extra: address.addressExtra,
+    person_name: address.personName,
+    street_address: address.streetAddress,
+    street_address_extra: address.streetAddressExtra,
     city: address.city,
     postal_code: address.postalCode,
-    country_code: address.country,
+    country_code: address.countryCode,
     state: address.state,
-    contact_phone: address.phone,
+    contact_phone: address.contactPhone,
   })
     .returning('*')
     .then(rows => rows[0]);
@@ -271,7 +277,7 @@ function _createOrderedPosters(orderId, cart, opts = {}) {
   const trx = opts.trx || knex;
 
   // TODO: Insert unit price too for book keeping
-  return BPromise.map(cart, item => {
+  return BPromise.map(cart, (item) => {
     const unitPrice = calculateItemPrice(item, { onlyUnitPrice: true });
 
     return trx('ordered_posters')

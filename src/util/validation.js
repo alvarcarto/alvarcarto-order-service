@@ -15,14 +15,14 @@ const stripeCreateTokenResponseSchema = Joi.object({
 }).unknown();
 
 const addressSchema = Joi.object({
-  name: Joi.string().min(1).max(300).required(),
-  address: Joi.string().min(1).max(300).required(),
-  addressExtra: Joi.string().min(1).max(300).optional(),
+  personName: Joi.string().min(1).max(300).required(),
+  streetAddress: Joi.string().min(1).max(300).required(),
+  streetAddressExtra: Joi.string().min(1).max(300).optional(),
   city: Joi.string().min(1).max(300).required(),
   postalCode: Joi.string().min(1).max(30).required(),
-  country: Joi.string().length(2).required(),
+  countryCode: Joi.string().length(2).required(),
   state: Joi.string().min(1).max(300).optional(),
-  phone: Joi.string().min(1).max(300).optional(),
+  contactPhone: Joi.string().min(1).max(300).optional(),
 });
 
 const latLngSchema = Joi.object({
