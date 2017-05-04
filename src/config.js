@@ -2,6 +2,7 @@
 const requireEnvs = require('./util/require-envs');
 
 requireEnvs([
+  'API_KEY',
   'DATABASE_URL',
   'RENDER_API_KEY',
   'STRIPE_SECRET_KEY',
@@ -17,6 +18,7 @@ requireEnvs([
 
 // Env vars should be casted to correct types
 const config = {
+  API_KEY: process.env.API_KEY,
   PORT: Number(process.env.PORT) || 9000,
   NODE_ENV: process.env.NODE_ENV,
   LOG_LEVEL: process.env.LOG_LEVEL,

@@ -1,0 +1,52 @@
+This is a receipt and order confirmation for your recent purchase on {{ purchase_date }}. The posters will be printed and delivered soon, we'll keep you up to date via email.
+
+Alvar Carto ( https://alvarcarto.com )
+
+************
+Hi, {{name}}!
+************
+
+Thank you so much for ordering from Alvar Carto. This email is a receipt and order confirmation for your purchase. This purchase will appear as “{{credit_card_statement_name}}” on your credit card statement for your {{credit_card_brand}} ending in {{credit_card_last4}}.
+
+
+Receipt #{{order_id}}
+-----------------------
+
+{{purchase_date}}
+--------
+
+{{#receipt_details}}
+Description: {{description}}
+Amount: {{amount}}
+
+{{/receipt_details}}
+
+Total: {{total}}
+Includes VAT ({{vat_percentage}}%): {{total_vat_amount}}
+
+
+Delivery details
+----------------
+
+The order will be delivered to the following address:
+
+{{shipping_address}}
+{{shipping_postal_code}}, {{shipping_city}}
+{{shipping_country}}
+
+
+You can also view the web version ( {{web_version_url}} ) of this receipt.
+
+If you have any questions about your order, simply reply to this email or visit our help page ( {{ support_url }} ) for frequently asked questions.
+
+Cheers,
+Alvar Carto Team
+
+
+© {{year}} Alvar Carto. All rights reserved.
+
+
+X Heads Oy (2692655-7)
+Kirkkokatu 16
+90100 Oulu
+Finland

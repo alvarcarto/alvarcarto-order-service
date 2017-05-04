@@ -1,19 +1,55 @@
+const _ = require('lodash');
 const Joi = require('joi');
 const validate = require('express-validation');
 const RateLimit = require('express-rate-limit');
 const express = require('express');
+const config = require('./config');
+const ROLES = require('./enums/roles');
 const order = require('./http/order-http');
 const health = require('./http/health-http');
-
+const receipt = require('./http/receipt-http');
 const {
   addressSchema,
   stripeCreateTokenResponseSchema,
-  printmotorWebhookPayload,
+  printmotorWebhookPayloadSchema,
   cartSchema,
+  orderIdSchema,
 } = require('./util/validation');
+
+const validTokens = config.API_KEY.split(',');
+
+function _requireRole(role) {
+  return function middleware(req, res, next) {
+    if (_.get(req, 'user.role') !== role) {
+      const err = new Error('Unauthorized');
+      err.status = 401;
+      return next(err);
+    }
+
+    return next();
+  };
+}
 
 function createRouter() {
   const router = express.Router();
+  // Simple token authentication
+  router.use((req, res, next) => {
+    const apiKey = req.headers['x-api-key'];
+    if (_.includes(validTokens, apiKey)) {
+      // eslint-disable-next-line
+      req.user = {
+        role: ROLES.ADMIN,
+      };
+    } else {
+      // eslint-disable-next-line
+      req.user = {
+        role: ROLES.ANONYMOUS,
+      };
+    }
+
+    return next();
+  });
+
   router.get('/api/health', health.getHealth);
 
   const postOrderSchema = {
@@ -44,10 +80,21 @@ function createRouter() {
   router.get('/api/orders/:orderId', apiLimiter, validate(getOrderSchema), order.getOrder);
 
   const postWebHook = {
-    body: printmotorWebhookPayload,
+    body: printmotorWebhookPayloadSchema,
   };
   router.post('/api/webhooks/printmotor', validate(postWebHook), order.postWebhook);
 
+  const getReceiptForOrder = {
+    params: {
+      orderId: orderIdSchema.required(),
+    },
+  };
+  router.get(
+    '/views/receipts/:orderId',
+    validate(getReceiptForOrder),
+    _requireRole(ROLES.ADMIN),
+    receipt.getReceipt,
+  );
   return router;
 }
 

@@ -1,6 +1,13 @@
+const path = require('path');
+const fs = require('fs');
 const _ = require('lodash');
 const { oneLineTrim } = require('common-tags');
 const config = require('../config');
+
+function readFileSync(filePath) {
+  const rootDir = path.join(__dirname, '../..');
+  return fs.readFileSync(path.join(rootDir, filePath), { encoding: 'utf8' });
+}
 
 function createPosterImageUrl(mapItem) {
   return oneLineTrim`
@@ -32,6 +39,7 @@ function toLog(obj) {
 }
 
 module.exports = {
+  readFileSync,
   createPosterImageUrl,
   toLog,
 };

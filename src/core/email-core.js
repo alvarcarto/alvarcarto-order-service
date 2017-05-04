@@ -1,19 +1,21 @@
 const BPromise = require('bluebird');
 const postmark = require('postmark');
+const Mustache = require('mustache');
 const _ = require('lodash');
 const moment = require('moment');
 const countries = require('i18n-iso-countries');
 const logger = require('../util/logger')(__filename);
+const { readFileSync } = require('../util');
 const { calculateItemPrice, calculateCartPrice, getCurrencySymbol } = require('alvarcarto-price-util');
 const config = require('../config');
 const { isEuCountry } = require('./country-core');
 
 // This can be found from Postmark web UI
-const POSTMARK_RECEIPT_TEMPLATE_ID = 1488101;
 const FINLAND_VAT_PERCENTAGE = 24;
-const client = config.MOCK_EMAIL
-  ? null
-  : new postmark.Client(config.POSTMARK_API_KEY);
+const client = new postmark.Client(config.POSTMARK_API_KEY);
+
+const receiptHtmlTemplate = readFileSync('email-templates/receipt.inlined.html');
+const receiptTextTemplate = readFileSync('email-templates/receipt.txt');
 
 function mockSendReceipt(order) {
   logger.info(`Mock email enabled, skipping send to ${order.email} .. `);
@@ -24,14 +26,20 @@ function mockSendReceipt(order) {
 function sendReceipt(order) {
   logger.logEncrypted('info', 'Sending receipt email to', order.email);
 
-  return sendEmailWithTemplateAsync({
+  const templateModel = createReceiptTemplateModel(order);
+  return sendEmailAsync({
     From: 'help@alvarcarto.com',
     To: order.email,
-    TemplateId: POSTMARK_RECEIPT_TEMPLATE_ID,
-    TemplateModel: createReceiptTemplateModel(order),
+    Subject: `Receipt for your purchase (#${order.orderId})`,
+    TextBody: Mustache.render(receiptTextTemplate, templateModel),
+    HtmlBody: Mustache.render(receiptHtmlTemplate, templateModel),
   });
 }
 
+function renderReceiptToHtml(order) {
+  const templateModel = createReceiptTemplateModel(order);
+  return Mustache.render(receiptHtmlTemplate, templateModel);
+}
 
 function createReceiptTemplateModel(order) {
   const customerName = order.differentBillingAddress
@@ -128,9 +136,9 @@ function getCountry(order) {
   return country;
 }
 
-function sendEmailWithTemplateAsync(messageObject) {
+function sendEmailAsync(messageObject) {
   return new BPromise((resolve, reject) => {
-    client.sendEmailWithTemplate(messageObject, (err, result) => {
+    client.sendEmail(messageObject, (err, result) => {
       if (err) {
         const realError = new Error(err.message);
         realError.code = err.code;
@@ -147,4 +155,6 @@ module.exports = {
   sendReceipt: config.MOCK_EMAIL
     ? mockSendReceipt
     : sendReceipt,
+  renderReceiptToHtml,
+  createReceiptTemplateModel,
 };
