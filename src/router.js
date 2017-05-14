@@ -8,6 +8,7 @@ const ROLES = require('./enums/roles');
 const order = require('./http/order-http');
 const health = require('./http/health-http');
 const receipt = require('./http/receipt-http');
+const promotion = require('./http/promotion-http');
 const {
   addressSchema,
   stripeCreateTokenResponseSchema,
@@ -78,6 +79,18 @@ function createRouter() {
     },
   };
   router.get('/api/orders/:orderId', apiLimiter, validate(getOrderSchema), order.getOrder);
+
+  const getPromotionSchema = {
+    params: {
+      promotionCode: Joi.string().regex(/^[A-Za-z0-9]+$/).required(),
+    },
+  };
+  router.get(
+    '/api/promotions/:promotionCode',
+    apiLimiter,
+    validate(getPromotionSchema),
+    promotion.getPromotion,
+  );
 
   const postWebHook = {
     body: printmotorWebhookPayloadSchema,
