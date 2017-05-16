@@ -17,6 +17,7 @@ function uploadPoster(order, item, itemId) {
     headers: {
       'x-api-key': config.RENDER_API_KEY,
     },
+    timeout: 300 * 1000,
     encoding: null,
     resolveWithFullResponse: true,
   })
