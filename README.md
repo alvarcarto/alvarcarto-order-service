@@ -1,8 +1,20 @@
 # Alvar Carto Order Service
 
+This service is the master of customer orders. It receives orders,
+charges customer's credit card with a stripe token, saves order details to
+database, sends receipt of the order and forwards it to Printmotor for printing.
+
+Service handles sensitive customer data, be careful!
+
 Dependencies:
 
 * Postgres >=9.5
+* [Stripe](https://stripe.com)
+* [Printmotor API](https://api.printmotor.io/apidocs/index)
+* AWS S3 Bucket *(for sending poster images to Printmotor API)*
+* Postmark *(sending order confirmations and other transactional email)*
+* https://github.com/kimmobrunfeldt/alvarcarto-render-service
+
 
 ## Get started
 
@@ -11,11 +23,8 @@ Dependencies:
   If this doesn't work, you can manually run SQL commands from ./tools/init-database.sql
   in Postgres console.
 
-* `cp .env.sample .env && cp .env.test.sample .env.test`
-* Fill in the blanks in `.env` and `.env.test` files
-
-  Ask details from Kimmo Brunfeldt or Tomi Turtiainen.
-
+* `cp .env.sample .env`
+* Fill in the blanks in `.env`
 * `source .env` or `bash .env`
 
   Or use [autoenv](https://github.com/kennethreitz/autoenv).
@@ -25,7 +34,7 @@ Dependencies:
 * `knex migrate:latest` Run migrations to local database
 * `knex seed:run` Create seed data to local database
 * `npm start` Start express server locally
-* Server runs at http://localhost:9000
+* Server runs at http://localhost:3001
 
 ## Techstack
 
@@ -38,10 +47,12 @@ Dependencies:
 
 ```bash
 #!/bin/bash
-heroku addons:create --app wappuapp-backend papertrail
-heroku addons:create --app wappuapp-backend heroku-postgresql:hobby-dev
-heroku addons:create --app wappuapp-backend newrelic
+heroku addons:create --app alvarcarto-order-prod papertrail
+heroku addons:create --app alvarcarto-order-prod heroku-postgresql:hobby-dev
+heroku addons:create --app alvarcarto-order-prod newrelic
 ```
+
+In addition, it needs Postmark.
 
 ## Common tasks
 
