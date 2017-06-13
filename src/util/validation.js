@@ -38,7 +38,15 @@ const cartItemSchema = Joi.object({
   }).required(),
   mapCenter: latLngSchema.optional(),
   mapZoom: Joi.number().min(0).max(30).optional(),
-  mapStyle: Joi.string().required(),
+  posterStyle: Joi.string().valid([
+    'sharp', 'classic', 'sans', 'bw',
+    'pacific', 'summer', 'round',
+  ]).required(),
+  mapStyle: Joi.string().valid([
+    'bw', 'gray', 'black', 'petrol',
+    'iceberg', 'marshmellow', 'copper',
+    'madang',
+  ]).required(),
   mapPitch: Joi.number().optional(),
   mapBearing: Joi.number().min(-360).max(360).optional(),
   orientation: Joi.string().valid(['landscape', 'portrait']).required(),
