@@ -34,7 +34,7 @@ const postOrder = ex.createJsonRoute((req) => {
       posterQuantities: _.map(req.body.cart, item => `${item.quantity}x`).join('; '),
       sizes: _.map(req.body.cart, item => item.size).join('; '),
       orientations: _.map(req.body.cart, item => item.orientation).join('; '),
-      styles: _.map(req.body.cart, item => item.mapStyle).join('; '),
+      mapStyles: _.map(req.body.cart, item => item.mapStyle).join('; '),
       posterStyles: _.map(req.body.cart, item => item.posterStyle).join('; '),
       headers: _.map(req.body.cart, item => item.labelHeader).join('; '),
       smallHeaders: _.map(req.body.cart, item => item.labelSmallHeader).join('; '),
