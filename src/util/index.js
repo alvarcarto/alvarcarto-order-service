@@ -25,9 +25,9 @@ function createPosterUrlParameters(mapItem) {
     size: mapItem.size,
     orientation: mapItem.orientation,
     labelsEnabled: mapItem.labelsEnabled,
-    labelHeader: mapItem.labelHeader.toUpperCase(),
-    labelSmallHeader: mapItem.labelSmallHeader.toUpperCase(),
-    labelText: mapItem.labelText.toUpperCase(),
+    labelHeader: mapItem.labelHeader,
+    labelSmallHeader: mapItem.labelSmallHeader,
+    labelText: mapItem.labelText,
   };
 }
 
