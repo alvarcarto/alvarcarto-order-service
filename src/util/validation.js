@@ -55,7 +55,7 @@ const cartItemSchema = Joi.object({
   labelHeader: Joi.string().min(0).max(100).required(),
   labelSmallHeader: Joi.string().min(0).max(100).required(),
   labelText: Joi.string().min(0).max(500).required(),
-});
+}).unknown();  // Ignore additional fields
 
 const cartSchema = Joi.array().items(cartItemSchema).min(1).max(1000);
 
