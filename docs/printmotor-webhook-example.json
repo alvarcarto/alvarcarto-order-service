@@ -1,0 +1,12 @@
+{
+    "eventType":"USER_ORDER_DELIVERED",
+    "userOrder":{
+        "orderNumber":9156,
+        "meta":{
+            "trackingCode":"RE452891261SE"
+        },
+        "estimatedDeliveryTime":"2015-10-03T12:00",
+        "processingStatusDescription":"In production",
+        "postalClass":"PRIORITY"
+    }
+}
