@@ -8,12 +8,14 @@ const ROLES = require('./enums/roles');
 const order = require('./http/order-http');
 const health = require('./http/health-http');
 const receipt = require('./http/receipt-http');
+const promotion = require('./http/promotion-http');
 const {
   addressSchema,
   stripeCreateTokenResponseSchema,
   printmotorWebhookPayloadSchema,
   cartSchema,
   orderIdSchema,
+  promotionCodeSchema,
 } = require('./util/validation');
 
 const validTokens = config.API_KEY.split(',');
@@ -61,6 +63,7 @@ function createRouter() {
       billingAddress: addressSchema.optional(),
       stripeTokenResponse: stripeCreateTokenResponseSchema.required(),
       cart: cartSchema.required(),
+      promotionCode: promotionCodeSchema.optional(),
     },
   };
   router.post('/api/orders', validate(postOrderSchema), order.postOrder);
@@ -78,6 +81,18 @@ function createRouter() {
     },
   };
   router.get('/api/orders/:orderId', apiLimiter, validate(getOrderSchema), order.getOrder);
+
+  const getPromotionSchema = {
+    params: {
+      promotionCode: promotionCodeSchema,
+    },
+  };
+  router.get(
+    '/api/promotions/:promotionCode',
+    apiLimiter,
+    validate(getPromotionSchema),
+    promotion.getPromotion,
+  );
 
   const postWebHook = {
     body: printmotorWebhookPayloadSchema,

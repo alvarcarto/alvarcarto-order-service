@@ -7,6 +7,7 @@ const BPromise = require('bluebird');
 const logger = require('../util/logger')(__filename);
 const ADDRESS_TYPE = require('../enums/address-type');
 const { knex } = require('../util/database');
+const promotionCore = require('./promotion-core');
 const config = require('../config');
 const { retryingSaveFailedOrder } = require('./fail-safe-core');
 
@@ -62,14 +63,24 @@ function getOrder(orderId, opts = {}) {
       }
 
       const order = orders[0];
+      return BPromise.props({
+        order,
+        promotion: promotionCore.getPromotion(order.promotionCode),
+      });
+    })
+    .then(({ order, promotion }) => {
+      const fullOrder = _.merge({}, order, {
+        promotion,
+      });
       if (opts.allFields) {
-        return order;
+        return fullOrder;
       }
 
       return {
-        orderId: order.orderId,
-        cart: order.cart,
-        shippingAddress: _.pick(order.shippingAddress, ['city', 'countryCode']),
+        orderId: fullOrder.orderId,
+        cart: fullOrder.cart,
+        promotion: fullOrder.promotion,
+        shippingAddress: _.pick(fullOrder.shippingAddress, ['city', 'countryCode']),
       };
     });
 }
@@ -99,6 +110,7 @@ function selectOrders(_opts = {}) {
       orders.customer_email as customer_email,
       orders.email_subscription as email_subscription,
       orders.pretty_order_id as pretty_order_id,
+      orders.promotion_code as promotion_code,
       orders.stripe_charge_response as stripe_charge_response,
       addresses.person_name as shipping_person_name,
       addresses.street_address as shipping_street_address,
@@ -191,6 +203,7 @@ function _rowsToOrderObject(rows) {
     emailSubscription: firstRow.email_subscription,
     stripeChargeResponse: firstRow.stripe_charge_response,
     orderId: firstRow.pretty_order_id,
+    promotionCode: firstRow.promotion_code,
     cart,
     shippingAddress: {
       personName: firstRow.shipping_person_name,
@@ -250,6 +263,7 @@ function _createOrder(order, opts = {}) {
     stripe_token_id: order.stripeTokenResponse.id,
     stripe_token_response: order.stripeTokenResponse,
     stripe_charge_response: order.stripeChargeResponse,
+    promotion_code: order.promotionCode,
     sent_to_production_at: null,
   })
     .returning('*')

@@ -9,6 +9,10 @@ const getReceipt = ex.createRoute((req, res) => {
         return ex.throwStatus(404, 'Order not found');
       }
 
+      if (req.query.format === 'text') {
+        return `<pre>${emailCore.renderReceiptToText(order)}</pre>`;
+      }
+
       return emailCore.renderReceiptToHtml(order);
     })
     .then((html) => {
