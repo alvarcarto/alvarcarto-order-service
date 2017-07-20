@@ -36,6 +36,11 @@ function sendReceipt(order) {
   });
 }
 
+function renderReceiptToText(order) {
+  const templateModel = createReceiptTemplateModel(order);
+  return Mustache.render(receiptTextTemplate, templateModel);
+}
+
 function renderReceiptToHtml(order) {
   const templateModel = createReceiptTemplateModel(order);
   return Mustache.render(receiptHtmlTemplate, templateModel);
@@ -50,6 +55,22 @@ function createReceiptTemplateModel(order) {
     ? FINLAND_VAT_PERCENTAGE
     : 0;
 
+  const totalPrice = calculateCartPrice(order.cart, order.promotion, {
+    ignorePromotionExpiry: true,
+  });
+  const receiptItems = _.map(order.cart, item => ({
+    description: getProductName(item),
+    amount: `${item.quantity}x ${getUnitPrice(item)}`,
+  }));
+
+  receiptItems.push({ description: 'Shipping', amount: '0.00 €'});
+  if (order.promotion) {
+    receiptItems.push({
+      description: `Promotion ${order.promotion.label}`,
+      amount: `-${totalPrice.discount.label}`,
+    });
+  }
+
   return {
     purchase_date: order.createdAt.format('MMMM Do YYYY'),
     name: getFirstName(customerName),
@@ -57,11 +78,8 @@ function createReceiptTemplateModel(order) {
     credit_card_brand: _.get(order.stripeChargeResponse, 'source.brand', 'Unknown'),
     credit_card_last4: _.get(order.stripeChargeResponse, 'source.last4', 'XXXX'),
     order_id: order.orderId,
-    receipt_details: _.map(order.cart, item => ({
-      description: getProductName(item),
-      amount: `${item.quantity}x ${getUnitPrice(item)}`,
-    })),
-    total: calculateCartPrice(order.cart).label,
+    receipt_details: receiptItems,
+    total: totalPrice.label,
     shipping_address: getAddress(order),
     shipping_city: getCity(order),
     shipping_postal_code: getPostalCode(order),
@@ -70,7 +88,7 @@ function createReceiptTemplateModel(order) {
     support_url: 'https://alvarcarto.com/help',
     year: moment().format('YYYY'),
     vat_percentage: vatPercentage,
-    total_vat_amount: getTotalVatAmount(order.cart, vatPercentage),
+    total_vat_amount: getTotalVatAmount(totalPrice, vatPercentage),
   };
 }
 
@@ -85,11 +103,10 @@ function getUnitPrice(cartItem) {
   return `${value}${symbol}`;
 }
 
-function getTotalVatAmount(cart, vatPercentage) {
-  const price = calculateCartPrice(cart);
+function getTotalVatAmount(totalPrice, vatPercentage) {
   const vatFactor = vatPercentage / 100.0;
-  const vatTotal = ((price.value * vatFactor) / 100.0).toFixed(2);
-  const symbol = getCurrencySymbol(price.currency);
+  const vatTotal = ((totalPrice.value * vatFactor) / 100.0).toFixed(2);
+  const symbol = getCurrencySymbol(totalPrice.currency);
   return `${vatTotal}${symbol}`;
 }
 
@@ -155,6 +172,7 @@ module.exports = {
   sendReceipt: config.MOCK_EMAIL
     ? mockSendReceipt
     : sendReceipt,
+  renderReceiptToText,
   renderReceiptToHtml,
   createReceiptTemplateModel,
 };

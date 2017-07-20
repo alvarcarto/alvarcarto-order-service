@@ -15,6 +15,7 @@ const {
   printmotorWebhookPayloadSchema,
   cartSchema,
   orderIdSchema,
+  promotionCodeSchema,
 } = require('./util/validation');
 
 const validTokens = config.API_KEY.split(',');
@@ -62,6 +63,7 @@ function createRouter() {
       billingAddress: addressSchema.optional(),
       stripeTokenResponse: stripeCreateTokenResponseSchema.required(),
       cart: cartSchema.required(),
+      promotionCode: promotionCodeSchema.optional(),
     },
   };
   router.post('/api/orders', validate(postOrderSchema), order.postOrder);
@@ -82,7 +84,7 @@ function createRouter() {
 
   const getPromotionSchema = {
     params: {
-      promotionCode: Joi.string().regex(/^[A-Za-z0-9]+$/).required(),
+      promotionCode: promotionCodeSchema,
     },
   };
   router.get(

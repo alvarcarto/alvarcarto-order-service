@@ -71,6 +71,7 @@ const printmotorWebhookPayloadSchema = Joi.object({
 }).unknown();
 
 const orderIdSchema = Joi.string().regex(/^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/);
+const promotionCodeSchema = Joi.string().regex(/^[A-Za-z0-9-]+$/);
 
 module.exports = {
   addressSchema,
@@ -79,4 +80,5 @@ module.exports = {
   stripeCreateTokenResponseSchema,
   printmotorWebhookPayloadSchema,
   orderIdSchema,
+  promotionCodeSchema,
 };
