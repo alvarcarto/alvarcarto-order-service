@@ -3,6 +3,10 @@ const moment = require('moment');
 const { knex } = require('../util/database');
 
 function getPromotion(code) {
+  if (!code) {
+    return null;
+  }
+
   return knex.raw(`
     SELECT
       promotions.id as id,
