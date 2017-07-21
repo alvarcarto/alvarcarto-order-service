@@ -88,7 +88,8 @@ function executeCheckout(inputOrder) {
     .tap((createdOrder) => {
       const orderWithId = _.merge({
         orderId: createdOrder.orderId,
-        createdAt: moment(),
+        promotion: createdOrder.promotion,
+        createdAt: createdOrder.createdAt,
       }, order);
 
       logger.info('alert-10m New order received!');

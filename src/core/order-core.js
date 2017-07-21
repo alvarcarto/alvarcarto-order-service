@@ -41,9 +41,7 @@ function createOrder(order) {
         });
         return _createAddress(orderRow.id, address, { trx });
       })
-      .then(() => ({
-        orderId: fullOrder.prettyOrderId,
-      }))
+      .then(() => getOrder(fullOrder.prettyOrderId))
       .catch(_isUniqueConstraintError, err => _logUniqueConstraintErrorAndRethrow(err))
       .catch(err => _saveErrorInBackgroundAndRethrow(err, fullOrder))
   );
@@ -81,6 +79,7 @@ function getOrder(orderId, opts = {}) {
         cart: fullOrder.cart,
         promotion: fullOrder.promotion,
         shippingAddress: _.pick(fullOrder.shippingAddress, ['city', 'countryCode']),
+        createdAt: fullOrder.createdAt,
       };
     });
 }
