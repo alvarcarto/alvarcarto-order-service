@@ -41,7 +41,7 @@ function createOrder(order) {
         });
         return _createAddress(orderRow.id, address, { trx });
       })
-      .then(() => getOrder(fullOrder.prettyOrderId))
+      .then(() => getOrder(fullOrder.prettyOrderId, { trx }))
       .catch(_isUniqueConstraintError, err => _logUniqueConstraintErrorAndRethrow(err))
       .catch(err => _saveErrorInBackgroundAndRethrow(err, fullOrder))
   );
