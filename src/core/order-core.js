@@ -57,7 +57,10 @@ function getOrder(orderId, opts = {}) {
   })
     .then((orders) => {
       if (_.isEmpty(orders)) {
-        return null;
+        return BPromise.props({
+          order: null,
+          promotion: null,
+        });
       }
 
       const order = orders[0];
@@ -67,6 +70,10 @@ function getOrder(orderId, opts = {}) {
       });
     })
     .then(({ order, promotion }) => {
+      if (!order) {
+        return null;
+      }
+
       const fullOrder = _.merge({}, order, {
         promotion,
       });
