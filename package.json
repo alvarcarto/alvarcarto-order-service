@@ -42,11 +42,18 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
+    "@google/maps": "^0.4.2",
+    "alvarcarto-common": "git+https://alvarcarto-integration:1c9888484a1db3a46fb46c4d465ea4edc6d93196@github.com/kimmobrunfeldt/alvarcarto-common.git#v3.2.3",
+    "csv": "^1.1.1",
     "dcr": "^0.3.0",
     "eslint": "^3.11.1",
     "eslint-config-airbnb-base": "^10.0.1",
     "eslint-plugin-import": "^2.2.0",
-    "nodemon": "^1.11.0"
+    "geolib": "^2.0.22",
+    "js-combinatorics": "^0.5.2",
+    "nodemon": "^1.11.0",
+    "seedrandom": "^2.4.3",
+    "yargs": "^8.0.2"
   },
   "scripts": {
     "postinstall": "./tools/run-migrations.sh",
