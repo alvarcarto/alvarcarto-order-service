@@ -12,6 +12,14 @@ const config = require('../../src/config');
 const { coordToPrettyText } = require('./util');
 const cachingGeocode = require('./caching-geocode');
 
+const USE_COUNTRIES = [
+  'NL', 'PT', 'BE', 'PL', 'BG', 'FR', 'ES', 'RO',
+  'IE', 'SE', 'IT', 'DE', 'AT', 'SK', 'GR', 'SI',
+  'HR', 'FI', 'CY', 'DK', 'LV', 'CZ', 'LT', 'HU',
+  'LU', 'EE', 'MT', 'GB',
+  'US', 'CA', 'RU',
+];
+
 // null values are generated later
 const defaultFbAttrs = {
   id: null,
@@ -41,12 +49,12 @@ function transform(matrix) {
     name: row[1],
     lat: Number(row[4]),
     lng: Number(row[5]),
-    countryCode: row[8],
-    population: row[14],
+    countryCode: row[8].toUpperCase(),
+    population: Number(row[14]),
     modified: moment(row[18], 'YYYY-MM-DD'),
   }));
 
-  const filteredCities = _.filter(cities, c => c.countryCode === 'US');
+  const filteredCities = _.filter(cities, c => c.population > 50000 && _.includes(USE_COUNTRIES, c.countryCode));
 
   const cityIds = _.map(filteredCities, 'id');
   const posterStyleIds = _.map(common.POSTER_STYLES, 'id');
@@ -102,7 +110,7 @@ function filterUnavailableProducts(results) {
 
 function combinationToProduct(comb) {
   const attrs = {
-    // 0-SHARP-FFFFFF-50X70C-0-60.169-24.935
+    // 0/SHARP/FFFFFF/50X70C/0/60.169/24.935
     id: [
       0,  // ID version 0
       comb.posterStyle.id.toUpperCase(),
@@ -111,7 +119,7 @@ function combinationToProduct(comb) {
       comb.sizeId.toUpperCase(),
       0, // Paper weight, 0 -> Printmotor's default
       comb.city.id,
-    ].join('-'),
+    ].join('/'),
     title: comb.city.name,
     description: oneLine`
       ${randomNiceAdjective(comb.city.id)} map poster from ${comb.city.name}.

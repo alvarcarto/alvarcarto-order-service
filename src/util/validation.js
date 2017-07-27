@@ -81,4 +81,5 @@ module.exports = {
   printmotorWebhookPayloadSchema,
   orderIdSchema,
   promotionCodeSchema,
+  latLngSchema,
 };

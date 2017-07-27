@@ -6,6 +6,7 @@ const express = require('express');
 const config = require('./config');
 const ROLES = require('./enums/roles');
 const order = require('./http/order-http');
+const product = require('./http/product-http');
 const health = require('./http/health-http');
 const receipt = require('./http/receipt-http');
 const promotion = require('./http/promotion-http');
@@ -16,6 +17,7 @@ const {
   cartSchema,
   orderIdSchema,
   promotionCodeSchema,
+  latLngSchema,
 } = require('./util/validation');
 
 const validTokens = config.API_KEY.split(',');
@@ -98,6 +100,11 @@ function createRouter() {
     body: printmotorWebhookPayloadSchema,
   };
   router.post('/api/webhooks/printmotor', validate(postWebHook), order.postWebhook);
+
+  const getCities = {
+    query: latLngSchema,
+  };
+  router.get('/api/cities', validate(getCities), product.getCities);
 
   const getReceiptForOrder = {
     params: {
