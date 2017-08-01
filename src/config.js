@@ -44,6 +44,7 @@ const config = {
   SEND_TO_PRODUCTION_AFTER: process.env.SEND_TO_PRODUCTION_AFTER || '3 hours',
   CREDIT_CARD_STATEMENT_NAME: process.env.CREDIT_CARD_STATEMENT_NAME || 'alvarcarto.com',
   MOCK_EMAIL: process.env.MOCK_EMAIL === 'true',
+  SKIP_S3_POSTER_UPLOAD: process.env.SKIP_S3_POSTER_UPLOAD === 'true',
 };
 
 if (!config.MOCK_EMAIL) {

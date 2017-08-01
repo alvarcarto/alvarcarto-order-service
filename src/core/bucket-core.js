@@ -1,14 +1,26 @@
+const BPromise = require('bluebird');
 const request = require('request-promise');
 const prettyBytes = require('pretty-bytes');
 const { createS3 } = require('../util/aws');
 const logger = require('../util/logger')(__filename);
 const { createPosterImageUrl } = require('../util');
+const { oneLine } = require('common-tags');
 const config = require('../config');
 
 const s3 = createS3();
 
 // Download image from Alvar Carto render API, and then upload it to S3
 function uploadPoster(order, item, itemId) {
+  if (config.SKIP_S3_POSTER_UPLOAD) {
+    logger.info(oneLine`
+      Skipping S3 poster upload
+      for order #${order.orderId}, item ${itemId}
+      and assuming it has been uploaded manually ..
+    `);
+
+    return BPromise.resolve(_createS3Url(order.orderId, itemId));
+  }
+
   const posterApiUrl = createPosterImageUrl(item);
   logger.info(`Downloading poster from "${posterApiUrl}" ..`);
 
@@ -44,6 +56,15 @@ function uploadPoster(order, item, itemId) {
     logger.error(`Error uploading poster to S3: ${err}`);
     throw err;
   });
+}
+
+function _createS3Url(orderId, itemId) {
+  return [
+    `https://s3-${config.AWS_REGION}.amazonaws.com/`,
+    config.AWS_S3_BUCKET_NAME,
+    '/',
+    `posters/${orderId}-item${itemId}.png`,
+  ].join('');
 }
 
 module.exports = {

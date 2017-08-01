@@ -20,7 +20,7 @@ function createOrder(internalOrder) {
   return BPromise.map(internalOrder.cart, (item, i) => uploadPoster(internalOrder, item, i), {
     concurrency: 3,
   })
-    .then((uploadResponses) => {
+    .then((imageUrls) => {
       const params = {
         method: 'POST',
         url: `${BASE_URL}/api/v1/order`,
@@ -28,7 +28,7 @@ function createOrder(internalOrder) {
         headers: {
           'X-Printmotor-Service': config.PRINTMOTOR_SERVICE_ID,
         },
-        body: _internalOrderToPrintmotorOrder(internalOrder, uploadResponses),
+        body: _internalOrderToPrintmotorOrder(internalOrder, imageUrls),
       };
 
       logger.logEncrypted(
@@ -53,7 +53,7 @@ function createOrder(internalOrder) {
     });
 }
 
-function _internalOrderToPrintmotorOrder(internalOrder, uploadResponses) {
+function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
   const nameParts = _splitFullName(internalOrder.shippingAddress.personName);
   return {
     address: {
@@ -77,12 +77,12 @@ function _internalOrderToPrintmotorOrder(internalOrder, uploadResponses) {
       phone: internalOrder.shippingAddress.contactPhone || '',
     },
     products: _.map(internalOrder.cart, (item, i) =>
-      _internalCartItemToPrintmotorProduct(item, uploadResponses[i])
+      _internalCartItemToPrintmotorProduct(item, imageUrls[i])
     ),
   };
 }
 
-function _internalCartItemToPrintmotorProduct(item, uploadResponse) {
+function _internalCartItemToPrintmotorProduct(item, imageUrl) {
   const price = calculateItemPrice(item, { onlyUnitPrice: true });
   return {
     amount: item.quantity,
@@ -90,7 +90,7 @@ function _internalCartItemToPrintmotorProduct(item, uploadResponse) {
     customization: [
       {
         fieldName: 'image',
-        value: uploadResponse.Location,
+        value: imageUrl,
       },
     ],
     endUserPrice: {
