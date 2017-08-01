@@ -52,6 +52,7 @@ function uploadPoster(order, item, itemId) {
     return s3.uploadAsync(params);
   })
   .tap(data => logger.info(`Uploaded poster to S3: ${data.Location}`))
+  .then(response => response.Location)
   .catch((err) => {
     logger.error(`Error uploading poster to S3: ${err}`);
     throw err;
