@@ -38,7 +38,7 @@ function createRouter() {
   const router = express.Router();
   // Simple token authentication
   router.use((req, res, next) => {
-    const apiKey = req.headers['x-api-key'];
+    const apiKey = req.headers['x-api-key'] || req.query.apiKey;
     if (_.includes(validTokens, apiKey)) {
       // eslint-disable-next-line
       req.user = {
