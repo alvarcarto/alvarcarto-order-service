@@ -63,11 +63,15 @@ function createReceiptTemplateModel(order) {
     amount: `${item.quantity}x ${getUnitPrice(item)}`,
   }));
 
-  receiptItems.push({ description: 'Shipping', amount: '0.00 €'});
+  receiptItems.push({ description: 'Shipping', amount: '0.00 €' });
   if (order.promotion) {
+    const discountCurrencySymbol = getCurrencySymbol(totalPrice.discount.currency);
+    const discountHumanValue = (-totalPrice.discount.value / 100).toFixed(2);
+    const discountPriceLabel = `${discountHumanValue} ${discountCurrencySymbol}`;
+
     receiptItems.push({
-      description: `Promotion ${order.promotion.label}`,
-      amount: `-${totalPrice.discount.label}`,
+      description: `${order.promotion.label}`,
+      amount: discountPriceLabel,
     });
   }
 
