@@ -33,10 +33,15 @@ function getPromotion(code) {
     });
 }
 
+// XXX: This is not the best DB design. The used promotion
+//      code is also saved with to the order table without
+//      a link to promotions. We could just always count the
+//      used prmotion code amount from order table instead
+//      of keeping a separate counter state.
 function increasePromotionUsageCount(code) {
   return knex.raw(`
     UPDATE promotions
-      SET usageCount = usageCount + 1
+      SET usage_count = usage_count + 1
     WHERE
       promotion_code = :code
   `, { code: code.toUpperCase() });
