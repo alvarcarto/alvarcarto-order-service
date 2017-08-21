@@ -95,9 +95,13 @@ function executeCheckout(inputOrder) {
       logger.info('alert-10m New order received!');
       return emailCore.sendReceipt(orderWithId);
     })
-    .tap(createdOrder =>
-      promotionCore.increasePromotionUsageCount(createdOrder.promotion.promotionCode)
-    )
+    .tap((createdOrder) => {
+      if (createdOrder.promotion) {
+        return promotionCore.increasePromotionUsageCount(createdOrder.promotion.promotionCode);
+      }
+
+      return BPromise.resolve();
+    })
     .then(createdOrder => ({
       orderId: createdOrder.orderId,
     }))
