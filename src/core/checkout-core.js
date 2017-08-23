@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const moment = require('moment');
 const BPromise = require('bluebird');
 const { calculateCartPrice } = require('alvarcarto-price-util');
 const logger = require('../util/logger')(__filename);
@@ -16,7 +15,7 @@ const ALERT_LIMIT_MIN = 25 * 100;
 
 function executeCheckout(inputOrder) {
   let order;
-  let stripeCharge;
+  let stripeCharge = null;
   return _getPromotion(inputOrder.promotionCode)
     .then((promotion) => {
       if (_.get(promotion, 'hasExpired')) {
@@ -37,37 +36,26 @@ function executeCheckout(inputOrder) {
         logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
       }
 
-      if (price.value < 100) {
-        logger.error(`Calculated price is too low: ${price}`);
-        throw new Error('Internal price calculation failed');
+      const isFreeOrder = price.value <= 0;
+      if (!isFreeOrder && !_.has(inputOrder, 'stripeTokenResponse')) {
+        logger.warn('alert-1h Request without stripeTokenResponse noticed');
+        logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
+
+        const err = new Error('Required field stripeTokenResponse is missing.');
+        err.status = 400;
+        throw err;
+      }
+
+      if (isFreeOrder) {
+        // User has used a promotion code which allows a free purchase
+        return BPromise.props({
+          price,
+          stripeChargeResponse: null,
+        });
       }
 
       const shippingAddress = inputOrder.shippingAddress;
-      stripeCharge = {
-        amount: price.value,
-        currency: price.currency.toLowerCase(),
-        source: inputOrder.stripeTokenResponse.id,
-        metadata: fixStripeMeta({
-          posterQuantities: _.map(inputOrder.cart, item => `${item.quantity}x`).join('; '),
-          sizes: _.map(inputOrder.cart, item => item.size).join('; '),
-          orientations: _.map(inputOrder.cart, item => item.orientation).join('; '),
-          mapStyles: _.map(inputOrder.cart, item => item.mapStyle).join('; '),
-          posterStyles: _.map(inputOrder.cart, item => item.posterStyle).join('; '),
-          headers: _.map(inputOrder.cart, item => item.labelHeader).join('; '),
-          smallHeaders: _.map(inputOrder.cart, item => item.labelSmallHeader).join('; '),
-          texts: _.map(inputOrder.cart, item => item.labelText).join('; '),
-          coords: _.map(inputOrder.cart, item => mapBoundsToStr(item.mapBounds)).join('; '),
-          shippingName: shippingAddress.personName,
-          shippingAddress: shippingAddress.streetAddress,
-          shippingAddressExtra: shippingAddress.streetAddressExtra,
-          shippingCountry: `${shippingAddress.countryCode}, state: ${shippingAddress.state}`,
-          shippingCity: `${shippingAddress.postalCode}, ${shippingAddress.city}`,
-          shippingPhone: shippingAddress.contactPhone,
-        }),
-        receipt_email: inputOrder.email,
-        description: `Charge for ${inputOrder.email}`,
-        statement_descriptor: config.CREDIT_CARD_STATEMENT_NAME,
-      };
+      stripeCharge = _createStripeChargeObject(inputOrder, shippingAddress, price);
 
       return BPromise.props({
         price,
@@ -111,6 +99,34 @@ function executeCheckout(inputOrder) {
       logger.logEncrypted('error', 'Full order:', order);
       throw err;
     });
+}
+
+function _createStripeChargeObject(inputOrder, shippingAddress, price) {
+  return {
+    amount: price.value,
+    currency: price.currency.toLowerCase(),
+    source: inputOrder.stripeTokenResponse.id,
+    metadata: fixStripeMeta({
+      posterQuantities: _.map(inputOrder.cart, item => `${item.quantity}x`).join('; '),
+      sizes: _.map(inputOrder.cart, item => item.size).join('; '),
+      orientations: _.map(inputOrder.cart, item => item.orientation).join('; '),
+      mapStyles: _.map(inputOrder.cart, item => item.mapStyle).join('; '),
+      posterStyles: _.map(inputOrder.cart, item => item.posterStyle).join('; '),
+      headers: _.map(inputOrder.cart, item => item.labelHeader).join('; '),
+      smallHeaders: _.map(inputOrder.cart, item => item.labelSmallHeader).join('; '),
+      texts: _.map(inputOrder.cart, item => item.labelText).join('; '),
+      coords: _.map(inputOrder.cart, item => mapBoundsToStr(item.mapBounds)).join('; '),
+      shippingName: shippingAddress.personName,
+      shippingAddress: shippingAddress.streetAddress,
+      shippingAddressExtra: shippingAddress.streetAddressExtra,
+      shippingCountry: `${shippingAddress.countryCode}, state: ${shippingAddress.state}`,
+      shippingCity: `${shippingAddress.postalCode}, ${shippingAddress.city}`,
+      shippingPhone: shippingAddress.contactPhone,
+    }),
+    receipt_email: inputOrder.email,
+    description: `Charge for ${inputOrder.email}`,
+    statement_descriptor: config.CREDIT_CARD_STATEMENT_NAME,
+  };
 }
 
 function _getPromotion(code) {

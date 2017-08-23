@@ -63,7 +63,9 @@ function createRouter() {
       emailSubscription: Joi.boolean().optional(),
       shippingAddress: addressSchema.required(),
       billingAddress: addressSchema.optional(),
-      stripeTokenResponse: stripeCreateTokenResponseSchema.required(),
+      // If this is not defined, order must have a promotion code which fully
+      // covers the total price
+      stripeTokenResponse: stripeCreateTokenResponseSchema.optional(),
       cart: cartSchema.required(),
       promotionCode: promotionCodeSchema.optional(),
     },

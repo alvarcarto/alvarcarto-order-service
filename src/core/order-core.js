@@ -266,9 +266,9 @@ function _createOrder(order, opts = {}) {
     customer_email: order.email,
     different_billing_address: _.get(order, 'differentBillingAddress', false),
     email_subscription: _.get(order, 'emailSubscription', false),
-    stripe_token_id: order.stripeTokenResponse.id,
-    stripe_token_response: order.stripeTokenResponse,
-    stripe_charge_response: order.stripeChargeResponse,
+    stripe_token_id: _.get(order, 'stripeTokenResponse.id', null),
+    stripe_token_response: _.get(order, 'stripeTokenResponse', null),
+    stripe_charge_response: _.get(order, 'stripeChargeResponse', null),
     promotion_code: order.promotionCode,
     sent_to_production_at: null,
   })
