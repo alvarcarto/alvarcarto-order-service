@@ -9,6 +9,11 @@ const getPromotion = ex.createJsonRoute((req) => {
         return ex.throwStatus(404, 'Promotion not found');
       }
 
+      const throwIfExpired = req.query.expiredAsOk === 'false';
+      if (throwIfExpired && promotion.hasExpired) {
+        return ex.throwStatus(404, 'Promotion not found');
+      }
+
       return promotion;
     });
 });
