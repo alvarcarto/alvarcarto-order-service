@@ -37,7 +37,7 @@ function executeCheckout(inputOrder) {
       }
 
       const isFreeOrder = price.value <= 0;
-      if (isFreeOrder && !_.has(inputOrder, 'stripeTokenResponse')) {
+      if (!isFreeOrder && !_.has(inputOrder, 'stripeTokenResponse')) {
         logger.warn('alert-1h Request without stripeTokenResponse noticed');
         logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
 
