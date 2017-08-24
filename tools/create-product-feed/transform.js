@@ -121,10 +121,7 @@ function combinationToProduct(comb) {
       comb.city.id,
     ].join('/'),
     title: comb.city.name,
-    description: oneLine`
-      ${randomNiceAdjective(comb.city.id)} map poster from ${comb.city.name}.
-      Printed on a thick matte paper which looks great with or without frames.
-    `,
+    description: `${randomNiceAdjective(comb.city.id)} poster of ${comb.city.name}`,
     link: createProductLink({
       lat: comb.city.lat,
       lng: comb.city.lng,
@@ -177,7 +174,7 @@ function transformProductAsync(result) {
         labelText: coordToPrettyText({ lat: combination.city.lat, lng: combination.city.lng }),
         background: 'facebook-carousel',
         frames: 'black',
-        resizeToWidth: 600,
+        resizeToHeight: 1080,
       }),
     });
   });
