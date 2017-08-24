@@ -17,9 +17,10 @@ function main() {
 
         return printmotorCore.createOrder(order)
           .tap(() => logger.info(`Sent order to Printmotor (#${order.orderId})`))
-          .then(result =>
-            orderCore.markOrderSentToProduction(order.orderId, result.requestParams)
-          )
+          .then((result) => {
+            const printmotorId = String(result.response.orderNumber);
+            return orderCore.markOrderSentToProduction(order.orderId, printmotorId, result.requestParams);
+          })
           .then(() => logger.info(`Marked order as sent to production (#${order.orderId})`))
           .catch((err) => {
             logSingleProcessError(err, order);
