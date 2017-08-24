@@ -9,15 +9,17 @@ const { oneLine } = require('common-tags');
 const { calculateItemPrice } = require('alvarcarto-price-util');
 const common = require('alvarcarto-common');
 const config = require('../../src/config');
-const { coordToPrettyText } = require('./util');
+const { coordToPrettyText, latLngToBbox, boundsToZoom } = require('./util');
 const cachingGeocode = require('./caching-geocode');
 
 const USE_COUNTRIES = [
-  'NL', 'PT', 'BE', 'PL', 'BG', 'FR', 'ES', 'RO',
+  /*'NL', 'PT', 'BE', 'PL', 'BG', 'FR', 'ES', 'RO',
   'IE', 'SE', 'IT', 'DE', 'AT', 'SK', 'GR', 'SI',
   'HR', 'FI', 'CY', 'DK', 'LV', 'CZ', 'LT', 'HU',
   'LU', 'EE', 'MT', 'GB',
   'US', 'CA', 'RU',
+  */
+  'FI'
 ];
 
 // null values are generated later
@@ -54,7 +56,7 @@ function transform(matrix) {
     modified: moment(row[18], 'YYYY-MM-DD'),
   }));
 
-  const filteredCities = _.filter(cities, c => c.population > 50000 && _.includes(USE_COUNTRIES, c.countryCode));
+  const filteredCities = _.filter(cities, c => c.population > 100000 && _.includes(USE_COUNTRIES, c.countryCode));
 
   const cityIds = _.map(filteredCities, 'id');
   const posterStyleIds = _.map(common.POSTER_STYLES, 'id');
@@ -125,7 +127,7 @@ function combinationToProduct(comb) {
     link: createProductLink({
       lat: comb.city.lat,
       lng: comb.city.lng,
-      zoom: 10,
+      zoom: 13,
       size: comb.sizeId,
       orientation: comb.orientationId,
       posterStyle: comb.posterStyle.id,
@@ -155,15 +157,16 @@ function transformProductAsync(result) {
     },
   })
   .then((data) => {
-    // Fix to return only city
-    const bounds = data.results[0].geometry.viewport;
+    const viewport = data.results[0].geometry.viewport;
+    const zoom = boundsToZoom(viewport.northeast, viewport.southwest);
+    const bounds = latLngToBbox(combination.city.lat, combination.city.lng, zoom);
 
     return _.merge({}, product, {
       image_link: createImageLink({
-        neLat: bounds.northeast.lat,
-        neLng: bounds.northeast.lng,
-        swLat: bounds.southwest.lat,
-        swLng: bounds.southwest.lng,
+        neLat: bounds.northEast.lat,
+        neLng: bounds.northEast.lng,
+        swLat: bounds.southWest.lat,
+        swLng: bounds.southWest.lng,
         size: combination.sizeId,
         orientation: combination.orientationId,
         posterStyle: combination.posterStyle.id,
