@@ -6,24 +6,17 @@ const printmotorCore = require('../core/printmotor-core');
 const { knex } = require('../util/database');
 
 function main() {
-  logger.info('Checking for new orders to send to production ..');
+  logger.info('Uploading receipts for all orders to S3 ..');
 
-  return orderCore.getOrdersReadyToProduction()
+  return orderCore.getOrders()
     .then((orders) => {
-      logger.logEncrypted('info', 'Found orders:', orders);
-      logger.info(`Found ${orders.length} orders ready for Printmotor ..`);
+      logger.info(`Found ${orders.length} orders ..`);
 
       return BPromise.each(orders, (order) => {
-        logger.info(`Creating order to Printmotor (#${order.orderId}) ..`);
+        logger.info(`Uploading receipt for (#${order.orderId}) ..`);
 
-        return printmotorCore.createOrder(order)
-          .tap(() => logger.info(`Sent order to Printmotor (#${order.orderId})`))
-          .then(result =>
-            orderCore.markOrderSentToProduction(order.orderId, result.requestParams)
-          )
-          .tap(() => logger.info(`Marked order as sent to production (#${order.orderId})`))
-          .tap(() => logger.info('Saving order receipt to S3 ..'))
-          .then(() => bucketCore.uploadReceipt(order))
+        return bucketCore.uploadReceipt(order)
+          .tap(() => logger.info(`Uploaded receipt for (#${order.orderId})`))
           .catch((err) => {
             logSingleProcessError(err, order);
             logger.info('Continuing with next order ..');

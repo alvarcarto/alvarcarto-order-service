@@ -6,6 +6,7 @@ const logger = require('../util/logger')(__filename);
 const { createPosterImageUrl } = require('../util');
 const { oneLine } = require('common-tags');
 const config = require('../config');
+const pdfCore = require('./pdf-core');
 
 const s3 = createS3();
 
@@ -18,7 +19,7 @@ function uploadPoster(order, item, itemId) {
       and assuming it has been uploaded manually ..
     `);
 
-    return BPromise.resolve(_createS3Url(order.orderId, itemId));
+    return BPromise.resolve(_createPosterS3Url(order.orderId, itemId));
   }
 
   const posterApiUrl = createPosterImageUrl(item);
@@ -59,7 +60,33 @@ function uploadPoster(order, item, itemId) {
   });
 }
 
-function _createS3Url(orderId, itemId) {
+function uploadReceipt(order) {
+  const receiptUrl = `${config.ORDER_API_URL}/views/receipts/${order.orderId}`;
+  return pdfCore.getPdf(receiptUrl)
+    .then((res) => {
+      const params = {
+        // create unique file name id
+        Bucket: config.AWS_S3_BUCKET_NAME,
+        ACL: 'public-read',
+        Key: `receipts/${order.orderId}-receipt.pdf`,
+        ContentType: 'application/pdf',
+        Body: res.body,
+        Metadata: {
+          orderId: order.orderId,
+        },
+      };
+
+      return s3.uploadAsync(params);
+    })
+    .tap(data => logger.info(`Uploaded receipt to S3: ${data.Location}`))
+    .then(response => response.Location)
+    .catch((err) => {
+      logger.error(`Error uploading receipt to S3: ${err}`);
+      throw err;
+    });
+}
+
+function _createPosterS3Url(orderId, itemId) {
   return [
     `https://s3-${config.AWS_REGION}.amazonaws.com/`,
     config.AWS_S3_BUCKET_NAME,
@@ -70,4 +97,5 @@ function _createS3Url(orderId, itemId) {
 
 module.exports = {
   uploadPoster,
+  uploadReceipt,
 };

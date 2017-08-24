@@ -1,7 +1,6 @@
 const BPromise = require('bluebird');
 const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
-const bucketCore = require('../core/bucket-core');
 const printmotorCore = require('../core/printmotor-core');
 const { knex } = require('../util/database');
 
@@ -21,9 +20,7 @@ function main() {
           .then(result =>
             orderCore.markOrderSentToProduction(order.orderId, result.requestParams)
           )
-          .tap(() => logger.info(`Marked order as sent to production (#${order.orderId})`))
-          .tap(() => logger.info('Saving order receipt to S3 ..'))
-          .then(() => bucketCore.uploadReceipt(order))
+          .then(() => logger.info(`Marked order as sent to production (#${order.orderId})`))
           .catch((err) => {
             logSingleProcessError(err, order);
             logger.info('Continuing with next order ..');
