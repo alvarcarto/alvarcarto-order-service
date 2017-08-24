@@ -9,6 +9,7 @@ const order = require('./http/order-http');
 const product = require('./http/product-http');
 const health = require('./http/health-http');
 const receipt = require('./http/receipt-http');
+const webhook = require('./http/webhook-http');
 const promotion = require('./http/promotion-http');
 const {
   addressSchema,
@@ -101,7 +102,7 @@ function createRouter() {
   const postWebHook = {
     body: printmotorWebhookPayloadSchema,
   };
-  router.post('/api/webhooks/printmotor', validate(postWebHook), order.postWebhook);
+  router.post('/api/webhooks/printmotor', validate(postWebHook), webhook.postPrintmotor);
 
   const getCities = {
     query: latLngSchema,

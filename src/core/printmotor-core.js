@@ -5,6 +5,7 @@ const request = require('request-promise');
 const config = require('../config');
 const logger = require('../util/logger')(__filename);
 const { toLog } = require('../util');
+const { isEuCountry } = require('./country-core');
 const { uploadPoster } = require('./bucket-core');
 
 const BASE_URL = [
@@ -53,13 +54,59 @@ function createOrder(internalOrder) {
     });
 }
 
+function getDeliveryEstimate(countryCode) {
+  const production = {
+    min: 1,
+    max: 3,
+    timeUnit: 'BUSINESS_DAY',
+  };
+
+  let delivery;
+  if (countryCode === 'FI') {
+    delivery = {
+      min: 1,
+      max: 2,
+      timeUnit: 'BUSINESS_DAY',
+    };
+  } else if (isEuCountry(countryCode)) {
+    delivery = {
+      min: 5,
+      max: 7,
+      timeUnit: 'BUSINESS_DAY',
+    };
+  } else if (countryCode === 'US') {
+    // "North America" is simplified here
+    delivery = {
+      min: 7,
+      max: 10,
+      timeUnit: 'BUSINESS_DAY',
+    };
+  } else {
+    delivery = {
+      min: 10,
+      max: 14,
+      timeUnit: 'BUSINESS_DAY',
+    };
+  }
+
+  return {
+    production,
+    delivery,
+    total: {
+      min: production.min + delivery.min,
+      max: production.max + delivery.max,
+      timeUnit: 'BUSINESS_DAY',
+    },
+  };
+}
+
 function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
   const nameParts = _splitFullName(internalOrder.shippingAddress.personName);
   return {
     address: {
       recipientName: internalOrder.shippingAddress.personName,
       name: internalOrder.shippingAddress.personName,
-      recipientPhone: internalOrder.shippingAddress.contactPhone || '',
+      recipientPhone: internalOrder.shippingAddress.contactPhone || '',
       address: internalOrder.shippingAddress.streetAddress,
       address2: internalOrder.shippingAddress.streetAddressExtra || '',
       countryIso2: internalOrder.shippingAddress.countryCode,
@@ -74,7 +121,7 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
       emailAddress: internalOrder.email,
       firstName: nameParts.first,
       lastName: nameParts.last,
-      phone: internalOrder.shippingAddress.contactPhone || '',
+      phone: internalOrder.shippingAddress.contactPhone || '',
     },
     products: _.map(internalOrder.cart, (item, i) =>
       _internalCartItemToPrintmotorProduct(item, imageUrls[i])
@@ -145,4 +192,5 @@ function _getPortraitLayoutName(size) {
 
 module.exports = {
   createOrder,
+  getDeliveryEstimate,
 };
