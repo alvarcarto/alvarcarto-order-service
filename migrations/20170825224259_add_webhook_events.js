@@ -1,6 +1,7 @@
 exports.up = function(knex, Promise) {
   return knex.schema.table('orders', function(table) {
     table.string('printmotor_order_id').index().defaultTo(null);
+    table.jsonb('printmotor_order_response').defaultTo(null);
   })
   .then(() =>
     knex.schema.createTable('webhook_events', function(table) {
@@ -24,6 +25,7 @@ exports.up = function(knex, Promise) {
 exports.down = function(knex, Promise) {
   return knex.schema.table('orders', function(table) {
     table.dropColumn('printmotor_order_id');
+    table.dropColumn('printmotor_order_response');
   })
   .then(() => knex.schema.dropTable('webhook_events'));
 };

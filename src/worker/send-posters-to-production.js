@@ -19,7 +19,12 @@ function main() {
           .tap(() => logger.info(`Sent order to Printmotor (#${order.orderId})`))
           .then((result) => {
             const printmotorId = String(result.response.orderNumber);
-            return orderCore.markOrderSentToProduction(order.orderId, printmotorId, result.requestParams);
+            return orderCore.markOrderSentToProduction(
+              order.orderId,
+              printmotorId,
+              result.response,
+              result.requestParams
+            );
           })
           .then(() => logger.info(`Marked order as sent to production (#${order.orderId})`))
           .catch((err) => {
