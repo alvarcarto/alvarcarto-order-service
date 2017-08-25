@@ -17,11 +17,20 @@ function savePrintmotorEvent(payload) {
 function _saveEvent(payload) {
   const { eventType, userOrder } = payload;
   const printmotorId = String(userOrder.orderNumber);
-  return knex('webhook_events')
-    .insert({
-      order_id: knex.raw('(SELECT id FROM orders WHERE printmotor_order_id = ?)', [printmotorId]),
-      event: eventType,
-      payload,
+  return knex('orders')
+    .select('id')
+    .where({ printmotor_order_id: printmotorId })
+    .then((rows) => {
+      if (!_.isArray(rows) || rows.length === 0) {
+        throw new Error(`Order not found with printmotor id: ${printmotorId}`);
+      }
+
+      return knex('webhook_events')
+        .insert({
+          order_id: rows[0].id,
+          event: eventType,
+          payload,
+        });
     });
 }
 
@@ -46,7 +55,7 @@ const reactions = {
       throw new Error('No tracking code found from payload');
     }
 
-    const { eventType, userOrder } = payload;
+    const { userOrder } = payload;
     const printmotorId = String(userOrder.orderNumber);
 
     return knex('orders')
@@ -68,6 +77,20 @@ const reactions = {
           throw new Error(`Order not found with pretty id: ${prettyOrderId}`);
         }
 
+        return BPromise.props({
+          rows: knex('webhook_events')
+            .select('*')
+            .where({
+              order_id: knex.raw('(SELECT id FROM orders WHERE printmotor_order_id = ?)', [printmotorId]),
+            }),
+          order,
+        });
+      })
+      .then(({ order, rows }) => {
+        if (_.isArray(rows) && rows.length > 1) {
+          throw new Error('USER_ORDER_DELIVERED called multiple times');
+        }
+
         const link = _.get(userOrder, 'meta.externalTrackingLinks.0.absoluteUrl');
         if (!link) {
           throw new Error('No tracking url found from webhook payload');
@@ -80,7 +103,7 @@ const reactions = {
 
         return emailCore.sendDeliveryStarted(order, trackingInfo);
       });
-  }
+  },
 };
 
 module.exports = {
