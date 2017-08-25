@@ -6,7 +6,7 @@ Your order has been shipped (#{{ order_id }}).
 Hi, {{name}}!
 *************
 
-Great news, your order has been shipped from our printing studio. The estimated delivery time is {{min_delivery_days}} - {{max_delivery_days}} business days. Tracking code for the delivery is {{tracking_code}}. You can track the order by following this link:
+Great news, your order has been shipped from our printing studio. The estimated delivery time is {{min_delivery_business_days}} - {{max_delivery_business_days}} business days. Tracking code for the delivery is {{tracking_code}}. You can track the order by following this link:
 
 Track your order ( {{ tracking_url }} )
 
