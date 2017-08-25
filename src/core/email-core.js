@@ -8,6 +8,7 @@ const logger = require('../util/logger')(__filename);
 const { readFileSync } = require('../util');
 const { calculateItemPrice, calculateCartPrice, getCurrencySymbol } = require('alvarcarto-price-util');
 const config = require('../config');
+const { getDeliveryEstimate } = require('./printmotor-core');
 const { isEuCountry } = require('./country-core');
 
 // This can be found from Postmark web UI
@@ -16,9 +17,11 @@ const client = new postmark.Client(config.POSTMARK_API_KEY);
 
 const receiptHtmlTemplate = readFileSync('email-templates/receipt.inlined.html');
 const receiptTextTemplate = readFileSync('email-templates/receipt.txt');
+const deliveryStartedHtmlTemplate = readFileSync('email-templates/delivery-started.inlined.html');
+const deliveryStartedTextTemplate = readFileSync('email-templates/delivery-started.txt');
 
 function mockSendReceipt(order) {
-  logger.info(`Mock email enabled, skipping send to ${order.email} .. `);
+  logger.info(`Mock email enabled, skipping receipt send to ${order.email} ..`);
   logger.logEncrypted('info', 'Order', order);
   return BPromise.resolve();
 }
@@ -36,6 +39,25 @@ function sendReceipt(order) {
   });
 }
 
+function mockSendDeliveryStarted(order) {
+  logger.info(`Mock email enabled, skipping delivery started send to ${order.email} ..`);
+  logger.logEncrypted('info', 'Order', order);
+  return BPromise.resolve();
+}
+
+function sendDeliveryStarted(order, trackingInfo) {
+  logger.logEncrypted('info', 'Sending delivery started email to', order.email);
+
+  const templateModel = createDeliveryStartedTemplateModel(order, trackingInfo);
+  return sendEmailAsync({
+    From: 'help@alvarcarto.com',
+    To: order.email,
+    Subject: `Your order has been shipped (#${order.orderId})`,
+    TextBody: Mustache.render(deliveryStartedTextTemplate, templateModel),
+    HtmlBody: Mustache.render(deliveryStartedHtmlTemplate, templateModel),
+  });
+}
+
 function renderReceiptToText(order) {
   const templateModel = createReceiptTemplateModel(order);
   return Mustache.render(receiptTextTemplate, templateModel);
@@ -44,6 +66,29 @@ function renderReceiptToText(order) {
 function renderReceiptToHtml(order) {
   const templateModel = createReceiptTemplateModel(order);
   return Mustache.render(receiptHtmlTemplate, templateModel);
+}
+
+function createDeliveryStartedTemplateModel(order, trackingInfo) {
+  const customerName = order.differentBillingAddress
+    ? _.get(order, 'billingAddress.personName', 'Poster Designer')
+    : _.get(order, 'shippingAddress.personName', 'Poster Designer');
+
+  const countryCode = _.get(order, 'shippingAddress.countryCode');
+  const timeEstimate = getDeliveryEstimate(countryCode);
+  return {
+    name: getFirstName(customerName),
+    tracking_code: trackingInfo.code,
+    tracking_url: trackingInfo.url,
+    order_id: order.orderId,
+    shipping_address: getAddress(order),
+    shipping_city: getCity(order),
+    shipping_postal_code: getPostalCode(order),
+    shipping_country: getCountry(order),
+    min_delivery_business_days: timeEstimate.delivery.min,
+    max_delivery_business_days: timeEstimate.delivery.max,
+    support_url: 'https://alvarcarto.com/help',
+    year: moment().format('YYYY'),
+  };
 }
 
 function createReceiptTemplateModel(order) {
@@ -75,6 +120,9 @@ function createReceiptTemplateModel(order) {
     });
   }
 
+  const countryCode = _.get(order, 'shippingAddress.countryCode');
+  const timeEstimate = getDeliveryEstimate(countryCode);
+
   return {
     purchase_date: order.createdAt.format('MMMM Do YYYY'),
     name: getFirstName(customerName),
@@ -89,6 +137,8 @@ function createReceiptTemplateModel(order) {
     shipping_postal_code: getPostalCode(order),
     shipping_country: getCountry(order),
     web_version_url: getOrderUrl(order),
+    min_delivery_business_days: timeEstimate.total.min,
+    max_delivery_business_days: timeEstimate.total.max,
     support_url: 'https://alvarcarto.com/help',
     year: moment().format('YYYY'),
     vat_percentage: vatPercentage,
@@ -176,6 +226,9 @@ module.exports = {
   sendReceipt: config.MOCK_EMAIL
     ? mockSendReceipt
     : sendReceipt,
+  sendDeliveryStarted: config.MOCK_EMAIL
+    ? mockSendDeliveryStarted
+    : sendDeliveryStarted,
   renderReceiptToText,
   renderReceiptToHtml,
   createReceiptTemplateModel,

@@ -1,0 +1,32 @@
+Your order has been shipped (#{{ order_id }}).
+
+[Alvar Carto] ( https://alvarcarto.com )
+
+*************
+Hi, {{name}}!
+*************
+
+Great news, your order has been shipped from our printing studio. The estimated delivery time is {{min_delivery_business_days}} - {{max_delivery_business_days}} business days. Tracking code for the delivery is {{tracking_code}}. You can track the order by following this link:
+
+Track your order ( {{ tracking_url }} )
+
+
+The order will be delivered to the following address:
+{{shipping_address}}
+{{shipping_postal_code}}, {{shipping_city}}
+{{shipping_country}}
+
+If you have any questions about your order, simply reply to this email or visit our help page ( {{ support_url }} ) for frequently asked questions.
+
+Thank you,
+Alvar Carto Team
+
+P.S. We'd love to hear your review of our products at Alvar Carto's Facebook page ( https://facebook.com/alvarcarto ).
+
+
+© {{year}} Alvar Carto. All rights reserved.
+
+X Heads Oy (2692655-7)
+Rantakatu 3
+90100 Oulu
+Finland

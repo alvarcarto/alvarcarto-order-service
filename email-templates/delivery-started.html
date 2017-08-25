@@ -3,7 +3,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Receipt for your purchase (#{{ order_id }})</title>
+    <title>Your order has been shipped (#{{ order_id }})</title>
     <!--
     The style block is collapsed on page load to save you some scrolling.
     Postmark automatically inlines all CSS properties for maximum email client
@@ -294,22 +294,6 @@
     .purchase_total--label {
       padding: 0 15px 0 0;
     }
-
-    .purchase_footer_vat {
-      padding-top: 5px;
-    }
-
-    .purchase_total_vat {
-      margin: 0;
-      font-size: 11px;
-      text-align: right;
-      font-weight: bold;
-      color: #2F3133;
-    }
-
-    .purchase_total_vat--label {
-      padding: 0 15px 0 0;
-    }
     /* Utilities ------------------------------ */
 
     .align-right {
@@ -412,14 +396,14 @@
     </style>
   </head>
   <body>
-    <span class="preheader">This is a receipt and order confirmation for your recent purchase on {{ purchase_date }}. The posters will be printed and delivered soon, we'll keep you up to date via email.</span>
+    <span class="preheader">Your order has been shipped from our printing studio.</span>
     <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td align="center">
           <table class="email-content" width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td class="email-masthead">
-                <a href="https://example.com" class="email-masthead_name">
+                <a href="https://alvarcarto.com" class="email-masthead_name">
         Alvar Carto
       </a>
               </td>
@@ -431,50 +415,24 @@
                   <!-- Body content -->
                   <tr>
                     <td class="content-cell">
-                      <h1>Hi, {{name}}!</h1>
-                      <p>Thank you so much for ordering from Alvar Carto. This email is a receipt and order confirmation for your purchase. The posters will be printed and shipped soon, we'll keep you up to date via email. In our estimation, you should get the posters in {{min_delivery_business_days}} - {{max_delivery_business_days}} business days.</p>
-
-                      <p>This purchase will appear as “{{credit_card_statement_name}}” on your credit card statement for your {{credit_card_brand}} ending in {{credit_card_last4}}.
-                      </p>
-
-                      <table class="purchase" width="100%" cellpadding="0" cellspacing="0">
+                      <h1>Hi, {{ name }}!</h1>
+                      <p>Great news, your order has been shipped from our printing studio. The estimated delivery time is {{min_delivery_business_days}} - {{max_delivery_business_days}} business days. Tracking code for the delivery is <strong>{{tracking_code}}</strong>. You can track the order by following this link:</p>
+                      <!-- Action -->
+                      <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0">
                         <tr>
-                          <td>
-                            <h3>Receipt #{{order_id}}</h3></td>
-                          <td>
-                            <h3 class="align-right">{{purchase_date}}</h3></td>
-                        </tr>
-                        <tr>
-                          <td colspan="2">
-                            <table class="purchase_content" width="100%" cellpadding="0" cellspacing="0">
+                          <td align="center">
+                            <!-- Border based button
+                       https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
                               <tr>
-                                <th class="purchase_heading">
-                                  <p>Description</p>
-                                </th>
-                                <th class="purchase_heading">
-                                  <p class="align-right">Amount</p>
-                                </th>
-                              </tr>
-                              {{#receipt_details}}
-                              <tr>
-                                <td width="80%" class="purchase_item">{{description}}</td>
-                                <td class="align-right" width="20%" class="purchase_item">{{amount}}</td>
-                              </tr>
-                              {{/receipt_details}}
-                              <tr>
-                                <td width="80%" class="purchase_footer" valign="middle">
-                                  <p class="purchase_total purchase_total--label">Total</p>
-                                </td>
-                                <td width="20%" class="purchase_footer" valign="middle">
-                                  <p class="purchase_total">{{total}}</p>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td width="80%" class="purchase_footer_vat" valign="middle">
-                                  <p class="purchase_total_vat purchase_total_vat--label">Includes VAT ({{vat_percentage}}%)</p>
-                                </td>
-                                <td width="20%" class="purchase_footer_vat" valign="middle">
-                                  <p class="purchase_total_vat">{{total_vat_amount}}</p>
+                                <td align="center">
+                                  <table border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                      <td>
+                                        <a href="{{tracking_url}}" class="button button--" target="_blank">Track your order</a>
+                                      </td>
+                                    </tr>
+                                  </table>
                                 </td>
                               </tr>
                             </table>
@@ -502,11 +460,21 @@
                         </tr>
                       </table>
 
-                      <p>You can also view the <a href="{{web_version_url}}">web version</a> of this receipt.</p>
-
                       <p>If you have any questions about your order, simply reply to this email or visit our <a href="{{support_url}}">help page</a> for frequently asked questions.</p>
-                      <p>Cheers,
-                        <br><i>Alvar Carto Team</i></p>
+
+                      <p>Thank you,
+                        <br>Alvar Carto Team</p>
+
+                      <p><strong>P.S.</strong> We'd love to hear your review of our products at <a href="https://facebook.com/alvarcarto" target="_blank">Alvar Carto's Facebook page</a>.</p>
+                      <!-- Sub copy -->
+                      <table class="body-sub">
+                        <tr>
+                          <td>
+                            <p class="sub">If you’re having trouble with the button above, copy and paste the URL below into your web browser.</p>
+                            <p class="sub">{{tracking_url}}</p>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
                 </table>

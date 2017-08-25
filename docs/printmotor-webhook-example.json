@@ -1,12 +1,22 @@
 {
-    "eventType":"USER_ORDER_DELIVERED",
-    "userOrder":{
-        "orderNumber":9156,
-        "meta":{
-            "trackingCode":"RE452891261SE"
+  "eventType": "USER_ORDER_DELIVERED",
+  "userOrder": {
+    "deliveryTime": "2017-08-24T14:57:56",
+    "estimatedDeliveryTime": "2017-08-25T12:00",
+    "meta": {
+      "externalTrackingLinks": [
+        {
+          "absoluteUrl": "https://www.matkahuolto.fi/seuranta/tilanne/?package_code=MA0943165000000107546"
         },
-        "estimatedDeliveryTime":"2015-10-03T12:00",
-        "processingStatusDescription":"In production",
-        "postalClass":"PRIORITY"
-    }
+        {
+          "absoluteUrl": "https://track.aftership.com/MA0943165000000107801"
+        }
+      ],
+      "reference": "2017-0821-3121-0192",
+      "trackingCode": "MA0943165000000107801"
+    },
+    "orderNumber": 6912,
+    "postalClass": "PRIORITY",
+    "processingStatusDescription": "Delivered"
+  }
 }

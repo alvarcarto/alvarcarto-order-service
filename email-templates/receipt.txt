@@ -6,7 +6,9 @@ Alvar Carto ( https://alvarcarto.com )
 Hi, {{name}}!
 ************
 
-Thank you so much for ordering from Alvar Carto. This email is a receipt and order confirmation for your purchase. This purchase will appear as “{{credit_card_statement_name}}” on your credit card statement for your {{credit_card_brand}} ending in {{credit_card_last4}}.
+Thank you so much for ordering from Alvar Carto. This email is a receipt and order confirmation for your purchase. The posters will be printed and shipped soon, we'll keep you up to date via email. In our estimation, you should get the posters in {{min_delivery_business_days}} - {{max_delivery_business_days}} business days.
+
+This purchase will appear as “{{credit_card_statement_name}}” on your credit card statement for your {{credit_card_brand}} ending in {{credit_card_last4}}.
 
 
 Receipt #{{order_id}}
@@ -45,8 +47,7 @@ Alvar Carto Team
 
 © {{year}} Alvar Carto. All rights reserved.
 
-
 X Heads Oy (2692655-7)
-Kirkkokatu 16
+Rantakatu 3
 90100 Oulu
 Finland

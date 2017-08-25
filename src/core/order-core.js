@@ -168,14 +168,18 @@ function selectOrders(_opts = {}) {
     });
 }
 
-function markOrderSentToProduction(orderId, requestParams) {
+function markOrderSentToProduction(orderId, printmotorOrderId, response, requestParams) {
   return knex.raw(`
     UPDATE orders
       SET sent_to_production_at = now(),
-          printmotor_order_request = :requestParams
+          printmotor_order_id = :printmotorOrderId,
+          printmotor_order_request = :requestParams,
+          printmotor_order_response = :printmotorResponse
     WHERE pretty_order_id = :orderId
   `, {
     orderId,
+    printmotorOrderId,
+    printmotorResponse: JSON.stringify(response),
     requestParams: JSON.stringify(requestParams),
   });
 }
