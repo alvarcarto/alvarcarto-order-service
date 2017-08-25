@@ -64,7 +64,8 @@ const printmotorWebhookPayloadSchema = Joi.object({
   userOrder: Joi.object({
     orderNumber: Joi.number().required(),
     meta: Joi.object(),
-    deliveryTime: Joi.string().required(),
+    deliveryTime: Joi.string().optional(),
+    estimatedDeliveryTime: Joi.string().optional(),
     processingStatusDescription: Joi.string().required(),
     postalClass: Joi.string().required(),
   }).required().unknown(),
