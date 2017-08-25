@@ -120,6 +120,9 @@ function createReceiptTemplateModel(order) {
     });
   }
 
+  const countryCode = _.get(order, 'shippingAddress.countryCode');
+  const timeEstimate = getDeliveryEstimate(countryCode);
+
   return {
     purchase_date: order.createdAt.format('MMMM Do YYYY'),
     name: getFirstName(customerName),
@@ -134,6 +137,8 @@ function createReceiptTemplateModel(order) {
     shipping_postal_code: getPostalCode(order),
     shipping_country: getCountry(order),
     web_version_url: getOrderUrl(order),
+    min_delivery_business_days: timeEstimate.total.min,
+    max_delivery_business_days: timeEstimate.total.max,
     support_url: 'https://alvarcarto.com/help',
     year: moment().format('YYYY'),
     vat_percentage: vatPercentage,
