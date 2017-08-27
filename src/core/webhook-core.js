@@ -49,7 +49,7 @@ function _saveEvent(payload) {
 function _isRealEventSource(payload, incomingHmac) {
   const hmac = crypto.createHmac('sha256', config.PRINTMOTOR_WEBHOOK_HMAC_SECRET);
   hmac.update(JSON.stringify(payload));
-  return hmac.digest('hex') === incomingHmac;
+  return hmac.digest('base64') === incomingHmac;
 }
 
 function _reactToEvent(payload) {
