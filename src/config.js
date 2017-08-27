@@ -25,6 +25,7 @@ const config = {
   LOG_LEVEL: process.env.LOG_LEVEL,
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
   ALLOW_HTTP: process.env.ALLOW_HTTP === 'true',
+  ALLOW_UNVERIFIED_WEBHOOKS: process.env.ALLOW_UNVERIFIED_WEBHOOKS === 'true',
   IP_LOGGER: process.env.IP_LOGGER === 'true',
   LOG_ENCRYPT_KEY: process.env.LOG_ENCRYPT_KEY,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
@@ -34,6 +35,7 @@ const config = {
   PRINTMOTOR_USER: process.env.PRINTMOTOR_USER,
   PRINTMOTOR_PASSWORD: process.env.PRINTMOTOR_PASSWORD,
   PRINTMOTOR_SERVICE_ID: process.env.PRINTMOTOR_SERVICE_ID,
+  PRINTMOTOR_WEBHOOK_HMAC_SECRET: process.env.PRINTMOTOR_WEBHOOK_HMAC_SECRET,
   RENDER_API_URL: process.env.RENDER_API_URL || 'http://51.255.81.67:8001',
   RENDER_API_KEY: process.env.RENDER_API_KEY,
   AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
@@ -46,6 +48,10 @@ const config = {
   MOCK_EMAIL: process.env.MOCK_EMAIL === 'true',
   SKIP_S3_POSTER_UPLOAD: process.env.SKIP_S3_POSTER_UPLOAD === 'true',
 };
+
+if (!config.ALLOW_UNVERIFIED_WEBHOOKS) {
+  requireEnvs(['PRINTMOTOR_WEBHOOK_HMAC_SECRET']);
+}
 
 if (!config.MOCK_EMAIL) {
   requireEnvs(['POSTMARK_API_KEY']);

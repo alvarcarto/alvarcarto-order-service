@@ -1,11 +1,23 @@
+const crypto = require('crypto');
 const BPromise = require('bluebird');
 const _ = require('lodash');
 const { knex } = require('../util/database');
 const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
 const emailCore = require('../core/email-core');
+const config = require('../config');
 
-function savePrintmotorEvent(payload) {
+function savePrintmotorEvent(payload, incomingHmac) {
+  if (!config.ALLOW_UNVERIFIED_WEBHOOKS) {
+    const isReal = _isRealEventSource(payload, incomingHmac);
+    if (!isReal) {
+      logger.logEncrypted('error', 'alert-1h Unverified webhook event', payload);
+      const err = new Error('Incoming webhook request had incorrect HMAC');
+      err.status = 401;
+      throw err;
+    }
+  }
+
   return _saveEvent(payload)
     .then(() => _reactToEvent(payload))
     .catch((err) => {
@@ -32,6 +44,12 @@ function _saveEvent(payload) {
           payload,
         });
     });
+}
+
+function _isRealEventSource(payload, incomingHmac) {
+  const hmac = crypto.createHmac('sha256', config.PRINTMOTOR_WEBHOOK_HMAC_SECRET);
+  hmac.update(JSON.stringify(payload));
+  return hmac.digest('hex') === incomingHmac;
 }
 
 function _reactToEvent(payload) {
