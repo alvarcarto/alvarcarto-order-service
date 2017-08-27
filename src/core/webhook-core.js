@@ -82,6 +82,7 @@ const reactions = {
             .select('*')
             .where({
               order_id: knex.raw('(SELECT id FROM orders WHERE printmotor_order_id = ?)', [printmotorId]),
+              event: 'USER_ORDER_DELIVERED',
             }),
           order,
         });
