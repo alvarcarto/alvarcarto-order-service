@@ -56,8 +56,8 @@ function createOrder(internalOrder) {
 
 function getDeliveryEstimate(countryCode) {
   const production = {
-    min: 1,
-    max: 3,
+    min: 2,
+    max: 4,
     timeUnit: 'BUSINESS_DAY',
   };
 
