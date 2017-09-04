@@ -1,4 +1,5 @@
 const BPromise = require('bluebird');
+const geolib = require('geolib');
 const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
 const printmotorCore = require('../core/printmotor-core');
@@ -15,7 +16,8 @@ function main() {
       return BPromise.each(orders, (order) => {
         logger.info(`Creating order to Printmotor (#${order.orderId}) ..`);
 
-        return printmotorCore.createOrder(order)
+        return assertMapCentersInsideBounds(order)
+          .then(() => printmotorCore.createOrder(order))
           .tap(() => logger.info(`Sent order to Printmotor (#${order.orderId})`))
           .then((result) => {
             const printmotorId = String(result.response.orderNumber);
@@ -38,6 +40,26 @@ function main() {
       logError(err);
       throw err;
     });
+}
+
+function assertMapCentersInsideBounds(order) {
+  return BPromise.each(order.cart, (item) => {
+    const { mapCenter, mapBounds } = item;
+    // This is not accurate but it's a safe measure to prevent missync
+    // between map center and bounds
+    const isInside = geolib.isPointInside(mapCenter, [
+      { lat: mapBounds.northEast.lat, lng: mapBounds.northEast.lng },
+      { lat: mapBounds.northEast.lat, lng: mapBounds.southWest.lng },
+      { lat: mapBounds.southWest.lat, lng: mapBounds.southWest.lng },
+      { lat: mapBounds.southWest.lat, lng: mapBounds.northEast.lng },
+    ]);
+
+    if (!isInside) {
+      return BPromise.reject(new Error('Map center isn\'t inside map bounds'));
+    }
+
+    return BPromise.resolve();
+  });
 }
 
 function logSingleProcessError(err, order) {
