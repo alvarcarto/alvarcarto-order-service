@@ -70,7 +70,9 @@ const reactions = {
   USER_ORDER_DELIVERED: (payload) => {
     const trackingCode = _.get(payload, 'userOrder.meta.trackingCode');
     if (!trackingCode) {
-      throw new Error('No tracking code found from payload');
+      const err = new Error('No tracking code found from payload');
+      err.status = 400;
+      throw err;
     }
 
     const { userOrder } = payload;
@@ -112,7 +114,9 @@ const reactions = {
 
         const link = _.get(userOrder, 'meta.externalTrackingLinks.0.absoluteUrl');
         if (!link) {
-          throw new Error('No tracking url found from webhook payload');
+          const err = new Error('No tracking url found from webhook payload');
+          err.status = 400;
+          throw err;
         }
 
         const trackingInfo = {
