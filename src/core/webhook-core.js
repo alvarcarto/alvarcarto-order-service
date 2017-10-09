@@ -21,7 +21,9 @@ function savePrintmotorEvent(payload, incomingHmac) {
   return _saveEvent(payload)
     .then(() => _reactToEvent(payload))
     .catch((err) => {
-      logger.logEncrypted('error', 'alert-1h Could not process webhook event', payload);
+      const printmotorOrderId = _.get(payload, 'userOrder.orderNumber');
+      const msg = `alert-1h Could not process webhook event. Printmotor ID: ${printmotorOrderId}`;
+      logger.logEncrypted('error', msg, payload);
       throw err;
     });
 }
