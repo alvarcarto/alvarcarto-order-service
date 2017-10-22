@@ -25,7 +25,7 @@ function executeCheckout(inputOrder) {
       }
 
       // Promotion is either null or promotion object
-      const price = calculateCartPrice(inputOrder.cart, promotion);
+      const price = calculateCartPrice(inputOrder.cart, { promotion });
       if (price.value >= HARD_LIMIT_MAX) {
         logger.error(`Calculated price exceeded maximum safe limit: ${price}`);
         throw new Error('Internal price calculation failed');

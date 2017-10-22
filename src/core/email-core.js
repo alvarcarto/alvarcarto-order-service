@@ -9,10 +9,8 @@ const { readFileSync } = require('../util');
 const { calculateItemPrice, calculateCartPrice, getCurrencySymbol } = require('alvarcarto-price-util');
 const config = require('../config');
 const { getDeliveryEstimate } = require('./printmotor-core');
-const { isEuCountry } = require('./country-core');
 
 // This can be found from Postmark web UI
-const FINLAND_VAT_PERCENTAGE = 24;
 const client = new postmark.Client(config.POSTMARK_API_KEY);
 
 const receiptHtmlTemplate = readFileSync('email-templates/receipt.inlined.html');
@@ -96,11 +94,9 @@ function createReceiptTemplateModel(order) {
     ? _.get(order, 'billingAddress.personName', 'Poster Designer')
     : _.get(order, 'shippingAddress.personName', 'Poster Designer');
 
-  const vatPercentage = isEuCountry(_.get(order, 'shippingAddress.countryCode'))
-    ? FINLAND_VAT_PERCENTAGE
-    : 0;
-
-  const totalPrice = calculateCartPrice(order.cart, order.promotion, {
+  const totalPrice = calculateCartPrice(order.cart, {
+    promotion: order.promotion,
+    shipToCountry: _.get(order, 'shippingAddress.countryCode'),
     ignorePromotionExpiry: true,
   });
   const receiptItems = _.map(order.cart, item => ({
@@ -141,8 +137,8 @@ function createReceiptTemplateModel(order) {
     max_delivery_business_days: timeEstimate.total.max,
     support_url: 'https://alvarcarto.com/help',
     year: moment().format('YYYY'),
-    vat_percentage: vatPercentage,
-    total_vat_amount: getTotalVatAmount(totalPrice, vatPercentage),
+    vat_percentage: totalPrice.tax.taxPercentage,
+    total_vat_amount: totalPrice.tax.label,
   };
 }
 
@@ -157,15 +153,8 @@ function getUnitPrice(cartItem) {
   return `${value}${symbol}`;
 }
 
-function getTotalVatAmount(totalPrice, vatPercentage) {
-  const vatFactor = vatPercentage / 100.0;
-  const vatTotal = ((totalPrice.value * vatFactor) / 100.0).toFixed(2);
-  const symbol = getCurrencySymbol(totalPrice.currency);
-  return `${vatTotal}${symbol}`;
-}
-
 function getProductName(cartItem) {
-  if (cartItem.labelsEnabled) {
+  if (cartItem.labelsEnabled && cartItem.labelHeader) {
     return `${cartItem.labelHeader}, ${cartItem.size}`;
   }
 
