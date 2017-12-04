@@ -410,6 +410,7 @@ function randomInteger(min, max) {
 
 module.exports = {
   createOrder,
+  selectOrders,
   getOrder,
   getOrdersReadyToProduction,
   markOrderSentToProduction,

@@ -1,0 +1,25 @@
+Your order delivery has taken longer than average.
+
+[Alvar Carto] ( https://alvarcarto.com )
+
+*************
+Hello, {{name}}!
+*************
+
+Unfortunately the production and delivery of your order has taken longer than average because of a sudden increase in orders. We're so sorry about that.
+
+Our production team is doing their best to get your package on its way as soon as possible. The tracking code will be sent to you immediately after that.
+
+
+If you have any further questions, simply reply to this email or visit our help page ( {{ support_url }} ) for frequently asked questions.
+
+Thank you,
+Alvar Carto Team
+
+
+© {{year}} Alvar Carto. All rights reserved.
+
+X Heads Oy (2692655-7)
+Rantakatu 3
+90100 Oulu
+Finland

@@ -221,4 +221,13 @@ module.exports = {
   renderReceiptToText,
   renderReceiptToHtml,
   createReceiptTemplateModel,
+  getFirstName,
+  getUnitPrice,
+  getProductName,
+  getOrderUrl,
+  getAddress,
+  getCity,
+  getPostalCode,
+  getCountry,
+  sendEmailAsync,
 };
