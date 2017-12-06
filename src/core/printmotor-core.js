@@ -65,7 +65,7 @@ function getDeliveryEstimate(countryCode) {
   if (countryCode === 'FI') {
     delivery = {
       min: 1,
-      max: 2,
+      max: 4,
       timeUnit: 'BUSINESS_DAY',
     };
   } else if (isEuCountry(countryCode)) {
