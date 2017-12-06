@@ -4,17 +4,21 @@
 // Usage:
 // node tools/send-email.js <template> <title> <sql-query>
 
+const fs = require('fs');
 const _ = require('lodash');
 const BPromise = require('bluebird');
-const osmosis = require('osmosis');
+const scrapeIt = require('scrape-it');
 const moment = require('moment-timezone');
 const cityTimezones = require('city-timezones');
 const { knex } = require('../src/util/database');
 
+const CACHE_FILE_NAME = 'tracking-info.json';
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36';
+
 function getTrackingDetails(shippingAddress, trackingCode) {
   const provider = getTrackingProvider(trackingCode);
   return getRawItems(provider, trackingCode)
-    .then(rawItemsToDelivery);
+    .then(rawItems => rawItemsToDelivery(shippingAddress, rawItems));
 }
 
 function rawItemsToDelivery(shippingAddress, items) {
@@ -25,28 +29,35 @@ function rawItemsToDelivery(shippingAddress, items) {
 
 function transformItem(address, item) {
   return {
-    time: toMoment(address, item.date, item.time),
-    status: iconClassToEnum(item.iconClass),
+    time: toMoment(address, item.dateTime),
+    status: getEventStatus(item.text),
     text: item.text,
-    subText: item.subText,
+    location: item.location,
   };
 }
 
-function iconClassToEnum(className) {
-  if (_.endsWith(className, 'delivered')) {
+function getEventStatus(text) {
+  if (_.startsWith(text, 'Luovutettu')) {
     return 'DELIVERED';
-  } else if (_.endsWith(className, 'outfordelivery')) {
+  } else if (_.startsWith(text, 'Ilmoitettu')) {
+    return 'CUSTOMER_NOTIFIED';
+  } else if (_.startsWith(text, 'Noudettavissa')) {
     return 'OUT_FOR_DELIVERY';
-  } else if (_.endsWith(className, 'intransit')) {
+  } else if (_.startsWith(text, 'Lähtenyt')) {
     return 'IN_TRANSIT';
   }
 
   return 'UNKNOWN';
 }
 
-function toMoment(address, date, time) {
-  const tz = addressToTimezone(address);
-  return moment.tz(`${date} ${time}`, 'MMM DD, YYYY HH:mm a', tz);
+function toMoment(address, dateTime) {
+  //const tz = addressToTimezone(address);
+  const momentObj = moment.tz(dateTime, 'DD.MM.YYYY, HH:mm', 'Europe/Helsinki');
+  if (!momentObj.isValid()) {
+    throw new Error(`Incorrect date: ${dateTime}`);
+  }
+
+  return momentObj;
 }
 
 function addressToTimezone(address) {
@@ -58,27 +69,48 @@ function getTrackingProvider(trackingCode) {
     return 'matkahuolto';
   }
 
+  throw new Error('Unsupported tracking provider');
   return 'dhl-germany';
 }
 
 function getRawItems(provider, trackingCode) {
-  const url = `https://track.aftership.com/${provider}/${trackingCode}`;
+  const url = `https://www.matkahuolto.fi/seuranta/tilanne/?package_code=${trackingCode}`;
   console.error(`Fetching data from ${url} ..`);
 
-  return new BPromise((resolve, reject) => {
-    osmosis
-      .get(url)
-      .find('.checkpoints__list > li')
-      .set({
-        date: '.checkpoint__time > strong',
-        time: '.checkpoint__time > div',
-        text: '.checkpoint__content > strong',
-        subText: '.checkpoint__content > .hint',
-        iconClass: '.checkpoint__icon@class',
-      })
-      .data(arr => resolve(arr))
-      .error(err => reject(err));
-  });
+  // Promise interface
+  return scrapeIt({
+    url,
+    headers: { 'User-Agent': USER_AGENT },
+  }, {
+    items: {
+      listItem: '.events-list .event',
+      data: {
+        dateTime: '.timestamp',
+        text: '.event-details > div:first-child',
+        location: '.event-details > div:last-child',
+      },
+    },
+  })
+  .then(result => result.items);
+}
+
+function upsertToCache(trackingInfo) {
+  const obj = getCache();
+  obj[trackingInfo.trackingCode] = trackingInfo;
+  fs.writeFileSync(CACHE_FILE_NAME, JSON.stringify(obj, null, 2), { encoding: 'utf8' });
+}
+
+function getCache() {
+  try {
+    const text = fs.readFileSync(CACHE_FILE_NAME, { encoding: 'utf8' });
+    return JSON.parse(text);
+  } catch (e) {
+    return {};
+  }
+}
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function main() {
@@ -87,7 +119,7 @@ function main() {
       SELECT
         orders.pretty_order_id as pretty_order_id,
         orders.printmotor_order_id as printmotor_order_id,
-        ((stripe_charge_response->>'amount')::int / 100.0) stripe_charge_in_eur,
+        ((stripe_charge_response->>'amount')::int / 100.0) as stripe_charge_in_eur,
         orders.created_at as created_at,
         (SELECT created_at FROM webhook_events WHERE order_id = orders.id AND event = 'USER_ORDER_DELIVERED' ORDER BY created_at ASC LIMIT 1) as delivery_started_at,
 
@@ -102,26 +134,52 @@ function main() {
       LEFT JOIN addresses as addresses
         ON addresses.order_id = orders.id AND
            addresses.type = 'SHIPPING'
-      ORDER BY created_at ASC
     ) t
     WHERE
       tracking_code IS NOT NULL
-    OFFSET 2
+      ORDER BY t.created_at ASC
   `)
     .tap(({ rows }) => {
       console.log(`Found ${rows.length} rows`);
 
+      const currentCache = getCache();
+
       const filteredRows = _.filter(rows, r => r.shipping_country_code === 'FI');
-      return BPromise.map(filteredRows, (row) => {
+      return BPromise.mapSeries(filteredRows, (row) => {
+        if (_.has(currentCache, row.tracking_code)) {
+          console.error(`Tracking info already in cache for ${row.tracking_code}, skipping .. `);
+          return BPromise.resolve();
+        }
+
         const shippingAddress = {
           city: 'Helsinki', //row.shipping_city,
           countryCode: row.shipping_country_code,
         };
-        console.log(shippingAddress, row.tracking_code);
 
         return getTrackingDetails(shippingAddress, row.tracking_code)
-          .then(console.log);
-      }, { concurrency: 1});
+          .then((trackingDetails) => {
+            const trackingInfo = _.merge({
+              prettyOrderId: row.pretty_order_id,
+              printmotorOrderId: row.printmotor_order_id,
+              orderCreatedAt: row.created_at,
+              trackingCode: row.tracking_code,
+              deliveryStartedAt: row.delivery_started_at,
+              stripeChargeInEur: row.stripe_charge_in_eur,
+              shippingAddress: {
+                countryCode: row.shipping_country_code,
+                postalCode: row.shipping_postal_code,
+                city: row.shipping_city,
+              },
+            }, trackingDetails);
+
+            upsertToCache(trackingInfo);
+          })
+          .then(() => {
+            const randomDelay = getRandomInt(5000, 40000);
+            console.error(`Waiting for ${randomDelay}ms ..`);
+            return BPromise.delay(randomDelay);
+          });
+      });
     })
     .catch((err) => {
       console.log('Error:', err);
@@ -131,4 +189,3 @@ function main() {
 }
 
 main();
-

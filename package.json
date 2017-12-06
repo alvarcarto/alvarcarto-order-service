@@ -57,6 +57,7 @@
     "moment-timezone": "^0.5.14",
     "nodemon": "^1.11.0",
     "osmosis": "^1.1.5",
+    "scrape-it": "^4.0.0",
     "seedrandom": "^2.4.3",
     "table": "^4.0.2",
     "yargs": "^8.0.2"
