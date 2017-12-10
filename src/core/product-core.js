@@ -5,7 +5,7 @@ const geolib = require('geolib');
 
 function getCloseCities(lat, lng) {
   const sorted = _.sortBy(cities, c => geolib.getDistance({ lat, lng }, { lat: c.lat, lng: c.lng }));
-  const citiesWithDistance = _.map(_.take(sorted, 10), c => _.merge({}, c, {
+  const citiesWithDistance = _.map(_.take(sorted, 30), c => _.merge({}, c, {
     distanceMeters: geolib.getDistance({ lat, lng }, { lat: c.lat, lng: c.lng }),
   }));
 
