@@ -1,0 +1,117 @@
+{
+  "billingAddress": {
+    "city": "Helsinki",
+    "countryCode": "FI",
+    "personName": "Brad Pitt",
+    "postalCode": "00250",
+    "streetAddress": "Mannerheimintie 27",
+    "streetAddressExtra": "B 9"
+  },
+  "cart": [
+    {
+      "autoUpdateCoordinates": true,
+      "labelHeader": "Barcelona",
+      "labelSmallHeader": "Catalonia",
+      "labelText": "41.382°N / 2.167°E",
+      "labelTextManual": null,
+      "labelsEnabled": true,
+      "mapBearing": 0,
+      "mapBounds": {
+        "northEast": {
+          "lat": 41.596342070634314,
+          "lng": 2.370559900917968
+        },
+        "southWest": {
+          "lat": 41.16792451716633,
+          "lng": 1.9627132772477298
+        }
+      },
+      "mapCenter": {
+        "lat": 41.382374,
+        "lng": 2.166612
+      },
+      "mapPitch": 0,
+      "mapStyle": "bw",
+      "mapZoom": 10.5,
+      "orientation": "portrait",
+      "posterStyle": "sharp",
+      "quantity": 2,
+      "size": "50x70cm"
+    },
+    {
+      "autoUpdateCoordinates": true,
+      "labelHeader": "香港",
+      "labelSmallHeader": "Hong Kong",
+      "labelText": "22.280°N / 114.174°E",
+      "labelTextManual": null,
+      "labelsEnabled": true,
+      "mapBearing": 0,
+      "mapBounds": {
+        "northEast": {
+          "lat": 22.517631421923777,
+          "lng": 114.51736450195314
+        },
+        "southWest": {
+          "lat": 22.041094579914038,
+          "lng": 113.83071899414064
+        }
+      },
+      "mapCenter": {
+        "lat": 22.279565983835266,
+        "lng": 114.17404174804689
+      },
+      "mapPitch": 0,
+      "mapStyle": "gray",
+      "mapZoom": 10,
+      "orientation": "landscape",
+      "posterStyle": "sans",
+      "quantity": 1,
+      "size": "30x40cm"
+    }
+  ],
+  "differentBillingAddress": true,
+  "email": "brad.pitt@gmail.com",
+  "emailSubscription": true,
+  "shippingAddress": {
+    "city": "Helsinki",
+    "contactPhone": "0501234567",
+    "countryCode": "FI",
+    "personName": "Brad Pitt",
+    "postalCode": "00100",
+    "streetAddress": "Mannerheimintie 18",
+    "streetAddressExtra": "A 129"
+  },
+  "stripeTokenResponse": {
+    "fake": true,
+    "card": {
+      "address_city": "Helsinki",
+      "address_country": "FI",
+      "address_line1": "Mannerheimintie 27",
+      "address_line1_check": "unchecked",
+      "address_line2": "B 9",
+      "address_state": null,
+      "address_zip": "00250",
+      "address_zip_check": "unchecked",
+      "brand": "Visa",
+      "country": "US",
+      "cvc_check": "unchecked",
+      "dynamic_last4": null,
+      "exp_month": 12,
+      "exp_year": 2020,
+      "funding": "credit",
+      "id": "card_1BXXdwCFQq9RQBv87ZJ7tLi1",
+      "last4": "4242",
+      "metadata": {},
+      "name": "Brad Pitt",
+      "object": "card",
+      "tokenization_method": null
+    },
+    "client_ip": "85.76.68.173",
+    "created": 1512923228,
+    "id": "tok_1BXXdwCFQq9RQBv818aCayQ8",
+    "livemode": false,
+    "object": "token",
+    "type": "card",
+    "used": false
+  }
+}

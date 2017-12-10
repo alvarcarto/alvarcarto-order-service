@@ -12,6 +12,7 @@
     "no-path-concat": "error",
     "import/no-extraneous-dependencies": ["error", {"devDependencies": true}],
     "no-use-before-define": ["error", { "functions": false }],
-    "no-underscore-dangle": "off"
+    "no-underscore-dangle": "off",
+    "arrow-body-style": "off"
   }
 }

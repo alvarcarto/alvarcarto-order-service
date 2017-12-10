@@ -10,8 +10,9 @@ const { calculateItemPrice, calculateCartPrice, getCurrencySymbol } = require('a
 const config = require('../config');
 const { getDeliveryEstimate } = require('./printmotor-core');
 
-// This can be found from Postmark web UI
-const client = new postmark.Client(config.POSTMARK_API_KEY);
+const client = config.MOCK_EMAIL || config.NODE_ENV === 'test'
+  ? null
+  : new postmark.Client(config.POSTMARK_API_KEY);
 
 const receiptHtmlTemplate = readFileSync('email-templates/receipt.inlined.html');
 const receiptTextTemplate = readFileSync('email-templates/receipt.txt');
