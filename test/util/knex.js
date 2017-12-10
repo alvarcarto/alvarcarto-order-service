@@ -22,10 +22,15 @@ function runSeeds() {
   return knex.seed.run(config);
 }
 
+function runFixture(fixture) {
+  return fixture(knex);
+}
+
 module.exports = {
   migrateAllDownAndUp,
   migrateAllDown,
   runSeeds,
+  runFixture,
   knex,
   knexConfig: config,
 };

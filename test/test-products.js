@@ -1,12 +1,12 @@
 /* eslint-env mocha */
 
 const { expect } = require('chai');
-const request = require('./util/request')();
+const request = require('./util/request');
 
 function test() {
   describe('retargeting matching', () => {
     it('in Lauttasaari should return Helsinki and Espoo as the closest', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Lauttasaari
@@ -23,7 +23,7 @@ function test() {
     });
 
     it('nearby Moscow should return Moscow as the closest because population', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // In Russia, nearby Moscow
@@ -38,7 +38,7 @@ function test() {
     });
 
     it('nearby Edmonton, Canada should return Edmonton as the closest', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Nearby Edmonton
@@ -53,7 +53,7 @@ function test() {
     });
 
     it('nearby Lisbon should return Lisbon as the closest because population', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // In Carregado, nearby Lisbon
@@ -68,7 +68,7 @@ function test() {
     });
 
     it('nearby San Francisco should return SF as the closest', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Nearby SF
@@ -83,7 +83,7 @@ function test() {
     });
 
     it('query should find results if the center is 490km from SF', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Towards West from SF
@@ -99,7 +99,7 @@ function test() {
     });
 
     it('query should find zero results if the center is >500km from SF', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Towards West from SF
@@ -113,7 +113,7 @@ function test() {
     });
 
     it('nearby Cape Town should return zero results as Africa is not in data yet', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Nearby Cape Town
@@ -127,7 +127,7 @@ function test() {
     });
 
     it('nearby Sydney should return zero results as Australia is not in data yet', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Nearby Sydney
@@ -141,7 +141,7 @@ function test() {
     });
 
     it('nearby Buenos Aires should return zero results as South America is not in data yet', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Nearby Buenos Aires
@@ -155,7 +155,7 @@ function test() {
     });
 
     it('nearby Cancun, Mexico should return zero results as Middle America is not in data yet', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Nearby Cancun
@@ -169,7 +169,7 @@ function test() {
     });
 
     it('nearby Hong Kong should return zero results as China is not in the data yet', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Nearby Hong Kong
@@ -183,7 +183,7 @@ function test() {
     });
 
     it('nearby Tokyo should return zero results as Japan is not in the data yet', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Nearby Tokyo
@@ -197,7 +197,7 @@ function test() {
     });
 
     it('nearby New Delhi should return zero results as India is not in the data yet', () => {
-      return request
+      return request()
         .get('/api/cities')
         .query({
           // Nearby New Delhi

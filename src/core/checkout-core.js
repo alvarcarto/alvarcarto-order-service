@@ -1,7 +1,9 @@
 const _ = require('lodash');
 const BPromise = require('bluebird');
+const { oneLine } = require('common-tags');
 const { calculateCartPrice } = require('alvarcarto-price-util');
 const logger = require('../util/logger')(__filename);
+const { throwStatus } = require('../util/express');
 const orderCore = require('../core/order-core');
 const emailCore = require('../core/email-core');
 const promotionCore = require('../core/promotion-core');
@@ -20,16 +22,17 @@ function executeCheckout(inputOrder) {
   return _getPromotion(inputOrder.promotionCode)
     .then((promotion) => {
       if (_.get(promotion, 'hasExpired')) {
-        const err = new Error(`Promotion code ${promotion.promotionCode} has expired`);
-        err.status = 400;
-        throw err;
+        throwStatus(400, `Promotion code ${promotion.promotionCode} has expired`);
       }
 
       // Promotion is either null or promotion object
       const price = calculateCartPrice(inputOrder.cart, { promotion });
       if (price.value >= HARD_LIMIT_MAX) {
         logger.error(`Calculated price exceeded maximum safe limit: ${price}`);
-        throw new Error(`Calculated total price was too high: ${price.label}`);
+        throwStatus(400, oneLine`
+          The total price of the order is very high.
+          Please contact help@alvarcarto.com to continue with the order.
+        `);
       }
 
       if (price.value >= ALERT_LIMIT_MAX) {
@@ -47,9 +50,7 @@ function executeCheckout(inputOrder) {
         logger.warn('alert-1h Request without stripeTokenResponse noticed');
         logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
 
-        const err = new Error('Required field stripeTokenResponse is missing.');
-        err.status = 400;
-        throw err;
+        throwStatus(400, 'Required field stripeTokenResponse is missing.');
       }
 
       if (isFreeOrder) {

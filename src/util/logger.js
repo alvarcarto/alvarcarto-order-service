@@ -30,7 +30,11 @@ function createLogger(filePath) {
       secret = String(secretObj);
     }
 
-    logger[level](plainText, `ENCRYPTED(${encryptor.encrypt(secret)})`);
+    if (_.includes(['test', 'development'], config.NODE_ENV)) {
+      logger[level](plainText, `PLAINTEXT(${secret})`);
+    } else {
+      logger[level](plainText, `ENCRYPTED(${encryptor.encrypt(secret)})`);
+    }
   };
 
   _setLevelForTransports(logger, config.LOG_LEVEL || 'info');
