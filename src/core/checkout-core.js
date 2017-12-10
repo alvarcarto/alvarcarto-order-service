@@ -12,6 +12,7 @@ const STRIPE_META_KEY_MAX_LEN = 40;
 const STRIPE_META_VALUE_MAX_LEN = 500;
 const HARD_LIMIT_MAX = 10000 * 100;
 const ALERT_LIMIT_MIN = 25 * 100;
+const ALERT_LIMIT_MAX = 500 * 100;
 
 function executeCheckout(inputOrder) {
   let order;
@@ -28,7 +29,12 @@ function executeCheckout(inputOrder) {
       const price = calculateCartPrice(inputOrder.cart, { promotion });
       if (price.value >= HARD_LIMIT_MAX) {
         logger.error(`Calculated price exceeded maximum safe limit: ${price}`);
-        throw new Error('Internal price calculation failed');
+        throw new Error(`Calculated total price was too high: ${price.label}`);
+      }
+
+      if (price.value >= ALERT_LIMIT_MAX) {
+        logger.warn(`alert-10m Calculated price was over alert limit: ${price.label}`);
+        logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
       }
 
       if (price.value <= ALERT_LIMIT_MIN) {
