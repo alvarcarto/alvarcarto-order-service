@@ -60,7 +60,7 @@ function main() {
     .tap((orders) => {
       prettyPrintOrders(orders);
 
-      console.log('\n\About to send real email to the list people above!')
+      console.log('\n\About to send real email to the people above!');
       return inquirer.prompt([{
         type: 'confirm',
         message: 'Continue?',
@@ -73,10 +73,10 @@ function main() {
             err.code = 'CANCEL';
             throw err;
           }
-        })
+        });
     })
     .then((orders) => {
-      return BPromise.map(orders, (order) => {
+      return BPromise.mapSeries(orders, (order) => {
         console.log('Sending email to', order.email, '..');
 
         const templateModel = createReceiptTemplateModel(order);
@@ -94,7 +94,7 @@ function main() {
         return;
       }
 
-      console.log('Error:', err)
+      console.log('Error:', err);
       throw err;
     })
     .finally(() => knex.destroy());
