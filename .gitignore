@@ -3,3 +3,5 @@ node_modules
 .env
 *.inlined.html
 .geocode-cache.json
+.tracking-cache.json
+package-lock.json

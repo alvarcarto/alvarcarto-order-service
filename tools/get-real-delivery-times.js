@@ -12,7 +12,7 @@ const moment = require('moment-timezone');
 const cityTimezones = require('city-timezones');
 const { knex } = require('../src/util/database');
 
-const CACHE_FILE_NAME = 'tracking-info.json';
+const CACHE_FILE_NAME = '.tracking-cache.json';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36';
 
 function getTrackingDetails(shippingAddress, trackingCode) {
