@@ -130,7 +130,6 @@ function _createStripeChargeObject(inputOrder, shippingAddress, price) {
       shippingCity: `${shippingAddress.postalCode}, ${shippingAddress.city}`,
       shippingPhone: shippingAddress.contactPhone,
     }),
-    receipt_email: inputOrder.email,
     description: `Charge for ${inputOrder.email}`,
     statement_descriptor: config.CREDIT_CARD_STATEMENT_NAME,
   };
