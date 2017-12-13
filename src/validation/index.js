@@ -1,4 +1,6 @@
+const _ = require('lodash');
 const Joi = require('joi');
+const { joiValidate } = require('./express-validation-index');
 
 const stripeCreateTokenResponseSchema = Joi.object({
   id: Joi.string().required(),
@@ -30,7 +32,8 @@ const latLngSchema = Joi.object({
   lng: Joi.number().min(-180).max(180).required(),
 });
 
-const cartItemSchema = Joi.object({
+const mapCartItemSchema = Joi.object({
+  type: Joi.string().valid(['mapPoster']).optional(),
   quantity: Joi.number().min(1).max(100000),
   mapBounds: Joi.object({
     southWest: latLngSchema.required(),
@@ -57,7 +60,40 @@ const cartItemSchema = Joi.object({
   labelText: Joi.string().min(0).max(500).required(),
 }).unknown();  // Ignore additional fields
 
-const cartSchema = Joi.array().items(cartItemSchema).min(1).max(1000);
+const physicalGiftCardCartItemSchema = Joi.object({
+  type: Joi.string().valid(['physicalGiftCard']).required(),
+  // This is temporarily limited for 1 quantity to prevent accidental errors
+  quantity: Joi.number().integer().min(1).max(1),
+});
+
+const giftCardValueCartItemSchema = Joi.object({
+  type: Joi.string().valid(['giftCardValue']).required(),
+  // This is temporarily limited for 1 quantity to prevent accidental errors
+  value: Joi.number().integer().min(1).max(5000000),
+  quantity: Joi.number().integer().min(1).max(1),
+});
+
+/*
+const cartItemSchema = Joi.alternatives().when('i.type', {
+  is: 'giftCardValue',
+  then: giftCardValueCartItemSchema,
+  otherwise: Joi.when('i.type', {
+    is: 'physicalGiftCard',
+    then: physicalGiftCardCartItemSchema,
+    otherwise: mapCartItemSchema,
+  }),
+});
+*/
+
+const cartItemSchema = Joi.alternatives()
+  .when(Joi.object({ type: 'giftCardValue' }).unknown(), { then: giftCardValueCartItemSchema })
+  .when(Joi.object({ type: 'physicalGiftCard' }).unknown(), { then: physicalGiftCardCartItemSchema })
+  .when(Joi.object({ type: 'mapPoster' }).unknown(), {
+    then: mapCartItemSchema,
+    otherwise: mapCartItemSchema,
+  });
+
+const cartTooGenericSchema = Joi.array().items(cartItemSchema).min(1).max(1000);
 
 const printmotorWebhookPayloadSchema = Joi.object({
   eventType: Joi.string().required(),
@@ -74,13 +110,57 @@ const printmotorWebhookPayloadSchema = Joi.object({
 const orderIdSchema = Joi.string().regex(/^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/);
 const promotionCodeSchema = Joi.string().regex(/^[A-Za-z0-9-]+$/);
 
+const orderSchema = Joi.object({
+  email: Joi.string().email().required(),
+  differentBillingAddress: Joi.boolean().optional(),
+  emailSubscription: Joi.boolean().optional(),
+  shippingAddress: addressSchema.required(),
+  billingAddress: addressSchema.optional(),
+  // If this is not defined, order must have a promotion code which fully
+  // covers the total price
+  stripeTokenResponse: stripeCreateTokenResponseSchema.optional(),
+  cart: cartTooGenericSchema.required(),
+  promotionCode: promotionCodeSchema.optional(),
+}).unknown();
+
+function cartItemsValidation(req) {
+  _.forEach(req.body.cart, (item) => {
+    switch (item.type) {
+      case 'giftCardValue':
+        joiValidate(item, giftCardValueCartItemSchema);
+        return;
+      case 'physicalGiftCard':
+        joiValidate(item, physicalGiftCardCartItemSchema);
+        return;
+      case 'mapPoster':
+      default:
+        joiValidate(item, mapCartItemSchema);
+    }
+  });
+}
+
+function customValidation(validationFuncs) {
+  return (req, res, next) => {
+    try {
+      _.forEach(validationFuncs, f => f(req));
+    } catch (e) {
+      return next(e);
+    }
+
+    return next();
+  };
+}
+
 module.exports = {
   addressSchema,
   cartItemSchema,
-  cartSchema,
+  cartTooGenericSchema,
   stripeCreateTokenResponseSchema,
   printmotorWebhookPayloadSchema,
   orderIdSchema,
   promotionCodeSchema,
   latLngSchema,
+  orderSchema,
+  customValidation,
+  cartItemsValidation,
 };

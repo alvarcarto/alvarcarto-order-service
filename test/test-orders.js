@@ -4,6 +4,7 @@ const { expect } = require('chai');
 const _ = require('lodash');
 const sinon = require('sinon');
 const request = require('./util/request');
+const ryanGoslingRequest = require('./resources/ryan-gosling-orders-giftcard-request.json');
 const bradPittRequest = require('./resources/brad-pitt-orders-2-maps-request.json');
 const stripeResponseJson = require('./resources/brad-pitt-orders-2-maps-stripe-response.json');
 const partialResponse = require('./resources/brad-pitt-orders-2-maps-expected-api-response-partial.json');
@@ -101,6 +102,15 @@ function test() {
       }
 
       await requestInstance.get(`/api/orders/${res.body.orderId}`).expect(429);
+    });
+
+    it('gift card order should succeed', async () => {
+      const res = await request()
+        .post('/api/orders')
+        .send(ryanGoslingRequest)
+        .expect(200);
+
+      expect(res.body).to.have.all.keys('orderId');
     });
   });
 }

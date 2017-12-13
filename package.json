@@ -23,7 +23,7 @@
     "express-validation": "^1.0.1",
     "geolib": "^2.0.22",
     "i18n-iso-countries": "^1.11.0",
-    "joi": "^9.2.0",
+    "joi": "^13.0.2",
     "juice": "^4.0.2",
     "knex": "^0.12.6",
     "lodash": "^4.17.2",

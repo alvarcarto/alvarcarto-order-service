@@ -12,14 +12,14 @@ const receipt = require('./http/receipt-http');
 const webhook = require('./http/webhook-http');
 const promotion = require('./http/promotion-http');
 const {
-  addressSchema,
-  stripeCreateTokenResponseSchema,
   printmotorWebhookPayloadSchema,
-  cartSchema,
+  orderSchema,
   orderIdSchema,
   promotionCodeSchema,
   latLngSchema,
-} = require('./util/validation');
+  customValidation,
+  cartItemsValidation,
+} = require('./validation');
 
 const validTokens = config.API_KEY.split(',');
 
@@ -58,20 +58,14 @@ function createRouter() {
   router.get('/api/health', health.getHealth);
 
   const postOrderSchema = {
-    body: {
-      email: Joi.string().email().required(),
-      differentBillingAddress: Joi.boolean().optional(),
-      emailSubscription: Joi.boolean().optional(),
-      shippingAddress: addressSchema.required(),
-      billingAddress: addressSchema.optional(),
-      // If this is not defined, order must have a promotion code which fully
-      // covers the total price
-      stripeTokenResponse: stripeCreateTokenResponseSchema.optional(),
-      cart: cartSchema.required(),
-      promotionCode: promotionCodeSchema.optional(),
-    },
+    body: orderSchema,
   };
-  router.post('/api/orders', validate(postOrderSchema), order.postOrder);
+  router.post(
+    '/api/orders',
+    validate(postOrderSchema),
+    customValidation([cartItemsValidation]),
+    order.postOrder,
+  );
 
   // Uses req.ip as the default identifier
   const apiLimiter = new RateLimit({
