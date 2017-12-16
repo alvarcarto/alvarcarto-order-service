@@ -61,8 +61,7 @@ function executeCheckout(inputOrder) {
         });
       }
 
-      const shippingAddress = inputOrder.shippingAddress;
-      stripeCharge = _createStripeChargeObject(inputOrder, shippingAddress, price);
+      stripeCharge = _createStripeChargeObject(inputOrder, price);
 
       return BPromise.props({
         price,
@@ -108,30 +107,44 @@ function executeCheckout(inputOrder) {
     });
 }
 
-function _createStripeChargeObject(inputOrder, shippingAddress, price) {
+function _createStripeChargeObject(inputOrder, price) {
   return {
     amount: price.value,
     currency: price.currency.toLowerCase(),
     source: inputOrder.stripeTokenResponse.id,
-    metadata: fixStripeMeta({
-      posterQuantities: _.map(inputOrder.cart, item => `${item.quantity}x`).join('; '),
-      sizes: _.map(inputOrder.cart, item => item.size).join('; '),
-      orientations: _.map(inputOrder.cart, item => item.orientation).join('; '),
-      mapStyles: _.map(inputOrder.cart, item => item.mapStyle).join('; '),
-      posterStyles: _.map(inputOrder.cart, item => item.posterStyle).join('; '),
-      headers: _.map(inputOrder.cart, item => item.labelHeader).join('; '),
-      smallHeaders: _.map(inputOrder.cart, item => item.labelSmallHeader).join('; '),
-      texts: _.map(inputOrder.cart, item => item.labelText).join('; '),
-      coords: _.map(inputOrder.cart, item => mapBoundsToStr(item.mapBounds)).join('; '),
-      shippingName: shippingAddress.personName,
-      shippingAddress: shippingAddress.streetAddress,
-      shippingAddressExtra: shippingAddress.streetAddressExtra,
-      shippingCountry: `${shippingAddress.countryCode}, state: ${shippingAddress.state}`,
-      shippingCity: `${shippingAddress.postalCode}, ${shippingAddress.city}`,
-      shippingPhone: shippingAddress.contactPhone,
-    }),
+    metadata: _createStripeMetaData(inputOrder),
     description: `Charge for ${inputOrder.email}`,
     statement_descriptor: config.CREDIT_CARD_STATEMENT_NAME,
+  };
+}
+
+function _createStripeMetaData(inputOrder) {
+  const { shippingAddress } = inputOrder;
+  const meta = {};
+  if (_.isPlainObject(shippingAddress)) {
+    meta.shippingName = shippingAddress.personName;
+    meta.shippingAddress = shippingAddress.streetAddress;
+    meta.shippingAddressExtra = shippingAddress.streetAddressExtra;
+    meta.shippingCountry = `${shippingAddress.countryCode}, state: ${shippingAddress.state}`;
+    meta.shippingCity = `${shippingAddress.postalCode}, ${shippingAddress.city}`;
+    meta.shippingPhone = shippingAddress.contactPhone;
+  }
+
+  return trimStripeMeta(_.merge(meta, _createCartMetas(inputOrder.cart)));
+}
+
+function _createCartMetas(cart) {
+  return {
+    itemTypes: _.map(cart, item => _.get(item, 'type')).join('; '),
+    posterQuantities: _.map(cart, item => `${_.get(item, 'quantity')}x`).join('; '),
+    sizes: _.map(cart, item => _.get(item, 'size')).join('; '),
+    orientations: _.map(cart, item => _.get(item, 'orientation')).join('; '),
+    mapStyles: _.map(cart, item => _.get(item, 'mapStyle')).join('; '),
+    posterStyles: _.map(cart, item => _.get(item, 'posterStyle')).join('; '),
+    headers: _.map(cart, item => _.get(item, 'labelHeader')).join('; '),
+    smallHeaders: _.map(cart, item => _.get(item, 'labelSmallHeader')).join('; '),
+    texts: _.map(cart, item => _.get(item, 'labelText')).join('; '),
+    coords: _.map(cart, item => mapBoundsToStr(_.get(item, 'mapBounds'))).join('; '),
   };
 }
 
@@ -144,12 +157,16 @@ function _getPromotion(code) {
 }
 
 function mapBoundsToStr(bounds) {
+  if (!bounds) {
+    return '';
+  }
+
   let coordStr = `${bounds.southWest.lat} ${bounds.southWest.lng}`;
   coordStr += `, ${bounds.northEast.lat} ${bounds.northEast.lng}`;
   return coordStr;
 }
 
-function fixStripeMeta(obj) {
+function trimStripeMeta(obj) {
   const newObj = {};
   _.each(obj, (val, key) => {
     if (!val) {

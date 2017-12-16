@@ -25,7 +25,12 @@ function createOrder(order) {
         return _createOrder(fullOrder, { trx });
       })
       .tap(orderRow => _createOrderedPosters(orderRow.id, order.cart, { trx }))
+      .tap(orderRow => _createOrderedGiftItems(orderRow.id, order.cart, { trx }))
       .tap((orderRow) => {
+        if (!order.shippingAddress) {
+          return BPromise.resolve();
+        }
+
         const address = _.merge({}, order.shippingAddress, {
           type: ADDRESS_TYPE.SHIPPING,
         });
@@ -81,13 +86,20 @@ function getOrder(orderId, opts = {}) {
         return fullOrder;
       }
 
-      return {
+      const partialOrder = {
         orderId: fullOrder.orderId,
         cart: fullOrder.cart,
         promotion: fullOrder.promotion,
-        shippingAddress: _.pick(fullOrder.shippingAddress, ['city', 'countryCode']),
         createdAt: fullOrder.createdAt,
       };
+      if (fullOrder.shippingAddress) {
+        partialOrder.shippingAddress = _.pick(fullOrder.shippingAddress, [
+          'city',
+          'countryCode',
+        ]);
+      }
+
+      return _.omitBy(partialOrder, _.isNil);
     });
 }
 
@@ -112,10 +124,10 @@ function selectOrders(_opts = {}) {
 
   return trx.raw(`
     SELECT
+      orders.pretty_order_id as pretty_order_id,
       orders.created_at as created_at,
       orders.customer_email as customer_email,
       orders.email_subscription as email_subscription,
-      orders.pretty_order_id as pretty_order_id,
       orders.promotion_code as promotion_code,
       orders.stripe_charge_response as stripe_charge_response,
       addresses.person_name as shipping_person_name,
@@ -126,30 +138,66 @@ function selectOrders(_opts = {}) {
       addresses.country_code as shipping_country_code,
       addresses.state as shipping_state,
       addresses.contact_phone as shipping_contact_phone,
-      ordered_posters.quantity as quantity,
-      ordered_posters.map_south_west_lat as map_south_west_lat,
-      ordered_posters.map_south_west_lng as map_south_west_lng,
-      ordered_posters.map_north_east_lat as map_north_east_lat,
-      ordered_posters.map_north_east_lng as map_north_east_lng,
-      ordered_posters.map_style as map_style,
-      ordered_posters.poster_style as poster_style,
-      ordered_posters.map_bearing as map_bearing,
-      ordered_posters.map_pitch as map_pitch,
-      ordered_posters.size as size,
-      ordered_posters.orientation as orientation,
-      ordered_posters.labels_enabled as labels_enabled,
-      ordered_posters.label_header as label_header,
-      ordered_posters.label_small_header as label_small_header,
-      ordered_posters.label_text as label_text,
-      ordered_posters.map_center_lat as map_center_lat,
-      ordered_posters.map_center_lng as map_center_lng,
-      ordered_posters.map_zoom as map_zoom
-    FROM orders
-    LEFT JOIN ordered_posters as ordered_posters
-      ON ordered_posters.order_id = orders.id
+      *
+    FROM (
+      SELECT
+        ordered_posters.order_id as order_id,
+        ordered_posters.id as ordered_poster_id,
+        ordered_posters.quantity as quantity,
+        ordered_posters.map_south_west_lat as map_south_west_lat,
+        ordered_posters.map_south_west_lng as map_south_west_lng,
+        ordered_posters.map_north_east_lat as map_north_east_lat,
+        ordered_posters.map_north_east_lng as map_north_east_lng,
+        ordered_posters.map_style as map_style,
+        ordered_posters.poster_style as poster_style,
+        ordered_posters.map_bearing as map_bearing,
+        ordered_posters.map_pitch as map_pitch,
+        ordered_posters.size as size,
+        ordered_posters.orientation as orientation,
+        ordered_posters.labels_enabled as labels_enabled,
+        ordered_posters.label_header as label_header,
+        ordered_posters.label_small_header as label_small_header,
+        ordered_posters.label_text as label_text,
+        ordered_posters.map_center_lat as map_center_lat,
+        ordered_posters.map_center_lng as map_center_lng,
+        ordered_posters.map_zoom as map_zoom,
+        null as gift_item_id,
+        null as gift_item_type,
+        null as gift_item_quantity,
+        null as gift_item_value
+      FROM ordered_posters
+      UNION ALL
+      SELECT
+        ordered_gift_items.order_id as order_id,
+        null as ordered_poster_id,
+        null as quantity,
+        null as map_south_west_lat,
+        null as map_south_west_lng,
+        null as map_north_east_lat,
+        null as map_north_east_lng,
+        null as map_style,
+        null as poster_style,
+        null as map_bearing,
+        null as map_pitch,
+        null as size,
+        null as orientation,
+        null as labels_enabled,
+        null as label_header,
+        null as label_small_header,
+        null as label_text,
+        null as map_center_lat,
+        null as map_center_lng,
+        null as map_zoom,
+        ordered_gift_items.id as gift_item_id,
+        ordered_gift_items.type as gift_item_type,
+        ordered_gift_items.quantity as gift_item_quantity,
+        ordered_gift_items.value as gift_item_value
+      FROM ordered_gift_items
+    ) sub_query
+    LEFT JOIN orders as orders
+      ON orders.id = sub_query.order_id
     LEFT JOIN addresses as addresses
-      ON addresses.order_id = orders.id AND
-         addresses.type = 'SHIPPING'
+      ON addresses.order_id = orders.id AND addresses.type = 'SHIPPING'
     ${opts.addQuery}
   `, opts.params)
     .then((result) => {
@@ -186,36 +234,58 @@ function markOrderSentToProduction(orderId, printmotorOrderId, response, request
 
 // Each cart item is its own row
 function _rowsToOrderObject(rows) {
-  const cart = _.map(rows, row => ({
-    quantity: row.quantity,
-    mapCenter: { lat: row.map_center_lat, lng: row.map_center_lng },
-    mapBounds: {
-      southWest: { lat: row.map_south_west_lat, lng: row.map_south_west_lng },
-      northEast: { lat: row.map_north_east_lat, lng: row.map_north_east_lng },
-    },
-    mapZoom: row.map_zoom,
-    mapStyle: row.map_style,
-    posterStyle: row.poster_style,
-    mapPitch: row.map_pitch,
-    mapBearing: row.map_bearing,
-    orientation: row.orientation,
-    size: row.size,
-    labelsEnabled: row.labels_enabled,
-    labelHeader: row.label_header,
-    labelSmallHeader: row.label_small_header,
-    labelText: row.label_text,
-  }));
+  const cart = _.map(rows, (row) => {
+    if (row.gift_item_id) {
+      return _.omitBy({
+        id: row.gift_item_id,
+        type: row.gift_item_type,
+        quantity: row.gift_item_quantity,
+        value: row.gift_item_value,
+      }, _.isNil);
+    }
+
+    return {
+      id: row.ordered_poster_id,
+      type: 'mapPoster',
+      quantity: row.quantity,
+      mapCenter: { lat: row.map_center_lat, lng: row.map_center_lng },
+      mapBounds: {
+        southWest: { lat: row.map_south_west_lat, lng: row.map_south_west_lng },
+        northEast: { lat: row.map_north_east_lat, lng: row.map_north_east_lng },
+      },
+      mapZoom: row.map_zoom,
+      mapStyle: row.map_style,
+      posterStyle: row.poster_style,
+      mapPitch: row.map_pitch,
+      mapBearing: row.map_bearing,
+      orientation: row.orientation,
+      size: row.size,
+      labelsEnabled: row.labels_enabled,
+      labelHeader: row.label_header,
+      labelSmallHeader: row.label_small_header,
+      labelText: row.label_text,
+    };
+  });
+
+  // Sort cart items so that they are in the same order as they were saved in
+  // inside one type
+  const sortedCart = _.orderBy(cart, ['type', 'id']);
 
   // All rows should contain same info for all rows, so we just pick first
   const firstRow = rows[0];
-  return {
+  const order = {
     email: firstRow.customer_email,
     emailSubscription: firstRow.email_subscription,
     stripeChargeResponse: firstRow.stripe_charge_response,
     orderId: firstRow.pretty_order_id,
     promotionCode: firstRow.promotion_code,
-    cart,
-    shippingAddress: {
+    cart: _.map(sortedCart, i => _.omit(i, ['id'])),
+    createdAt: moment(firstRow.created_at),
+  };
+
+  if (firstRow.shipping_city) {
+    // Shipping address is missing if only digital card was ordered
+    order.shippingAddress = {
       personName: firstRow.shipping_person_name,
       streetAddress: firstRow.shipping_street_address,
       streetAddressExtra: firstRow.shipping_street_address_extra,
@@ -224,9 +294,10 @@ function _rowsToOrderObject(rows) {
       countryCode: firstRow.shipping_country_code,
       state: firstRow.shipping_state,
       contactPhone: firstRow.shipping_contact_phone,
-    },
-    createdAt: moment(firstRow.created_at),
-  };
+    };
+  }
+
+  return order;
 }
 
 // Yes, not good.. but knex doesn't provide better options.
@@ -259,6 +330,7 @@ function _createOrder(order, opts = {}) {
   const trx = opts.trx || knex;
 
   // https://support.stripe.com/questions/what-information-can-i-safely-store-about-my-users-payment-information
+  // https://stripe.com/docs/security#out-of-scope-card-data
   //  The only sensitive data that you want to avoid handling is your customers'
   //  credit card number and CVC; other than that, you’re welcome to store
   //  any other information on your local machines.
@@ -302,8 +374,8 @@ function _createAddress(orderId, address, opts = {}) {
 function _createOrderedPosters(orderId, cart, opts = {}) {
   const trx = opts.trx || knex;
 
-  // TODO: Insert unit price too for book keeping
-  return BPromise.map(cart, (item) => {
+  const posterItems = _.filter(cart, item => _.isNil(item.type) || item.type === 'mapPoster');
+  return BPromise.mapSeries(posterItems, (item) => {
     const unitPrice = calculateItemPrice(item, { onlyUnitPrice: true });
 
     return trx('ordered_posters')
@@ -332,8 +404,27 @@ function _createOrderedPosters(orderId, cart, opts = {}) {
       })
       .returning('*')
       .then(rows => rows[0]);
-  }, {
-    concurrency: 1,
+  });
+}
+
+function _createOrderedGiftItems(orderId, cart, opts = {}) {
+  const trx = opts.trx || knex;
+
+  const giftItems = _.filter(cart, item => _.includes(['giftCardValue', 'physicalGiftCard'], item.type));
+  return BPromise.mapSeries(giftItems, (item) => {
+    const unitPrice = calculateItemPrice(item, { onlyUnitPrice: true });
+
+    return trx('ordered_gift_items')
+      .insert({
+        order_id: orderId,
+        quantity: item.quantity,
+        type: item.type,
+        value: item.value,
+        customer_unit_price_value: unitPrice.value,
+        customer_unit_price_currency: unitPrice.currency,
+      })
+      .returning('*')
+      .then(rows => rows[0]);
   });
 }
 

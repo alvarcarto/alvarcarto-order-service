@@ -17,8 +17,6 @@ const {
   orderIdSchema,
   promotionCodeSchema,
   latLngSchema,
-  customValidation,
-  cartItemsValidation,
 } = require('./validation');
 
 const validTokens = config.API_KEY.split(',');
@@ -63,7 +61,6 @@ function createRouter() {
   router.post(
     '/api/orders',
     validate(postOrderSchema),
-    customValidation([cartItemsValidation]),
     order.postOrder,
   );
 

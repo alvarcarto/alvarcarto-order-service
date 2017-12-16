@@ -1,0 +1,55 @@
+{
+  "cart": [
+    {
+      "type": "giftCardValue",
+      "quantity": 1,
+      "value": 4900
+    },
+    {
+      "type": "giftCardValue",
+      "quantity": 2,
+      "value": 6900
+    },
+    {
+      "type": "mapPoster",
+      "quantity": 2,
+      "mapCenter": {
+        "lat": 41.3824,
+        "lng": 2.16661
+      },
+      "mapBounds": {
+        "southWest": {
+          "lat": 41.1679,
+          "lng": 1.96271
+        },
+        "northEast": {
+          "lat": 41.5963,
+          "lng": 2.37056
+        }
+      },
+      "mapZoom": 10.5,
+      "mapStyle": "bw",
+      "posterStyle": "sharp",
+      "mapPitch": 0,
+      "mapBearing": 0,
+      "orientation": "portrait",
+      "size": "50x70cm",
+      "labelsEnabled": true,
+      "labelHeader": "Barcelona",
+      "labelSmallHeader": "Catalonia",
+      "labelText": "41.382°N / 2.167°E"
+    },
+    {
+      "type": "physicalGiftCard",
+      "quantity": 1
+    },
+    {
+      "type": "physicalGiftCard",
+      "quantity": 2
+    }
+  ],
+  "shippingAddress": {
+    "city": "Helsinki",
+    "countryCode": "FI"
+  }
+}

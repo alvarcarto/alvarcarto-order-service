@@ -39,4 +39,14 @@ module.exports = knex =>
     usage_count: 0,
     max_allowed_usage_count: null,
     description: 'Test -10%',
+  }, {
+    type: 'FIXED',
+    value: 500,
+    promotion_code: 'ONETIME',
+    label: '-5€',
+    currency: 'EUR',
+    expires_at: null,
+    usage_count: 0,
+    max_allowed_usage_count: 1,
+    description: 'Test -5€',
   }]);

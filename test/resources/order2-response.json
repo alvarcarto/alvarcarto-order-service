@@ -1,0 +1,17 @@
+{
+  "cart": [
+    {
+      "type": "giftCardValue",
+      "quantity": 1,
+      "value": 4900
+    },
+    {
+      "type": "physicalGiftCard",
+      "quantity": 1
+    }
+  ],
+  "shippingAddress": {
+    "city": "Helsinki",
+    "countryCode": "FI"
+  }
+}
