@@ -30,7 +30,8 @@ const latLngSchema = Joi.object({
   lng: Joi.number().min(-180).max(180).required(),
 });
 
-const cartItemSchema = Joi.object({
+const mapCartItemSchema = Joi.object({
+  type: Joi.string().valid(['mapPoster']).optional(),
   quantity: Joi.number().min(1).max(100000),
   mapBounds: Joi.object({
     southWest: latLngSchema.required(),
@@ -57,6 +58,30 @@ const cartItemSchema = Joi.object({
   labelText: Joi.string().min(0).max(500).required(),
 }).unknown();  // Ignore additional fields
 
+const physicalGiftCardCartItemSchema = Joi.object({
+  type: Joi.string().valid(['physicalGiftCard']).required(),
+  quantity: Joi.number().integer().min(1).max(1000),
+});
+
+const giftCardValueCartItemSchema = Joi.object({
+  type: Joi.string().valid(['giftCardValue']).required(),
+  value: Joi.number().integer().min(1).max(5000000),
+  quantity: Joi.number().integer().min(1).max(1000),
+});
+
+const cartItemSchema = Joi.alternatives()
+  .when(Joi.object({ type: Joi.string().valid('giftCardValue').required() }).unknown().required(), {
+    then: giftCardValueCartItemSchema,
+  })
+  .when(Joi.object({ type: Joi.string().valid('physicalGiftCard').required() }).unknown().required(), {
+    then: physicalGiftCardCartItemSchema,
+  })
+  .when(Joi.object({ type: Joi.string().valid('mapPoster').required() }).unknown().required(), {
+    then: mapCartItemSchema,
+  })
+  // Default to mapPoster type
+  .when(Joi.any(), { then: mapCartItemSchema });
+
 const cartSchema = Joi.array().items(cartItemSchema).min(1).max(1000);
 
 const printmotorWebhookPayloadSchema = Joi.object({
@@ -74,6 +99,19 @@ const printmotorWebhookPayloadSchema = Joi.object({
 const orderIdSchema = Joi.string().regex(/^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/);
 const promotionCodeSchema = Joi.string().regex(/^[A-Za-z0-9-]+$/);
 
+const orderSchema = Joi.object({
+  email: Joi.string().email().required(),
+  differentBillingAddress: Joi.boolean().optional(),
+  emailSubscription: Joi.boolean().optional(),
+  shippingAddress: addressSchema.optional(),
+  billingAddress: addressSchema.optional(),
+  // If this is not defined, order must have a promotion code which fully
+  // covers the total price
+  stripeTokenResponse: stripeCreateTokenResponseSchema.optional(),
+  cart: cartSchema.required(),
+  promotionCode: promotionCodeSchema.optional(),
+}).unknown();
+
 module.exports = {
   addressSchema,
   cartItemSchema,
@@ -83,4 +121,5 @@ module.exports = {
   orderIdSchema,
   promotionCodeSchema,
   latLngSchema,
+  orderSchema,
 };

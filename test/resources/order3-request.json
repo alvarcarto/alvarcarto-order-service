@@ -1,0 +1,106 @@
+{
+  "billingAddress": {
+    "city": "Helsinki",
+    "countryCode": "FI",
+    "personName": "Ryan Gosling",
+    "postalCode": "00250",
+    "streetAddress": "Mannerheimintie 27",
+    "streetAddressExtra": "B 9"
+  },
+  "cart": [
+    {
+      "type": "physicalGiftCard",
+      "quantity": 1
+    },
+    {
+      "type": "physicalGiftCard",
+      "quantity": 2
+    },
+    {
+      "type": "giftCardValue",
+      "quantity": 1,
+      "value": 4900
+    },
+    {
+      "type": "giftCardValue",
+      "quantity": 2,
+      "value": 6900
+    },
+    {
+
+      "autoUpdateCoordinates": true,
+      "labelHeader": "Barcelona",
+      "labelSmallHeader": "Catalonia",
+      "labelText": "41.382°N / 2.167°E",
+      "labelTextManual": null,
+      "labelsEnabled": true,
+      "mapBearing": 0,
+      "mapBounds": {
+        "northEast": {
+          "lat": 41.596342070634314,
+          "lng": 2.370559900917968
+        },
+        "southWest": {
+          "lat": 41.16792451716633,
+          "lng": 1.9627132772477298
+        }
+      },
+      "mapCenter": {
+        "lat": 41.382374,
+        "lng": 2.166612
+      },
+      "mapPitch": 0,
+      "mapStyle": "bw",
+      "mapZoom": 10.5,
+      "orientation": "portrait",
+      "posterStyle": "sharp",
+      "quantity": 2,
+      "size": "50x70cm"
+    }
+  ],
+  "differentBillingAddress": true,
+  "email": "ryan.gosling@gmail.com",
+  "emailSubscription": true,
+  "shippingAddress": {
+    "city": "Helsinki",
+    "contactPhone": "0501234567",
+    "countryCode": "FI",
+    "personName": "Ryan Gosling",
+    "postalCode": "00100",
+    "streetAddress": "Mannerheimintie 18",
+    "streetAddressExtra": "A 129"
+  },
+  "stripeTokenResponse": {
+    "__THIS_OBJECT_IS_FAKED_FOR_TESTING_PURPOSES": true,
+    "card": {
+      "address_city": "Helsinki",
+      "address_country": "FI",
+      "address_line1": "Mannerheimintie 27",
+      "address_line1_check": "unchecked",
+      "address_line2": "B 9",
+      "address_state": null,
+      "address_zip": "00250",
+      "address_zip_check": "unchecked",
+      "brand": "Visa",
+      "country": "US",
+      "cvc_check": "unchecked",
+      "dynamic_last4": null,
+      "exp_month": 12,
+      "exp_year": 2020,
+      "funding": "credit",
+      "id": "card_1BXXdwCFQq9RQBv87ZJ7tLi1",
+      "last4": "4242",
+      "metadata": {},
+      "name": "Ryan Gosling",
+      "object": "card",
+      "tokenization_method": null
+    },
+    "client_ip": "85.76.68.173",
+    "created": 1512923228,
+    "id": "tok_1BXXdwCFQq9RQBv818aCayQ8",
+    "livemode": false,
+    "object": "token",
+    "type": "card",
+    "used": false
+  }
+}

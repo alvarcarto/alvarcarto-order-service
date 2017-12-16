@@ -2,19 +2,19 @@
   "billingAddress": {
     "city": "Helsinki",
     "countryCode": "FI",
-    "personName": "Brad Pitt",
-    "postalCode": "00250",
-    "streetAddress": "Mannerheimintie 27",
+    "personName": "Bad Boi",
+    "postalCode": "00101",
+    "streetAddress": "Sörnäisten rantatie 27",
     "streetAddressExtra": "B 9"
   },
   "cart": [
     {
       "autoUpdateCoordinates": true,
-      "labelHeader": "Barcelona",
-      "labelSmallHeader": "Catalonia",
-      "labelText": "41.382°N / 2.167°E",
+      "labelHeader": "",
+      "labelSmallHeader": "",
+      "labelText": "",
       "labelTextManual": null,
-      "labelsEnabled": true,
+      "labelsEnabled": false,
       "mapBearing": 0,
       "mapBounds": {
         "northEast": {
@@ -35,50 +35,20 @@
       "mapZoom": 10.5,
       "orientation": "portrait",
       "posterStyle": "sharp",
-      "quantity": 2,
-      "size": "50x70cm"
-    },
-    {
-      "autoUpdateCoordinates": true,
-      "labelHeader": "香港",
-      "labelSmallHeader": "Hong Kong",
-      "labelText": "22.280°N / 114.174°E",
-      "labelTextManual": null,
-      "labelsEnabled": true,
-      "mapBearing": 0,
-      "mapBounds": {
-        "northEast": {
-          "lat": 22.517631421923777,
-          "lng": 114.51736450195314
-        },
-        "southWest": {
-          "lat": 22.041094579914038,
-          "lng": 113.83071899414064
-        }
-      },
-      "mapCenter": {
-        "lat": 22.279565983835266,
-        "lng": 114.17404174804689
-      },
-      "mapPitch": 0,
-      "mapStyle": "gray",
-      "mapZoom": 10,
-      "orientation": "landscape",
-      "posterStyle": "sans",
       "quantity": 1,
-      "size": "30x40cm"
+      "size": "50x70cm"
     }
   ],
   "differentBillingAddress": true,
-  "email": "brad.pitt@gmail.com",
+  "email": "ryan.gosling@gmail.com",
   "emailSubscription": true,
   "shippingAddress": {
     "city": "Helsinki",
     "contactPhone": "0501234567",
     "countryCode": "FI",
-    "personName": "Brad Pitt",
-    "postalCode": "00100",
-    "streetAddress": "Mannerheimintie 18",
+    "personName": "Bad Boi",
+    "postalCode": "00530",
+    "streetAddress": "Sörnäisten rantatie 18",
     "streetAddressExtra": "A 129"
   },
   "stripeTokenResponse": {
@@ -86,11 +56,11 @@
     "card": {
       "address_city": "Helsinki",
       "address_country": "FI",
-      "address_line1": "Mannerheimintie 27",
+      "address_line1": "Sörnäisten rantatie 27",
       "address_line1_check": "unchecked",
       "address_line2": "B 9",
       "address_state": null,
-      "address_zip": "00250",
+      "address_zip": "00101",
       "address_zip_check": "unchecked",
       "brand": "Visa",
       "country": "US",
@@ -102,7 +72,7 @@
       "id": "card_1BXXdwCFQq9RQBv87ZJ7tLi1",
       "last4": "4242",
       "metadata": {},
-      "name": "Brad Pitt",
+      "name": "Bad Boi",
       "object": "card",
       "tokenization_method": null
     },

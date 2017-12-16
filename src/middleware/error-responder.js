@@ -41,11 +41,11 @@ function createErrorResponder(opts) {
 
     const isPrettyValidationErr = _.has(err, 'errors');
     const body = isPrettyValidationErr
-      ? JSON.stringify(err)
-      : { status, statusText: httpMessage, messages: [message] };
+      ? err
+      : { status, statusText: httpMessage, errors: [{ messages: [message] }] };
 
     res.status(status);
-    res.send(body);
+    res.json(body);
   };
 }
 

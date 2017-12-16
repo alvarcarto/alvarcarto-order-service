@@ -6,6 +6,7 @@ const appConfig = require('../src/config');
 const testHealth = require('./test-health');
 const testProducts = require('./test-products');
 const testOrders = require('./test-orders');
+const testBadOrders = require('./test-bad-orders');
 const testPromotions = require('./test-promotions');
 
 if (appConfig.NODE_ENV !== 'test') {
@@ -20,5 +21,6 @@ describe('Alvar Carto Order API', () => {
   testHealth();
   testProducts();
   testOrders();
+  testBadOrders();
   testPromotions();
 });
