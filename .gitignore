@@ -1,6 +1,7 @@
 *.mbtiles
 node_modules
 .env
+.env.test
 *.inlined.html
 .geocode-cache.json
 .tracking-cache.json
