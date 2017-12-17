@@ -32,7 +32,7 @@ const data = {
 
 function test() {
   describe('Printmotor integration', function() {
-    this.timeout(80000);
+    this.timeout(120000);
     this.slow(30000);
 
     before(() => {

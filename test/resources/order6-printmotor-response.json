@@ -6,5 +6,5 @@
   "orderNumber": 1,
   "postalClass": "EXPRESS",
   "processingStatusDescription": "Received, waiting for production",
-  "productionClass": "EXPRESS"
+  "productionClass": "HIGH"
 }

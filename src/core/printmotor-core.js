@@ -202,7 +202,7 @@ function _getPostalClass(internalOrder) {
 
 function _getProductionClass(internalOrder) {
   if (_.get(internalOrder, 'promotion.promotionCode') === 'EXPRESS') {
-    return 'EXPRESS';
+    return 'HIGH';
   }
 
   return 'REGULAR';

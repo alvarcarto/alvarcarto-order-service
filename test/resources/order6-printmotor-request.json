@@ -20,7 +20,7 @@
     "phone": "0501234567"
   },
   "postalClass": "EXPRESS",
-  "productionClass": "EXPRESS",
+  "productionClass": "HIGH",
   "products": [
     {
       "amount": 2,
