@@ -70,4 +70,5 @@ function _createS3Url(orderId, itemId) {
 
 module.exports = {
   uploadPoster,
+  s3,
 };

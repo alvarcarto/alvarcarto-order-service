@@ -49,4 +49,14 @@ module.exports = knex =>
     usage_count: 0,
     max_allowed_usage_count: 1,
     description: 'Test -5€',
+  }, {
+    type: 'FIXED',
+    value: -1500,
+    promotion_code: 'EXPRESS',
+    label: '15€',
+    currency: 'EUR',
+    expires_at: null,
+    usage_count: 0,
+    max_allowed_usage_count: null,
+    description: 'Express Shipping',
   }]);

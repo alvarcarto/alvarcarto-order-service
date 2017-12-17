@@ -213,7 +213,13 @@ function selectOrders(_opts = {}) {
       const uniqueOrderIds = _.uniq(_.keys(grouped));
       // Make sure the order of returned rows is not changed
       return _.map(uniqueOrderIds, orderId => orders[orderId]);
-    });
+    })
+    .then(orders =>
+      BPromise.mapSeries(orders, (order) => {
+        return promotionCore.getPromotion(order.promotionCode)
+          .then(promotion => _.merge({}, order, { promotion }));
+      })
+    );
 }
 
 function markOrderSentToProduction(orderId, printmotorOrderId, response, requestParams) {

@@ -1,10 +1,11 @@
+const BPromise = require('bluebird');
 const _ = require('lodash');
 const moment = require('moment');
 const { knex } = require('../util/database');
 
 function getPromotion(code) {
   if (!code) {
-    return null;
+    return BPromise.resolve(null);
   }
 
   return knex.raw(`

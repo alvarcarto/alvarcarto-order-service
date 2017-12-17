@@ -8,6 +8,7 @@ const testProducts = require('./test-products');
 const testOrders = require('./test-orders');
 const testBadOrders = require('./test-bad-orders');
 const testPromotions = require('./test-promotions');
+const testPrintmotor = require('./test-printmotor');
 
 if (appConfig.NODE_ENV !== 'test') {
   throw new Error(`Invalid NODE_ENV! Should be 'test', but found '${appConfig.NODE_ENV}'`);
@@ -23,4 +24,5 @@ describe('Alvar Carto Order API', () => {
   testOrders();
   testBadOrders();
   testPromotions();
+  testPrintmotor();
 });

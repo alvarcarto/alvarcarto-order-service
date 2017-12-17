@@ -6,6 +6,7 @@ const awsConfig = {
   accessKeyId: config.AWS_ACCESS_KEY_ID,
   secretAccessKey: config.AWS_SECRET_ACCESS_KEY,
   region: config.AWS_REGION,
+  sslEnabled: true,
 };
 if (config.AWS_DEBUG) {
   awsConfig.logger = process.stdout;

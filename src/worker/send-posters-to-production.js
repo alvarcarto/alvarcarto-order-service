@@ -5,7 +5,7 @@ const orderCore = require('../core/order-core');
 const printmotorCore = require('../core/printmotor-core');
 const { knex } = require('../util/database');
 
-function main() {
+function main(opts = {}) {
   logger.info('Checking for new orders to send to production ..');
 
   return orderCore.getOrdersReadyToProduction()
@@ -32,7 +32,10 @@ function main() {
           .catch((err) => {
             logSingleProcessError(err, order);
             logger.info('Continuing with next order ..');
-            // Ignore error for single order creation
+            if (opts.throwOnError) {
+              throw err;
+            }
+            // Otherwis ignore error for single order creation
           });
       });
     })

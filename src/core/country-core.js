@@ -8,6 +8,10 @@ const EU_COUNTRIES = [
 ];
 
 function isEuCountry(countryCode) {
+  if (!countryCode) {
+    return false;
+  }
+
   return _.includes(EU_COUNTRIES, countryCode.toUpperCase());
 }
 

@@ -1,0 +1,40 @@
+{
+  "address": {
+    "address": "Mannerheimintie 18",
+    "address2": "A 129",
+    "countryIso2": "FI",
+    "name": "Brad Pitt",
+    "postalArea": "Helsinki",
+    "postalCode": "00100",
+    "recipientName": "Brad Pitt",
+    "recipientPhone": "0501234567",
+    "state": ""
+  },
+  "meta": {
+    "reference": "DYNAMICALLY_GENERATED_IN_TESTS"
+  },
+  "orderer": {
+    "emailAddress": "brad.pitt@gmail.com",
+    "firstName": "Brad",
+    "lastName": "Pitt",
+    "phone": "0501234567"
+  },
+  "postalClass": "PRIORITY",
+  "productionClass": "REGULAR",
+  "products": [
+    {
+      "amount": 2,
+      "customization": [
+        {
+          "fieldName": "image",
+          "value": "https://fake-s3-url.com/posters/order-item0.png"
+        }
+      ],
+      "endUserPrice": {
+        "currencyIso4217": "EUR",
+        "priceValue": "39.00"
+      },
+      "layoutName": "api-poster-30x40"
+    }
+  ]
+}

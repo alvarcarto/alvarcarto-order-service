@@ -126,6 +126,8 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
     products: _.map(internalOrder.cart, (item, i) =>
       _internalCartItemToPrintmotorProduct(item, imageUrls[i])
     ),
+    postalClass: _getPostalClass(internalOrder),
+    productionClass: _getProductionClass(internalOrder),
   };
 }
 
@@ -142,7 +144,7 @@ function _internalCartItemToPrintmotorProduct(item, imageUrl) {
     ],
     endUserPrice: {
       currencyIso4217: price.currency.toUpperCase(),
-      priceValue: (price.value / 100.0).toFixed(2),
+      priceValue: price.humanValue,
     },
   };
 }
@@ -190,7 +192,24 @@ function _getPortraitLayoutName(size) {
   throw new Error(`Unknown size: ${size}`);
 }
 
+function _getPostalClass(internalOrder) {
+  if (_.get(internalOrder, 'promotion.promotionCode') === 'EXPRESS') {
+    return 'EXPRESS';
+  }
+
+  return 'PRIORITY';
+}
+
+function _getProductionClass(internalOrder) {
+  if (_.get(internalOrder, 'promotion.promotionCode') === 'EXPRESS') {
+    return 'EXPRESS';
+  }
+
+  return 'REGULAR';
+}
+
 module.exports = {
   createOrder,
   getDeliveryEstimate,
+  BASE_URL,
 };

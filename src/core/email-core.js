@@ -19,12 +19,6 @@ const receiptTextTemplate = readFileSync('email-templates/receipt.txt');
 const deliveryStartedHtmlTemplate = readFileSync('email-templates/delivery-started.inlined.html');
 const deliveryStartedTextTemplate = readFileSync('email-templates/delivery-started.txt');
 
-function mockSendReceipt(order) {
-  logger.info(`Mock email enabled, skipping receipt send to ${order.email} ..`);
-  logger.logEncrypted('info', 'Order', order);
-  return BPromise.resolve();
-}
-
 function sendReceipt(order) {
   logger.logEncrypted('info', 'Sending receipt email to', order.email);
 
@@ -36,12 +30,6 @@ function sendReceipt(order) {
     TextBody: Mustache.render(receiptTextTemplate, templateModel),
     HtmlBody: Mustache.render(receiptHtmlTemplate, templateModel),
   });
-}
-
-function mockSendDeliveryStarted(order) {
-  logger.info(`Mock email enabled, skipping delivery started send to ${order.email} ..`);
-  logger.logEncrypted('info', 'Order', order);
-  return BPromise.resolve();
 }
 
 function sendDeliveryStarted(order, trackingInfo) {
@@ -97,7 +85,7 @@ function createReceiptTemplateModel(order) {
 
   const totalPrice = calculateCartPrice(order.cart, {
     promotion: order.promotion,
-    shipToCountry: _.get(order, 'shippingAddress.countryCode'),
+    shipToCountry: _.get(order, 'shippingAddress.countryCode', 'FI'),
     ignorePromotionExpiry: true,
   });
   const receiptItems = _.map(order.cart, item => ({
@@ -198,6 +186,11 @@ function getCountry(order) {
 }
 
 function sendEmailAsync(messageObject) {
+  if (config.MOCK_EMAIL) {
+    logger.info(`Mock email enabled, skipping send to ${messageObject.To} ..`);
+    return BPromise.resolve();
+  }
+
   return new BPromise((resolve, reject) => {
     client.sendEmail(messageObject, (err, result) => {
       if (err) {
@@ -213,12 +206,8 @@ function sendEmailAsync(messageObject) {
 }
 
 module.exports = {
-  sendReceipt: config.MOCK_EMAIL
-    ? mockSendReceipt
-    : sendReceipt,
-  sendDeliveryStarted: config.MOCK_EMAIL
-    ? mockSendDeliveryStarted
-    : sendDeliveryStarted,
+  sendReceipt,
+  sendDeliveryStarted,
   renderReceiptToText,
   renderReceiptToHtml,
   createReceiptTemplateModel,
