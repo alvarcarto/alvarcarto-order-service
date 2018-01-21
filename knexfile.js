@@ -1,11 +1,17 @@
+var fs = require('fs');
+var pg = require('pg');
 var path = require('path');
 var requireEnvs = require('./src/util/require-envs');
 requireEnvs(['DATABASE_URL']);
 
 var connection = process.env.DATABASE_URL + '?charset=utf-8';
-if (process.env.NODE_ENV === 'production') {
-  // Heroku postgres uses ssl
-  connection += '&ssl=true';
+var disableCaVerify = process.env.DISABLE_RDS_CA_VERIFY === 'true';
+if (process.env.NODE_ENV === 'production' && !disableCaVerify) {
+  // Workaround to force "verify-ca" sslmode.
+  pg.defaults.ssl = {
+    rejectUnauthorized: true,
+    ca: fs.readFileSync(path.join(__dirname, 'data/amazon-rds-ca-cert.pem')).toString(),
+  };
 }
 
 var databaseConfig = {
