@@ -16,7 +16,7 @@ TEMP_DIR=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
 cd $TEMP_DIR
 
 echo "Taking postgres dump from prod .. "
-pg_dump --no-owner --no-acl -Fc $(heroku config:get DATABASE_URL -a $APP_NAME) > postgres.dump
+pg_dump --no-owner -Fc $(heroku config:get DATABASE_URL -a $APP_NAME) > postgres.dump
 
 echo "Encrypting file with GPG .. "
 gpg -c postgres.dump
