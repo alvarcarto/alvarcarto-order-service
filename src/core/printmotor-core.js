@@ -193,11 +193,7 @@ function _getPortraitLayoutName(size) {
 }
 
 function _getPostalClass(internalOrder) {
-  if (_.get(internalOrder, 'promotion.promotionCode') === 'EXPRESS') {
-    return 'EXPRESS';
-  }
-
-  return 'PRIORITY';
+  return 'EXPRESS';
 }
 
 function _getProductionClass(internalOrder) {
