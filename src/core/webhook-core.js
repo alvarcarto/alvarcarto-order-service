@@ -18,8 +18,8 @@ function savePrintmotorEvent(payload, incomingHmac) {
     }
   }
 
-  return _saveEvent(payload)
-    .then(() => _reactToEvent(payload))
+  return _reactToEvent(payload)
+    .then(() => _saveEvent(payload))
     .catch((err) => {
       const printmotorOrderId = _.get(payload, 'userOrder.orderNumber');
       const msg = `alert-critical Could not process webhook event. Printmotor ID: ${printmotorOrderId}`;
