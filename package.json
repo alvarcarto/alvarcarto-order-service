@@ -73,7 +73,7 @@
     "postinstall": "./tools/run-migrations.sh",
     "start": "npm run inline-emails && nodemon --watch ./src -e js --exec \"babel-node --presets es2015 src/index.js\"",
     "lint": "eslint ./src",
-    "test": "source .env.test && mocha",
+    "test": "npm run inline-emails && source .env.test && mocha",
     "inline-emails": "./tools/inline-emails.sh"
   }
 }
