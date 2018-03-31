@@ -11,7 +11,7 @@ function savePrintmotorEvent(payload, incomingHmac) {
   if (!config.ALLOW_UNVERIFIED_WEBHOOKS) {
     const isReal = _isRealEventSource(payload, incomingHmac);
     if (!isReal) {
-      logger.logEncrypted('error', 'alert-1h Unverified webhook event', payload);
+      logger.logEncrypted('error', 'alert-critical Unverified webhook event', payload);
       const err = new Error('Incoming webhook request had incorrect HMAC');
       err.status = 401;
       throw err;
@@ -22,7 +22,7 @@ function savePrintmotorEvent(payload, incomingHmac) {
     .then(() => _reactToEvent(payload))
     .catch((err) => {
       const printmotorOrderId = _.get(payload, 'userOrder.orderNumber');
-      const msg = `alert-1h Could not process webhook event. Printmotor ID: ${printmotorOrderId}`;
+      const msg = `alert-critical Could not process webhook event. Printmotor ID: ${printmotorOrderId}`;
       logger.logEncrypted('error', msg, payload);
       throw err;
     });
@@ -60,7 +60,7 @@ function _reactToEvent(payload) {
   if (_.has(reactions, eventType)) {
     return reactions[eventType](payload)
       .catch((err) => {
-        logger.logEncrypted('error', 'alert-1h Error reacting to webhook event:', payload);
+        logger.logEncrypted('error', 'alert-critical Error reacting to webhook event:', payload);
         throw err;
       });
   }

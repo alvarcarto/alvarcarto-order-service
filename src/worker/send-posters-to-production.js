@@ -66,12 +66,12 @@ function assertMapCentersInsideBounds(order) {
 }
 
 function logSingleProcessError(err, order) {
-  logger.error(`alert-1h Error when creating order to Printmotor (#${order.orderId}): ${err}`);
+  logger.error(`alert-critical Error when creating order to Printmotor (#${order.orderId}): ${err}`);
   logger.error(err.stack || err);
 }
 
 function logError(err) {
-  logger.error('alert-1h Error when sending posters to production', err);
+  logger.error('alert-critical Error when sending posters to production', err);
   logger.error(err.stack || err);
 }
 

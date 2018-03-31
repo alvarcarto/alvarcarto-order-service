@@ -36,18 +36,18 @@ function executeCheckout(inputOrder) {
       }
 
       if (price.value >= ALERT_LIMIT_MAX) {
-        logger.warn(`alert-10m Calculated price was over alert limit: ${price.label}`);
+        logger.warn(`alert-business-critical Calculated price was over alert limit: ${price.label}`);
         logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
       }
 
       if (price.value <= ALERT_LIMIT_MIN) {
-        logger.warn(`alert-10m Calculated price was under low alert limit: ${price.label}`);
+        logger.warn(`Calculated price was under low alert limit: ${price.label}`);
         logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
       }
 
       const isFreeOrder = price.value <= 0;
       if (!isFreeOrder && !_.has(inputOrder, 'stripeTokenResponse')) {
-        logger.warn('alert-1h Request without stripeTokenResponse noticed');
+        logger.warn('alert-critical Request without stripeTokenResponse noticed');
         logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
 
         throwStatus(400, 'Required field stripeTokenResponse is missing.');
@@ -86,7 +86,7 @@ function executeCheckout(inputOrder) {
         createdAt: createdOrder.createdAt,
       }, order);
 
-      logger.info('alert-10m New order received!');
+      logger.info('New order received!');
       return emailCore.sendReceipt(orderWithId);
     })
     .tap((createdOrder) => {
@@ -100,7 +100,7 @@ function executeCheckout(inputOrder) {
       orderId: createdOrder.orderId,
     }))
     .catch((err) => {
-      logger.error('alert-1h Creating order failed!');
+      logger.error('alert-normal Creating order failed!');
       logger.logEncrypted('error', 'Stripe charge:', stripeCharge);
       logger.logEncrypted('error', 'Full order:', order);
       throw err;

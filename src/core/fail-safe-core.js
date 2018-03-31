@@ -13,10 +13,10 @@ function saveFailedOrder(fullOrder, originalErr) {
       error_stack: String(originalErr.stack) || '',
     })
     .then(() => {
-      logger.warn(`alert-1h Saved failed order to failed_orders: #${fullOrder.prettyOrderId}`);
+      logger.warn(`alert-critical Saved failed order to failed_orders: #${fullOrder.prettyOrderId}`);
     })
     .catch((err) => {
-      logger.error(`alert-1h Couldn't save failed order: ${fullOrder.prettyOrderId}. Error: ${err}`);
+      logger.error(`alert-critical Couldn't save failed order: ${fullOrder.prettyOrderId}. Error: ${err}`);
       throw err;
     });
 }
@@ -27,7 +27,7 @@ const retryingSaveFailedOrder = promiseRetryify(saveFailedOrder, {
   retryTimeout: retryCount => Math.min(Math.pow(2, retryCount) * 10, 1000),
   beforeRetry: retryCount => logger.warn(`Retrying to save failed order (${retryCount}) ..`),
   onAllFailed: (err, fullOrder) => {
-    logger.error(`alert-1h Couldn't save failed order in any way: ${fullOrder.prettyOrderId}`);
+    logger.error(`alert-critical Couldn't save failed order in any way: ${fullOrder.prettyOrderId}`);
     // We never log personal info about customers, but
     // this is a VERY rare case and we want to maximise success to help
     // the customer.

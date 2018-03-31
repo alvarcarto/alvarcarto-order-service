@@ -318,7 +318,7 @@ function _isUniqueConstraintError(err) {
 }
 
 function _logUniqueConstraintErrorAndRethrow(err) {
-  logger.error(`alert-1h VERY RARE! Order creation failed to unique constraint error: ${err}`);
+  logger.error(`alert-critical VERY RARE! Order creation failed to unique constraint error: ${err}`);
   logger.error(err);
   throw err;
 }
@@ -458,7 +458,7 @@ const _createUniqueOrderId = promiseRetryify((opts = {}) => {
     .limit(1)
     .then((orders) => {
       if (!_.isEmpty(orders)) {
-        logger.warn(`alert-1h Order ID already exists: ${newOrderId}`);
+        logger.warn(`alert-critical Order ID already exists: ${newOrderId}`);
         throw new Error(`Order id already exists: ${newOrderId}`);
       }
 
@@ -473,7 +473,7 @@ const _createUniqueOrderId = promiseRetryify((opts = {}) => {
   // 10ms, 20ms, 40ms, 80ms, 160ms, 320ms, 640ms, 1000ms, 1000ms, 1000ms ...
   retryTimeout: retryCount => Math.min(Math.pow(2, retryCount) * 10, 1000),
   beforeRetry: retryCount => logger.warn(`Retrying to create unique id (${retryCount}) ..`),
-  onAllFailed: () => logger.error('alert-1h Critical order collision! All tries to create order id failed.'),
+  onAllFailed: () => logger.error('alert-critical Critical order collision! All tries to create order id failed.'),
 });
 
 // TODO: move this id creation shit to another module
