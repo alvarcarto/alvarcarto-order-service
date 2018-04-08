@@ -6,7 +6,7 @@ const moment = require('moment');
 const countries = require('i18n-iso-countries');
 const logger = require('../util/logger')(__filename);
 const { readFileSync } = require('../util');
-const { calculateItemPrice, calculateCartPrice, getCurrencySymbol } = require('alvarcarto-price-util');
+const { calculateItemPrice, calculateCartPrice, getCurrencySymbol, getItemLabel } = require('alvarcarto-price-util');
 const config = require('../config');
 const { getDeliveryEstimate } = require('./printmotor-core');
 
@@ -88,10 +88,9 @@ function createReceiptTemplateModel(order) {
     shipToCountry: _.get(order, 'shippingAddress.countryCode', 'FI'),
     ignorePromotionExpiry: true,
   });
-  const receiptItems = _.map(order.cart, item => ({
-    description: getProductName(item),
-    amount: `${item.quantity}x ${getUnitPrice(item)}`,
-  }));
+
+  const mapCart = _.filter(order.cart, item => !item.type || item.type === 'mapPoster');
+  let receiptItems = cartToReceiptItems(mapCart);
 
   if (order.promotion) {
     const discountCurrencySymbol = getCurrencySymbol(totalPrice.discount.currency);
@@ -103,6 +102,9 @@ function createReceiptTemplateModel(order) {
       amount: discountPriceLabel,
     });
   }
+
+  const otherCart = _.filter(order.cart, item => item.type && item.type !== 'mapPoster');
+  receiptItems = receiptItems.concat(cartToReceiptItems(otherCart));
 
   const countryCode = _.get(order, 'shippingAddress.countryCode');
   const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
@@ -130,6 +132,15 @@ function createReceiptTemplateModel(order) {
   };
 }
 
+function cartToReceiptItems(cart) {
+  return _.map(cart, item => ({
+    description: getItemLabel(item),
+    amount: item.quantity > 1
+      ? `${item.quantity}x ${getUnitPrice(item)}`
+      : `${getUnitPrice(item)}`,
+  }));
+}
+
 function getFirstName(fullName) {
   return _.head(fullName.split(' '));
 }
@@ -139,26 +150,6 @@ function getUnitPrice(cartItem) {
   const value = (price.value / 100.0).toFixed(2);
   const symbol = getCurrencySymbol(price.currency);
   return `${value}${symbol}`;
-}
-
-function getProductName(cartItem) {
-  if (cartItem.type === 'giftCardValue') {
-    return 'Gift value';
-  } else if (cartItem.type === 'physicalGiftCard') {
-    return 'Premium physical gift card';
-  } else if (cartItem.type === 'shippingClass') {
-    const className = _.upperFirst(_.toLower(cartItem.value));
-    return `${className} Shipping`;
-  } else if (cartItem.type === 'productionClass') {
-    const className = _.upperFirst(_.toLower(cartItem.value));
-    return `${className} Production`;
-  }
-
-  if (cartItem.labelsEnabled && cartItem.labelHeader) {
-    return `${cartItem.labelHeader}, ${cartItem.size}`;
-  }
-
-  return `Poster, ${cartItem.size}`;
 }
 
 function getOrderUrl(order) {
@@ -224,7 +215,6 @@ module.exports = {
   createReceiptTemplateModel,
   getFirstName,
   getUnitPrice,
-  getProductName,
   getOrderUrl,
   getAddress,
   getCity,

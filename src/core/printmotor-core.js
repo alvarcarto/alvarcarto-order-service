@@ -60,7 +60,7 @@ function getDeliveryEstimate(countryCode, cart) {
   const productionClass = resolveProductionClass(cart);
 
   const regularProduction = {
-    min: 1,
+    min: 2,
     max: 4,
     timeUnit: 'BUSINESS_DAY',
   };
@@ -89,13 +89,13 @@ function getDeliveryEstimate(countryCode, cart) {
   } else if (countryCode === 'US') {
     // "North America" is simplified here
     delivery = {
-      min: 1,
+      min: 2,
       max: 3,
       timeUnit: 'BUSINESS_DAY',
     };
   } else {
     delivery = {
-      min: 2,
+      min: 3,
       max: 4,
       timeUnit: 'BUSINESS_DAY',
     };

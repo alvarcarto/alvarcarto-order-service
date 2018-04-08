@@ -282,7 +282,7 @@ function _rowsToOrderObject(rows) {
   const firstRow = rows[0];
 
   // Always add shippingClass as the cart item to. This way it will show up on receipt etc
-  sortedCart.push({ type: 'shippingClass', value: firstRow.shipping_class, quantity: 1 });
+  sortedCart.push({ type: 'shippingClass', value: firstRow.shipping_class || 'EXPRESS', quantity: 1 });
 
   if (firstRow.production_class) {
     sortedCart.push({ type: 'productionClass', value: firstRow.production_class, quantity: 1 });
