@@ -61,7 +61,7 @@ function createDeliveryStartedTemplateModel(order, trackingInfo) {
     : _.get(order, 'shippingAddress.personName', 'Poster Designer');
 
   const countryCode = _.get(order, 'shippingAddress.countryCode');
-  const timeEstimate = getDeliveryEstimate(countryCode);
+  const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
   return {
     name: getFirstName(customerName),
     tracking_code: trackingInfo.code,
@@ -93,7 +93,6 @@ function createReceiptTemplateModel(order) {
     amount: `${item.quantity}x ${getUnitPrice(item)}`,
   }));
 
-  receiptItems.push({ description: 'Shipping', amount: '0.00 €' });
   if (order.promotion) {
     const discountCurrencySymbol = getCurrencySymbol(totalPrice.discount.currency);
     const discountHumanValue = (-totalPrice.discount.value / 100).toFixed(2);
@@ -106,7 +105,7 @@ function createReceiptTemplateModel(order) {
   }
 
   const countryCode = _.get(order, 'shippingAddress.countryCode');
-  const timeEstimate = getDeliveryEstimate(countryCode);
+  const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
 
   return {
     purchase_date: order.createdAt.format('MMMM Do YYYY'),
@@ -143,6 +142,18 @@ function getUnitPrice(cartItem) {
 }
 
 function getProductName(cartItem) {
+  if (cartItem.type === 'giftCardValue') {
+    return 'Gift value';
+  } else if (cartItem.type === 'physicalGiftCard') {
+    return 'Premium physical gift card';
+  } else if (cartItem.type === 'shippingClass') {
+    const className = _.upperFirst(_.toLower(cartItem.value));
+    return `${className} Shipping`;
+  } else if (cartItem.type === 'productionClass') {
+    const className = _.upperFirst(_.toLower(cartItem.value));
+    return `${className} Production`;
+  }
+
   if (cartItem.labelsEnabled && cartItem.labelHeader) {
     return `${cartItem.labelHeader}, ${cartItem.size}`;
   }

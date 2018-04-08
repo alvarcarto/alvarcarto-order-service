@@ -11,7 +11,7 @@ const { table } = require('table');
 const inquirer = require('inquirer');
 const { knex } = require('../src/util/database');
 const { sendEmailAsync, createReceiptTemplateModel } = require('../src/core/email-core');
-const { readFileSync } = require('../src/util');
+const { readFileSync, filterMapPosterCart } = require('../src/util');
 const { selectOrders } = require('../src/core/order-core');
 
 if (process.argv.length < 5) {
@@ -41,7 +41,7 @@ function prettyPrintOrders(orders) {
       orderId: order.orderId,
       email: order.email,
       createdAt: order.createdAt.toISOString(),
-      cartItems: order.cart.length,
+      mapCartItems: filterMapPosterCart(order.cart).length,
     };
   });
 

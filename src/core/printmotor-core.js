@@ -4,7 +4,7 @@ const { calculateItemPrice } = require('alvarcarto-price-util');
 const request = require('request-promise');
 const config = require('../config');
 const logger = require('../util/logger')(__filename);
-const { toLog } = require('../util');
+const { toLog, resolveProductionClass, resolveShippingClass, filterMapPosterCart } = require('../util');
 const { isEuCountry } = require('./country-core');
 const { uploadPoster } = require('./bucket-core');
 
@@ -18,7 +18,9 @@ const BASE_URL = [
 ].join('');
 
 function createOrder(internalOrder) {
-  return BPromise.map(internalOrder.cart, (item, i) => uploadPoster(internalOrder, item, i), {
+  const mapCart = filterMapPosterCart(internalOrder.cart);
+
+  return BPromise.map(mapCart, (item, i) => uploadPoster(internalOrder, item, i), {
     concurrency: 3,
   })
     .then((imageUrls) => {
@@ -54,37 +56,47 @@ function createOrder(internalOrder) {
     });
 }
 
-function getDeliveryEstimate(countryCode) {
-  const production = {
-    min: 2,
+function getDeliveryEstimate(countryCode, cart) {
+  const productionClass = resolveProductionClass(cart);
+
+  const regularProduction = {
+    min: 1,
     max: 4,
     timeUnit: 'BUSINESS_DAY',
   };
+  const highProduction = {
+    min: 0,
+    max: 1,
+    timeUnit: 'BUSINESS_DAY',
+  };
 
+  const production = productionClass === 'HIGH' ? highProduction : regularProduction;
+
+  // Shipping class is expected to be EXPRESS currently
   let delivery;
   if (countryCode === 'FI') {
     delivery = {
       min: 1,
-      max: 4,
+      max: 2,
       timeUnit: 'BUSINESS_DAY',
     };
   } else if (isEuCountry(countryCode)) {
     delivery = {
-      min: 5,
-      max: 7,
+      min: 1,
+      max: 2,
       timeUnit: 'BUSINESS_DAY',
     };
   } else if (countryCode === 'US') {
     // "North America" is simplified here
     delivery = {
-      min: 7,
-      max: 10,
+      min: 1,
+      max: 3,
       timeUnit: 'BUSINESS_DAY',
     };
   } else {
     delivery = {
-      min: 10,
-      max: 14,
+      min: 2,
+      max: 4,
       timeUnit: 'BUSINESS_DAY',
     };
   }
@@ -102,6 +114,7 @@ function getDeliveryEstimate(countryCode) {
 
 function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
   const nameParts = _splitFullName(internalOrder.shippingAddress.personName);
+  const mapCart = filterMapPosterCart(internalOrder.cart);
   return {
     address: {
       recipientName: internalOrder.shippingAddress.personName,
@@ -123,7 +136,7 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
       lastName: nameParts.last,
       phone: internalOrder.shippingAddress.contactPhone || '',
     },
-    products: _.map(internalOrder.cart, (item, i) =>
+    products: _.map(mapCart, (item, i) =>
       _internalCartItemToPrintmotorProduct(item, imageUrls[i])
     ),
     postalClass: _getPostalClass(internalOrder),
@@ -193,7 +206,12 @@ function _getPortraitLayoutName(size) {
 }
 
 function _getPostalClass(internalOrder) {
-  return 'EXPRESS';
+  const className = resolveShippingClass(internalOrder.cart);
+  if (!className) {
+    return 'EXPRESS';
+  }
+
+  return className;
 }
 
 function _getProductionClass(internalOrder) {
@@ -201,7 +219,12 @@ function _getProductionClass(internalOrder) {
     return 'HIGH';
   }
 
-  return 'REGULAR';
+  const className = resolveProductionClass(internalOrder.cart);
+  if (!className) {
+    return 'REGULAR';
+  }
+
+  return className;
 }
 
 module.exports = {

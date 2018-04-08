@@ -69,7 +69,25 @@ const giftCardValueCartItemSchema = Joi.object({
   quantity: Joi.number().integer().min(1).max(1000),
 });
 
+const productionClassCartItemSchema = Joi.object({
+  type: Joi.string().valid(['productionClass']).required(),
+  value: Joi.string().valid(['REGULAR', 'HIGH']).required(),
+  quantity: Joi.number().integer().min(1).max(1),
+});
+
+const shippingClassCartItemSchema = Joi.object({
+  type: Joi.string().valid(['shippingClass']).required(),
+  value: Joi.string().valid(['EXPRESS']).required(),
+  quantity: Joi.number().integer().min(1).max(1),
+});
+
 const cartItemSchema = Joi.alternatives()
+  .when(Joi.object({ type: Joi.string().valid('productionClass').required() }).unknown().required(), {
+    then: productionClassCartItemSchema,
+  })
+  .when(Joi.object({ type: Joi.string().valid('shippingClass').required() }).unknown().required(), {
+    then: shippingClassCartItemSchema,
+  })
   .when(Joi.object({ type: Joi.string().valid('giftCardValue').required() }).unknown().required(), {
     then: giftCardValueCartItemSchema,
   })

@@ -28,6 +28,11 @@ const data = {
     printmotorRequest: require('./resources/order6-printmotor-request.json'),
     printmotorResponse: require('./resources/order6-printmotor-response.json'),
   },
+  order7: {
+    request: require('./resources/order7-request.json'),
+    printmotorRequest: require('./resources/order7-printmotor-request.json'),
+    printmotorResponse: require('./resources/order7-printmotor-response.json'),
+  },
 };
 
 function test() {
@@ -71,7 +76,7 @@ function test() {
       await sendToProduction({ throwOnError: true });
     });
 
-    it('sending express order to production should work', async () => {
+    it('sending express order to production should work (via promotion code)', async () => {
       await runFixture(fixturePromotions);
 
       const res = await request()
@@ -85,6 +90,31 @@ function test() {
         },
       });
       const printmotorResponse = _.merge({}, data.order6.printmotorResponse, {
+        meta: {
+          reference: res.body.orderId,
+        },
+      });
+      nock('https://fakeuser:fakepassword@mocked-printmotor-not-real.com')
+        .post('/api/v1/order', body => expectDeepEqual(body, expectedBody))
+        .reply(200, printmotorResponse);
+
+      await sendToProduction({ throwOnError: true });
+    });
+
+    it('sending express order to production should work (via cart items)', async () => {
+      await runFixture(fixturePromotions);
+
+      const res = await request()
+        .post('/api/orders')
+        .send(data.order7.request)
+        .expect(200);
+
+      const expectedBody = _.merge({}, data.order7.printmotorRequest, {
+        meta: {
+          reference: res.body.orderId,
+        },
+      });
+      const printmotorResponse = _.merge({}, data.order7.printmotorResponse, {
         meta: {
           reference: res.body.orderId,
         },

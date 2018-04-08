@@ -31,6 +31,28 @@ function createPosterUrlParameters(mapItem) {
   };
 }
 
+function resolveProductionClass(cart) {
+  const found = _.find(cart, i => i.type === 'productionClass');
+  if (found) {
+    return found.value;
+  }
+
+  return null;
+}
+
+function resolveShippingClass(cart) {
+  const found = _.find(cart, i => i.type === 'shippingClass');
+  if (found) {
+    return found.value;
+  }
+
+  return null;
+}
+
+function filterMapPosterCart(cart) {
+  return _.filter(cart, item => !item.type || item.type === 'mapPoster');
+}
+
 function toLog(obj) {
   if (_.isObject(obj)) {
     try {
@@ -46,5 +68,8 @@ function toLog(obj) {
 module.exports = {
   readFileSync,
   createPosterImageUrl,
+  resolveProductionClass,
+  resolveShippingClass,
   toLog,
+  filterMapPosterCart,
 };
