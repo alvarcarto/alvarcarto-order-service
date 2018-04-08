@@ -28,6 +28,10 @@ const data = {
     request: require('./resources/order4-request.json'),
     response: require('./resources/order4-response.json'),
   },
+  order7: {
+    request: require('./resources/order7-request.json'),
+    response: require('./resources/order7-response.json'),
+  },
 };
 
 function test() {
@@ -49,6 +53,23 @@ function test() {
       const getRes = await request().get(`/api/orders/${postRes.body.orderId}`).expect(200);
       const order = getRes.body;
       const expectedResponse = _.merge({}, data.order1.response, {
+        // Add backend generated fields
+        orderId: order.orderId,
+        createdAt: order.createdAt,
+      });
+
+      expect(order).to.deep.equal(expectedResponse);
+    });
+
+    it('Brad Pitt orders 2 maps with high class production', async () => {
+      const postRes = await request()
+        .post('/api/orders')
+        .send(data.order7.request)
+        .expect(200);
+
+      const getRes = await request().get(`/api/orders/${postRes.body.orderId}`).expect(200);
+      const order = getRes.body;
+      const expectedResponse = _.merge({}, data.order7.response, {
         // Add backend generated fields
         orderId: order.orderId,
         createdAt: order.createdAt,

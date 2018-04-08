@@ -7,6 +7,7 @@ const BPromise = require('bluebird');
 const logger = require('../util/logger')(__filename);
 const ADDRESS_TYPE = require('../enums/address-type');
 const { knex } = require('../util/database');
+const { resolveProductionClass, resolveShippingClass } = require('../util');
 const promotionCore = require('./promotion-core');
 const config = require('../config');
 const { retryingSaveFailedOrder } = require('./fail-safe-core');
@@ -277,8 +278,16 @@ function _rowsToOrderObject(rows) {
   // inside one type
   const sortedCart = _.orderBy(cart, ['type', 'id']);
 
-  // All rows should contain same info for all rows, so we just pick first
+  // All rows should contain same info `orders` table rows, so we just pick first
   const firstRow = rows[0];
+
+  // Always add shippingClass as the cart item to. This way it will show up on receipt etc
+  sortedCart.push({ type: 'shippingClass', value: firstRow.shipping_class || 'EXPRESS', quantity: 1 });
+
+  if (firstRow.production_class) {
+    sortedCart.push({ type: 'productionClass', value: firstRow.production_class, quantity: 1 });
+  }
+
   const order = {
     email: firstRow.customer_email,
     emailSubscription: firstRow.email_subscription,
@@ -352,6 +361,8 @@ function _createOrder(order, opts = {}) {
     stripe_token_response: _.get(order, 'stripeTokenResponse', null),
     stripe_charge_response: _.get(order, 'stripeChargeResponse', null),
     promotion_code: order.promotionCode,
+    production_class: resolveProductionClass(order.cart),
+    shipping_class: resolveShippingClass(order.cart),
     sent_to_production_at: null,
   })
     .returning('*')

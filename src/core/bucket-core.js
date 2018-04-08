@@ -1,4 +1,5 @@
 const BPromise = require('bluebird');
+const _ = require('lodash');
 const request = require('request-promise');
 const prettyBytes = require('pretty-bytes');
 const { createS3 } = require('../util/aws');
@@ -34,8 +35,12 @@ function uploadPoster(order, item, itemId) {
     resolveWithFullResponse: true,
   })
   .then((res) => {
-    const bytes = parseInt(res.headers['content-length'], 10);
-    logger.info(`Downloaded ${prettyBytes(bytes)} data`);
+    if (_.has(res.headers, 'content-length')) {
+      const bytes = parseInt(res.headers['content-length'], 10);
+      logger.info(`Downloaded ${prettyBytes(bytes)} data`);
+    } else {
+      logger.info('Downloaded data, but content-length was not defined. Cloudflare URL was possibly used.');
+    }
 
     const params = {
       // create unique file name id

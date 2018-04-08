@@ -20,10 +20,10 @@
     "phone": "0501234567"
   },
   "postalClass": "EXPRESS",
-  "productionClass": "REGULAR",
+  "productionClass": "HIGH",
   "products": [
     {
-      "amount": 2,
+      "amount": 1,
       "customization": [
         {
           "fieldName": "image",
@@ -34,7 +34,7 @@
         "currencyIso4217": "EUR",
         "priceValue": "39.00"
       },
-      "layoutName": "api-poster-30x40"
+      "layoutName": "api-poster-40x30"
     }
   ]
 }

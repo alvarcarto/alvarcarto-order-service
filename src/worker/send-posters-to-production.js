@@ -4,6 +4,7 @@ const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
 const printmotorCore = require('../core/printmotor-core');
 const { knex } = require('../util/database');
+const { filterMapPosterCart } = require('../util');
 
 function main(opts = {}) {
   logger.info('Checking for new orders to send to production ..');
@@ -46,7 +47,7 @@ function main(opts = {}) {
 }
 
 function assertMapCentersInsideBounds(order) {
-  return BPromise.each(order.cart, (item) => {
+  return BPromise.each(filterMapPosterCart(order.cart), (item) => {
     const { mapCenter, mapBounds } = item;
     // This is not accurate but it's a safe measure to prevent missync
     // between map center and bounds
