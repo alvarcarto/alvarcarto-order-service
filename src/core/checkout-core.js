@@ -8,6 +8,7 @@ const orderCore = require('../core/order-core');
 const emailCore = require('../core/email-core');
 const promotionCore = require('../core/promotion-core');
 const stripe = require('../util/stripe');
+const { filterMapPosterCart } = require('../util');
 const config = require('../config');
 
 const STRIPE_META_KEY_MAX_LEN = 40;
@@ -130,7 +131,8 @@ function _createStripeMetaData(inputOrder) {
     meta.shippingPhone = shippingAddress.contactPhone;
   }
 
-  return trimStripeMeta(_.merge(meta, _createCartMetas(inputOrder.cart)));
+  const mapCart = filterMapPosterCart(inputOrder.cart);
+  return trimStripeMeta(_.merge(meta, _createCartMetas(mapCart)));
 }
 
 function _createCartMetas(cart) {
