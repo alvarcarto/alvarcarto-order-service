@@ -8,6 +8,11 @@
     {
       "type": "physicalGiftCard",
       "quantity": 1
+    },
+    {
+      "quantity": 1,
+      "type": "shippingClass",
+      "value": "EXPRESS"
     }
   ],
   "shippingAddress": {

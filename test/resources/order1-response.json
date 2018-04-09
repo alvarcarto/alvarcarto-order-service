@@ -57,6 +57,11 @@
       "labelHeader": "香港",
       "labelSmallHeader": "Hong Kong",
       "labelText": "22.280°N / 114.174°E"
+    },
+    {
+      "quantity": 1,
+      "type": "shippingClass",
+      "value": "EXPRESS"
     }
   ],
   "shippingAddress": {

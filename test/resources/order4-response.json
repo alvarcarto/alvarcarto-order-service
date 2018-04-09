@@ -4,6 +4,11 @@
       "type": "giftCardValue",
       "quantity": 1,
       "value": 4900
+    },
+    {
+      "quantity": 1,
+      "type": "shippingClass",
+      "value": "EXPRESS"
     }
   ]
 }
