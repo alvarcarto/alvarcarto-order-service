@@ -1,6 +1,10 @@
 const ex = require('../util/express');
 const promotionCore = require('../core/promotion-core');
 
+const getPromotions = ex.createJsonRoute(() => {
+  return promotionCore.getPromotions();
+});
+
 const getPromotion = ex.createJsonRoute((req) => {
   const code = String(req.params.promotionCode).toUpperCase();
   return promotionCore.getPromotion(code)
@@ -20,4 +24,5 @@ const getPromotion = ex.createJsonRoute((req) => {
 
 module.exports = {
   getPromotion,
+  getPromotions,
 };

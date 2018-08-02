@@ -78,6 +78,7 @@ function createRouter() {
   };
   router.get('/api/orders/:orderId', apiLimiter, validate(getOrderSchema), order.getOrder);
 
+  router.get('/api/promotions', _requireRole(ROLES.ADMIN), promotion.getPromotions);
   const getPromotionSchema = {
     params: {
       promotionCode: promotionCodeSchema,

@@ -31,6 +31,13 @@ function test() {
         .expect(404);
     });
 
+    it('get all promotions should not be possible as anonymous request', async () => {
+      await runFixture(fixturePromotions);
+      await request()
+        .get('/api/promotions')
+        .expect(401);
+    });
+
     it('get promotions too fast and too many times should fail', async () => {
       await runFixture(fixturePromotions);
 

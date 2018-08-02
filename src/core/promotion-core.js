@@ -3,6 +3,27 @@ const _ = require('lodash');
 const moment = require('moment');
 const { knex } = require('../util/database');
 
+function getPromotions() {
+  return knex.raw(`
+    SELECT
+      promotions.id as id,
+      promotions.type as type,
+      promotions.value as value,
+      promotions.currency as currency,
+      promotions.promotion_code as promotion_code,
+      promotions.label as label,
+      promotions.expires_at as expires_at,
+      promotions.usage_count as usage_count,
+      promotions.max_allowed_usage_count as max_allowed_usage_count,
+      promotions.created_at as created_at,
+      promotions.updated_at as updated_at
+    FROM promotions
+  `)
+    .then((result) => {
+      return _.map(result.rows, row => _rowToPromotionObject(row, { allFields: true }));
+    });
+}
+
 function getPromotion(code) {
   if (!code) {
     return BPromise.resolve(null);
@@ -48,7 +69,7 @@ function increasePromotionUsageCount(code) {
   `, { code: code.toUpperCase() });
 }
 
-function _rowToPromotionObject(row) {
+function _rowToPromotionObject(row, opts = {}) {
   const obj = {
     id: row.id,
     type: row.type,
@@ -67,6 +88,9 @@ function _rowToPromotionObject(row) {
   }
 
   obj.hasExpired = _hasPromotionExpired(obj);
+  if (opts.allFields) {
+    return obj;
+  }
 
   return _.pick(obj, [
     'type',
@@ -93,5 +117,6 @@ function _hasPromotionExpired(obj) {
 
 module.exports = {
   getPromotion,
+  getPromotions,
   increasePromotionUsageCount,
 };
