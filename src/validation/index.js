@@ -115,7 +115,15 @@ const printmotorWebhookPayloadSchema = Joi.object({
 }).unknown();
 
 const orderIdSchema = Joi.string().regex(/^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/);
-const promotionCodeSchema = Joi.string().regex(/^[A-Za-z0-9-]+$/);
+
+const promotionCodeSchema = Joi.string().regex(/^[A-Z0-9-]+$/).min(1).max(40);
+const promotionSchema = Joi.object({
+  currency: Joi.string().valid(['EUR']).required(),
+  label: Joi.string().min(1).max(30).required(),
+  promotionCode: promotionCodeSchema,
+  type: Joi.string().valid(['FIXED', 'PERCENTAGE']).required(),
+  value: Joi.number().min(-100000).max(100000).required(),
+});
 
 const orderSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -137,6 +145,7 @@ module.exports = {
   stripeCreateTokenResponseSchema,
   printmotorWebhookPayloadSchema,
   orderIdSchema,
+  promotionSchema,
   promotionCodeSchema,
   latLngSchema,
   orderSchema,

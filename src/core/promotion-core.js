@@ -55,6 +55,23 @@ function getPromotion(code) {
     });
 }
 
+function createPromotion(promotion) {
+  return knex('promotions').insert({
+    type: promotion.type,
+    value: promotion.value,
+    currency: promotion.currency,
+    promotion_code: promotion.promotionCode,
+    label: promotion.label,
+    expires_at: promotion.expiresAt,
+    usage_count: promotion.usageCount,
+    max_allowed_usage_count: promotion.maxAllowedUsageCount,
+  })
+    .returning('*')
+    .then((rows) => {
+      return _rowToPromotionObject(rows[0]);
+    });
+}
+
 // XXX: This is not the best DB design. The used promotion
 //      code is also saved with to the order table without
 //      a link to promotions. We could just always count the
@@ -117,6 +134,7 @@ function _hasPromotionExpired(obj) {
 
 module.exports = {
   getPromotion,
+  createPromotion,
   getPromotions,
   increasePromotionUsageCount,
 };

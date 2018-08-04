@@ -48,6 +48,43 @@ function test() {
 
       await requestInstance.get('/api/promotions/PROMOCODE100').expect(429);
     });
+
+    it('creating a promotion should not be possible as anonymous request', async () => {
+      await request()
+        .post('/api/promotions')
+        .send({
+          currency: 'EUR',
+          label: '-5€',
+          promotionCode: 'NEWFIXED5',
+          type: 'FIXED',
+          value: 500,
+        })
+        .expect(401);
+    });
+
+    it('creating a promotion should work', async () => {
+      const res = await request()
+        .post('/api/promotions')
+        .set('x-api-key', 'secret')
+        .send({
+          currency: 'EUR',
+          label: '-5€',
+          promotionCode: 'NEWFIXED5',
+          type: 'FIXED',
+          value: 500,
+        })
+        .expect(200);
+
+      const withoutDynamic = _.omit(res.body, ['createdAt']);
+      expect(withoutDynamic).to.deep.equal({
+        currency: 'EUR',
+        hasExpired: false,
+        label: '-5€',
+        promotionCode: 'NEWFIXED5',
+        type: 'FIXED',
+        value: 500,
+      });
+    });
   });
 }
 

@@ -5,6 +5,17 @@ const getPromotions = ex.createJsonRoute(() => {
   return promotionCore.getPromotions();
 });
 
+const postPromotion = ex.createJsonRoute((req) => {
+  const promotion = {
+    currency: req.body.currency,
+    label: req.body.label,
+    promotionCode: req.body.promotionCode,
+    type: req.body.type,
+    value: req.body.value,
+  };
+  return promotionCore.createPromotion(promotion);
+});
+
 const getPromotion = ex.createJsonRoute((req) => {
   const code = String(req.params.promotionCode).toUpperCase();
   return promotionCore.getPromotion(code)
@@ -24,5 +35,6 @@ const getPromotion = ex.createJsonRoute((req) => {
 
 module.exports = {
   getPromotion,
+  postPromotion,
   getPromotions,
 };

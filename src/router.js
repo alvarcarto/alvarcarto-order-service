@@ -15,6 +15,7 @@ const {
   printmotorWebhookPayloadSchema,
   orderSchema,
   orderIdSchema,
+  promotionSchema,
   promotionCodeSchema,
   latLngSchema,
 } = require('./validation');
@@ -79,6 +80,10 @@ function createRouter() {
   router.get('/api/orders/:orderId', apiLimiter, validate(getOrderSchema), order.getOrder);
 
   router.get('/api/promotions', _requireRole(ROLES.ADMIN), promotion.getPromotions);
+  const postPromotionSchema = {
+    body: promotionSchema,
+  };
+  router.post('/api/promotions', validate(postPromotionSchema), _requireRole(ROLES.ADMIN), promotion.postPromotion);
   const getPromotionSchema = {
     params: {
       promotionCode: promotionCodeSchema,
