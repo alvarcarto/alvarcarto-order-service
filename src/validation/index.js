@@ -123,6 +123,7 @@ const promotionSchema = Joi.object({
   value: Joi.number().min(-100000).max(100000).required(),
   currency: Joi.string().valid(['EUR']).required(),
   label: Joi.string().min(1).max(30).required(),
+  description: Joi.string().min(0).max(10000).optional(),
   maxAllowedUsageCount: Joi.number().integer().min(1).max(30).optional(),
   expiresAt: Joi.date().iso().optional(),
 });

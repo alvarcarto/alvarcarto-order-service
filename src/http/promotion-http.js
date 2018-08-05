@@ -7,11 +7,15 @@ const getPromotions = ex.createJsonRoute(() => {
 
 const postPromotion = ex.createJsonRoute((req) => {
   const promotion = {
-    currency: req.body.currency,
-    label: req.body.label,
-    promotionCode: req.body.promotionCode,
     type: req.body.type,
     value: req.body.value,
+    currency: req.body.currency,
+    promotionCode: req.body.promotionCode,
+    label: req.body.label,
+    expiresAt: req.body.expiresAt,
+    usageCount: req.body.usageCount,
+    maxAllowedUsageCount: req.body.maxAllowedUsageCount,
+    description: req.body.description,
   };
   return promotionCore.createPromotion(promotion);
 });

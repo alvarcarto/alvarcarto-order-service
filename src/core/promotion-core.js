@@ -13,6 +13,7 @@ function getPromotions() {
       promotions.promotion_code as promotion_code,
       promotions.label as label,
       promotions.expires_at as expires_at,
+      promotions.description as description,
       promotions.usage_count as usage_count,
       promotions.max_allowed_usage_count as max_allowed_usage_count,
       promotions.created_at as created_at,
@@ -39,6 +40,7 @@ function getPromotion(code) {
       promotions.label as label,
       promotions.expires_at as expires_at,
       promotions.usage_count as usage_count,
+      promotions.description as description,
       promotions.max_allowed_usage_count as max_allowed_usage_count,
       promotions.created_at as created_at,
       promotions.updated_at as updated_at
@@ -65,6 +67,7 @@ function createPromotion(promotion) {
     expires_at: promotion.expiresAt,
     usage_count: promotion.usageCount,
     max_allowed_usage_count: promotion.maxAllowedUsageCount,
+    description: promotion.description,
   })
     .returning('*')
     .then((rows) => {
@@ -94,6 +97,7 @@ function _rowToPromotionObject(row, opts = {}) {
     currency: row.currency,
     promotionCode: row.promotion_code,
     label: row.label,
+    description: row.description,
     usageCount: row.usage_count,
     maxAllowedUsageCount: row.max_allowed_usage_count,
     updatedAt: moment(row.updated_at),
