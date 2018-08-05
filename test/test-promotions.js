@@ -49,6 +49,13 @@ function test() {
       await requestInstance.get('/api/promotions/PROMOCODE100').expect(429);
     });
 
+    it('getting all promotions should work', async () => {
+      await request()
+        .get('/api/promotions')
+        .set('x-api-key', 'secret')
+        .expect(200);
+    });
+
     it('creating a promotion should not be possible as anonymous request', async () => {
       await request()
         .post('/api/promotions')
