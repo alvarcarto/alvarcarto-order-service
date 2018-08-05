@@ -81,6 +81,7 @@ function createRouter() {
 
   router.get('/api/promotions', _requireRole(ROLES.ADMIN), promotion.getPromotions);
   const postPromotionSchema = {
+    options: { allowUnknownBody: false },
     body: promotionSchema,
   };
   router.post('/api/promotions', validate(postPromotionSchema), _requireRole(ROLES.ADMIN), promotion.postPromotion);

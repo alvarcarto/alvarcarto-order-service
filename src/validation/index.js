@@ -118,11 +118,13 @@ const orderIdSchema = Joi.string().regex(/^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/
 
 const promotionCodeSchema = Joi.string().regex(/^[A-Z0-9-]+$/).min(1).max(40);
 const promotionSchema = Joi.object({
-  currency: Joi.string().valid(['EUR']).required(),
-  label: Joi.string().min(1).max(30).required(),
   promotionCode: promotionCodeSchema,
   type: Joi.string().valid(['FIXED', 'PERCENTAGE']).required(),
   value: Joi.number().min(-100000).max(100000).required(),
+  currency: Joi.string().valid(['EUR']).required(),
+  label: Joi.string().min(1).max(30).required(),
+  maxAllowedUsageCount: Joi.number().integer().min(1).max(30).optional(),
+  expiresAt: Joi.date().iso().optional(),
 });
 
 const orderSchema = Joi.object({
