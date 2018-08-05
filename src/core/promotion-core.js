@@ -19,7 +19,7 @@ function getPromotions() {
       promotions.created_at as created_at,
       promotions.updated_at as updated_at
     FROM promotions
-    ORDER BY created_at
+    ORDER BY id
   `)
     .then((result) => {
       return _.map(result.rows, row => _rowToPromotionObject(row, { allFields: true }));
