@@ -1,10 +1,35 @@
 #!/usr/bin/env node
 
 const _ = require('lodash');
-const moment = require('moment');
+const holidays = require('finnish-holidays-js');
+const moment = require('moment-business-time');
 const BPromise = require('bluebird');
 const fs = require('fs');
 const csv = require('csv');
+
+function pad(str) {
+  return _.padStart(str, 2, '0');
+}
+
+const years = [2017, 2018, 2019, 2020];
+const arrOfArrs = _.map(years, y => holidays.year(y));
+const allYearsHolidays = _.flatten(_.map(arrOfArrs, (singleYearHolidays) => {
+  return _.map(singleYearHolidays, obj => `${obj.year}-${pad(obj.month)}-${pad(obj.day)}`);
+}));
+
+moment.updateLocale('fi', {
+  workinghours: {
+    0: null,
+    1: ['09:00:00', '17:00:00'],
+    2: ['09:00:00', '17:00:00'],
+    3: ['09:00:00', '17:00:00'],
+    4: ['09:00:00', '17:00:00'],
+    5: ['09:00:00', '17:00:00'],
+    6: null,
+  },
+  holidays: allYearsHolidays,
+});
+moment.locale('fi');
 
 BPromise.promisifyAll(csv);
 
@@ -13,6 +38,31 @@ if (!process.argv[2]) {
   console.error('Usage: ./delivery-time-to-csv.js <json-file>');
   process.exit(2);
 }
+
+const COLUMNS_IN_ORDER = [
+  'prettyOrderId',
+  'printmotorOrderId',
+  'trackingCode',
+  'orderCreatedAt',
+  'deliveryStartedAt',
+  'deliveryFirstInteresting',
+  'deliveryFirstInTransit',
+  'deliveryCustomerNotified',
+  'deliveryCustomerReceived',
+  'stripeChargeInEur',
+  'shippingCountry',
+  'shippingCity',
+  'shippingPostalCode',
+  'orderCreateToFirstInterestingDays',
+  'orderCreateToDeliveryStart',
+  'deliveryStartedToFirstInteresting',
+  'firstInterestingToInTransitDays',
+  'firstInTransitToNotified',
+  'orderCreateToInTransitDays',
+  'orderCreateToNotifiedDays',
+  'customerNotifiedToReceivedDays',
+  'deliveryStartedToNotification',
+];
 
 function findEventTime(events, status) {
   const event = _.find(events, e => e.status === status);
@@ -43,31 +93,31 @@ function findFirstInterestingEventTime(events) {
 function calculateDiffs(info) {
   const diffs = {};
   if (info.deliveryFirstInteresting && info.orderCreatedAt) {
-    diffs.orderCreateToFirstInterestingDays = info.deliveryFirstInteresting.diff(info.orderCreatedAt, 'days', true).toFixed(4);
+    diffs.orderCreateToFirstInterestingDays = info.deliveryFirstInteresting.workingDiff(info.orderCreatedAt, 'days', true).toFixed(4);
   }
   if (info.deliveryStartedAt && info.orderCreatedAt) {
-    diffs.orderCreateToDeliveryStart = info.deliveryStartedAt.diff(info.orderCreatedAt, 'days', true).toFixed(4);
+    diffs.orderCreateToDeliveryStart = info.deliveryStartedAt.workingDiff(info.orderCreatedAt, 'days', true).toFixed(4);
   }
   if (info.deliveryStartedAt && info.deliveryFirstInteresting) {
-    diffs.deliveryStartedToFirstInteresting = info.deliveryFirstInteresting.diff(info.deliveryStartedAt, 'days', true).toFixed(4);
+    diffs.deliveryStartedToFirstInteresting = info.deliveryFirstInteresting.workingDiff(info.deliveryStartedAt, 'days', true).toFixed(4);
   }
   if (info.deliveryFirstInTransit && info.deliveryFirstInteresting) {
-    diffs.firstInterestingToInTransitDays = info.deliveryFirstInTransit.diff(info.deliveryFirstInteresting, 'days', true).toFixed(4);
+    diffs.firstInterestingToInTransitDays = info.deliveryFirstInTransit.workingDiff(info.deliveryFirstInteresting, 'days', true).toFixed(4);
   }
   if (info.deliveryCustomerNotified && info.deliveryFirstInTransit) {
-    diffs.firstInTransitToNotified = info.deliveryCustomerNotified.diff(info.deliveryFirstInTransit, 'days', true).toFixed(4);
+    diffs.firstInTransitToNotified = info.deliveryCustomerNotified.workingDiff(info.deliveryFirstInTransit, 'days', true).toFixed(4);
   }
   if (info.deliveryFirstInTransit && info.orderCreatedAt) {
-    diffs.orderCreateToInTransitDays = info.deliveryFirstInTransit.diff(info.orderCreatedAt, 'days', true).toFixed(4);
+    diffs.orderCreateToInTransitDays = info.deliveryFirstInTransit.workingDiff(info.orderCreatedAt, 'days', true).toFixed(4);
   }
   if (info.deliveryCustomerNotified && info.orderCreatedAt) {
-    diffs.orderCreateToNotifiedDays = info.deliveryCustomerNotified.diff(info.orderCreatedAt, 'days', true).toFixed(4);
+    diffs.orderCreateToNotifiedDays = info.deliveryCustomerNotified.workingDiff(info.orderCreatedAt, 'days', true).toFixed(4);
   }
   if (info.deliveryCustomerReceived && info.deliveryCustomerNotified) {
-    diffs.customerNotifiedToReceivedDays = info.deliveryCustomerReceived.diff(info.deliveryCustomerNotified, 'days', true).toFixed(4);
+    diffs.customerNotifiedToReceivedDays = info.deliveryCustomerReceived.workingDiff(info.deliveryCustomerNotified, 'days', true).toFixed(4);
   }
   if (info.deliveryStartedAt && info.deliveryCustomerNotified) {
-    diffs.deliveryStartedToNotification = info.deliveryCustomerNotified.diff(info.deliveryStartedAt, 'days', true).toFixed(4);
+    diffs.deliveryStartedToNotification = info.deliveryCustomerNotified.workingDiff(info.deliveryStartedAt, 'days', true).toFixed(4);
   }
   return diffs;
 }
@@ -101,9 +151,8 @@ function main() {
   });
 
   const sortedData = _.sortBy(processedData, 'orderCreatedAt');
-  const headers = _.keys(sortedData[0]);
-  const csvRows = [headers].concat(_.map(sortedData, (obj) => {
-    return _.map(headers, key => obj[key]);
+  const csvRows = [COLUMNS_IN_ORDER].concat(_.map(sortedData, (obj) => {
+    return _.map(COLUMNS_IN_ORDER, key => obj[key]);
   }));
 
   return csv.stringifyAsync(csvRows)

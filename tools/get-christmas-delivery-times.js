@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
+// Sends an email to a customer(s)
 // Usage:
-// node get-real-delivery-times.js
+// node tools/send-email.js <template> <title> <sql-query>
 
 const fs = require('fs');
 const _ = require('lodash');
@@ -11,7 +12,7 @@ const moment = require('moment-timezone');
 const cityTimezones = require('city-timezones');
 const { knex } = require('../src/util/database');
 
-const CACHE_FILE_NAME = '.tracking-cache.json';
+const CACHE_FILE_NAME = '.christmas-tracking-cache.json';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36';
 
 function getTrackingDetails(shippingAddress, trackingCode) {
@@ -135,7 +136,8 @@ function main() {
            addresses.type = 'SHIPPING'
     ) t
     WHERE
-      tracking_code IS NOT NULL
+      tracking_code IS NOT NULL AND
+      created_at >= '2017-12-01 00:00:00'
       ORDER BY t.created_at ASC
   `)
     .tap(({ rows }) => {
@@ -174,7 +176,7 @@ function main() {
             upsertToCache(trackingInfo);
           })
           .then(() => {
-            const randomDelay = getRandomInt(5000, 40000);
+            const randomDelay = getRandomInt(5000, 10000);
             console.error(`Waiting for ${randomDelay}ms ..`);
             return BPromise.delay(randomDelay);
           });

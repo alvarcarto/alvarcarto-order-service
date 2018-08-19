@@ -86,7 +86,8 @@ function main() {
           Subject: Mustache.render(emailTitle, templateModel),
           TextBody: Mustache.render(textTemplate, templateModel),
           HtmlBody: Mustache.render(htmlTemplate, templateModel),
-        });
+        })
+        .tap(() => console.log('Sent.'));
       });
     })
     .catch((err) => {

@@ -68,7 +68,7 @@ function createRouter() {
   // Uses req.ip as the default identifier
   const apiLimiter = new RateLimit({
     windowMs: 10 * 60 * 1000,
-    max: 50,
+    max: 20,
     delayMs: 0,
   });
 
