@@ -5,20 +5,32 @@ const BPromise = require('bluebird');
 const moment = require('moment');
 const countries = require('i18n-iso-countries');
 const combinatorics = require('js-combinatorics');
-const { oneLine } = require('common-tags');
 const { calculateItemPrice } = require('alvarcarto-price-util');
 const common = require('alvarcarto-common');
 const config = require('../../src/config');
 const { coordToPrettyText } = require('./util');
 const cachingGeocode = require('./caching-geocode');
 
-const USE_COUNTRIES = [
-  'NL', 'PT', 'BE', 'PL', 'BG', 'FR', 'ES', 'RO',
-  'IE', 'SE', 'IT', 'DE', 'AT', 'SK', 'GR', 'SI',
-  'HR', 'FI', 'CY', 'DK', 'LV', 'CZ', 'LT', 'HU',
-  'LU', 'EE', 'MT', 'GB',
-  'US', 'CA', 'RU',
+if (!process.env.PLACEMENT_API_URL) {
+  throw new Error('Invalid PLACEMENT_API_URL');
+}
+
+const IMPORTANT_COUNTRIES = [
+  'FI', 'SE', 'GB', 'FR', 'IT', 'NO', 'DK', 'DE',
+]
+const EUROPE_COUNTRIES = [
+  'AD', 'AL', 'AT', 'AX', 'BA', 'BE', 'BG', 'BY',
+  'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR',
+  'GB', 'GG', 'GI', 'GR', 'HR', 'HU', 'IE', 'IM',
+  'IT', 'JE', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD',
+  'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO',
+  'RS', 'RU', 'SE', 'SI', 'SK', 'SM', 'TR', 'UA',
+  'VA', 'XK', 'IE', 'CY', 'MC',
 ];
+const USE_COUNTRIES = EUROPE_COUNTRIES.concat([
+  'NO', 'US', 'CA', 'RU', 'CN',
+  'BZ', 'AE', 'MX',
+]);
 
 // null values are generated later
 const defaultFbAttrs = {
@@ -54,11 +66,15 @@ function transform(matrix) {
     modified: moment(row[18], 'YYYY-MM-DD'),
   }));
 
-  const filteredCities = _.filter(cities, c => c.population > 50000 && _.includes(USE_COUNTRIES, c.countryCode));
+  const filteredCities = _.filter(cities, (c) => {
+    const isNormal = _.includes(USE_COUNTRIES, c.countryCode) && c.population > 50000;
+    const isImportant = _.includes(IMPORTANT_COUNTRIES, c.countryCode) && c.population > 30000;
+    return isNormal || isImportant;
+  });
 
   const cityIds = _.map(filteredCities, 'id');
-  const posterStyleIds = _.map(common.POSTER_STYLES, 'id');
-  const mapStyleIds = _.map(common.MAP_STYLES, 'id');
+  const posterStyleIds = ['sharp', 'classic', 'sans', 'bw'];
+  const mapStyleIds = ['bw', 'gray', 'black', 'copper', 'petrol'];
   const sizeIds = ['30x40cm'];
   const orientationIds = ['portrait'];
 
@@ -148,18 +164,21 @@ function combinationToProduct(comb) {
 function transformProductAsync(result) {
   const { product, combination } = result;
 
+  let data;
   return cachingGeocode({
     address: combination.city.name,
     components: {
       country: combination.city.countryCode,
     },
   })
-  .then((data) => {
+  .then((_data) => {
+    data = _data;
     // Fix to return only city
     const bounds = data.results[0].geometry.viewport;
 
     return _.merge({}, product, {
       image_link: createImageLink({
+        placementId: randomPlacementId(combination.city.id, combination.posterStyle.id),
         neLat: bounds.northeast.lat,
         neLng: bounds.northeast.lng,
         swLat: bounds.southwest.lat,
@@ -172,11 +191,13 @@ function transformProductAsync(result) {
         labelHeader: combination.city.name,
         labelSmallHeader: countries.getName(combination.city.countryCode, 'en'),
         labelText: coordToPrettyText({ lat: combination.city.lat, lng: combination.city.lng }),
-        background: 'facebook-carousel',
-        frames: 'black',
-        resizeToHeight: 1080,
+        resizeToWidth: 1080,
       }),
     });
+  })
+  .catch((err) => {
+    console.error('Data:', data);
+    throw err;
   });
 }
 
@@ -191,8 +212,8 @@ function createProductLink(params) {
 }
 
 function createImageLink(params) {
-  const query = qs.stringify(params);
-  return `${config.RENDER_API_URL}/api/raster/placeit?${query}`;
+  const query = qs.stringify(_.omit(params, ['placementId']));
+  return `${process.env.PLACEMENT_API_URL}/api/place-map/${params.placementId}?${query}`;
 }
 
 function randomNiceAdjective(cityId) {
@@ -202,6 +223,21 @@ function randomNiceAdjective(cityId) {
     'Stylish',
     'Gorgeous',
   ], { seed: cityId });
+}
+
+
+function randomPlacementId(cityId, posterStyle) {
+  const choices = [
+    'green-hearted-coffee-square',
+    'flowers-in-blue-black-frame-square',
+    'black-brick-wall-above-table-square',
+  ];
+  if (posterStyle !== 'bw') {
+    choices.push('flatlay-flowers-shop-square');
+  }
+
+  // Same city and same posterStyle will always lead to same placement, but it's random
+  return randomChoice(choices, { seed: `${cityId}${posterStyle}` });
 }
 
 function randomChoice(arr, opts = {}) {

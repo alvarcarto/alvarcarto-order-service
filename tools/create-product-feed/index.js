@@ -2,7 +2,9 @@
 
 // This tool enriches Facebook CSV product catalog
 // Usage:
-// node tools/enrich-product-feed.js cities.csv > feed.csv
+// cd tools/create-product-feed/ && node index.js cities.csv > feed.csv
+//
+// Cities can be found from https://docs.google.com/spreadsheets/d/1XLy73mtLbU8fgvEAbRyTPa4m5VLc_lVuz-u1J-5kdGk/edit#gid=1503530168
 
 const BPromise = require('bluebird');
 const fs = require('fs');

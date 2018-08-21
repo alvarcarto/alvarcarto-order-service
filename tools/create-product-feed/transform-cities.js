@@ -1,18 +1,5 @@
 const _ = require('lodash');
-const qs = require('qs');
 const fs = require('fs');
-const seedrandom = require('seedrandom');
-const BPromise = require('bluebird');
-const moment = require('moment');
-const countries = require('i18n-iso-countries');
-const combinatorics = require('js-combinatorics');
-const { oneLine } = require('common-tags');
-const { calculateItemPrice } = require('alvarcarto-price-util');
-const common = require('alvarcarto-common');
-const config = require('../../src/config');
-const { coordToPrettyText } = require('./util');
-const cachingGeocode = require('./caching-geocode');
-
 
 const USE_COUNTRIES = [
   'NL', 'PT', 'BE', 'PL', 'BG', 'FR', 'ES', 'RO',
