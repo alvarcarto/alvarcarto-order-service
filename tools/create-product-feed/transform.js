@@ -37,8 +37,8 @@ const defaultFbAttrs = {
   id: null,
   title: null,
   description: null,
-  google_product_category: 'Home & Garden > Decor > Artwork Posters, Prints, & Visual Artwork',
-  product_type: 'Home & Garden > Decor > Artwork Posters, Prints, & Visual Artwork',
+  google_product_category: '500044', // 'Home & Garden > Decor > Artwork > Posters, Prints, & Visual Artwork',
+  product_type: 'Home & Garden > Decor > Artwork > Posters, Prints, & Visual Artwork',
   link: null,
   image_link: null,
   condition: 'new',
@@ -49,7 +49,7 @@ const defaultFbAttrs = {
   color: null,
   size: null,
   // shipping: _.map(countries.getNames('en'), (n, code) => `${code}::Standard:0 EUR`).join(','),
-  shipping: 'FI::Standard:0 EUR',
+  shipping: 'FI::Standard:0.00 EUR',
   custom_label_0: 'Designed and manufactured in Finland',
 };
 
@@ -67,8 +67,8 @@ function transform(matrix) {
   }));
 
   const filteredCities = _.filter(cities, (c) => {
-    const isNormal = _.includes(USE_COUNTRIES, c.countryCode) && c.population > 50000;
-    const isImportant = _.includes(IMPORTANT_COUNTRIES, c.countryCode) && c.population > 30000;
+    const isNormal = _.includes(USE_COUNTRIES, c.countryCode) && c.population > 100000;
+    const isImportant = _.includes(IMPORTANT_COUNTRIES, c.countryCode) && c.population > 80000;
     return isNormal || isImportant;
   });
 
@@ -153,7 +153,7 @@ function combinationToProduct(comb) {
     }),
     image_link: null,  // Generated later
     price: getPrice({ size: comb.sizeId, quantity: 1 }),
-    item_group_id: comb.posterStyle.id.toUpperCase(),
+    item_group_id: comb.city.id,
     color: comb.mapStyle.name,
     size: comb.sizeId,
   };
