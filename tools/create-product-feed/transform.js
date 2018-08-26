@@ -7,7 +7,7 @@ const countries = require('i18n-iso-countries');
 const combinatorics = require('js-combinatorics');
 const { calculateItemPrice } = require('alvarcarto-price-util');
 const common = require('alvarcarto-common');
-const config = require('../../src/config');
+const { getBoundsZoom, LatLng, LatLngBounds } = require('@alvarcarto/mapsy');
 const { coordToPrettyText } = require('./util');
 const cachingGeocode = require('./caching-geocode');
 
@@ -124,6 +124,10 @@ function filterUnavailableProducts(results) {
   });
 }
 
+function roundToStep(value, step) {
+  return ((Math.round(value / step)) * step);
+}
+
 function combinationToProduct(comb) {
   const attrs = {
     // 0/SHARP/FFFFFF/50X70C/0/60.169/24.935
@@ -138,19 +142,7 @@ function combinationToProduct(comb) {
     ].join('/'),
     title: comb.city.name,
     description: `${randomNiceAdjective(comb.city.id)} poster of ${comb.city.name}`,
-    link: createProductLink({
-      lat: comb.city.lat,
-      lng: comb.city.lng,
-      zoom: 10,
-      size: comb.sizeId,
-      orientation: comb.orientationId,
-      posterStyle: comb.posterStyle.id,
-      mapStyle: comb.mapStyle.id,
-      labelsEnabled: true,
-      labelHeader: comb.city.name,
-      labelSmallHeader: countries.getName(comb.city.countryCode, 'en'),
-      labelText: coordToPrettyText({ lat: comb.city.lat, lng: comb.city.lng }),
-    }),
+    link: null,  // Generated later
     image_link: null,  // Generated later
     price: getPrice({ size: comb.sizeId, quantity: 1 }),
     item_group_id: comb.city.id,
@@ -175,8 +167,26 @@ function transformProductAsync(result) {
     data = _data;
     // Fix to return only city
     const bounds = data.results[0].geometry.viewport;
-
+    const ne = new LatLng(bounds.northeast.lat, bounds.northeast.lng);
+    const sw = new LatLng(bounds.southwest.lat, bounds.southwest.lng);
+    const latLngBounds = new LatLngBounds(ne, sw);
+    const center = latLngBounds.getCenter();
+    // Pixels taken from here: https://github.com/kimmobrunfeldt/alvarcarto-designer/blob/master/src/util/index.js
+    const zoom = getBoundsZoom(latLngBounds, { width: 375, height: 500 });
     return _.merge({}, product, {
+      link: createProductLink({
+        lat: center.lat,
+        lng: center.lng,
+        zoom: roundToStep(zoom, 0.25),  // Our leaflet map allows 0.25 zoom steps
+        size: combination.sizeId,
+        orientation: combination.orientationId,
+        posterStyle: combination.posterStyle.id,
+        mapStyle: combination.mapStyle.id,
+        labelsEnabled: true,
+        labelHeader: combination.city.name,
+        labelSmallHeader: countries.getName(combination.city.countryCode, 'en'),
+        labelText: coordToPrettyText({ lat: combination.city.lat, lng: combination.city.lng }),
+      }),
       image_link: createImageLink({
         placementId: randomPlacementId(combination.city.id, combination.posterStyle.id),
         neLat: bounds.northeast.lat,
