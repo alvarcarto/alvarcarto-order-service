@@ -188,7 +188,7 @@ function transformProductAsync(result) {
         labelText: coordToPrettyText({ lat: combination.city.lat, lng: combination.city.lng }),
       }),
       image_link: createImageLink({
-        placementId: randomPlacementId(combination.city.id, combination.posterStyle.id),
+        placementId: randomPlacementId(combination.city.id, combination.posterStyle.id, combination.mapStyle.id),
         neLat: bounds.northeast.lat,
         neLng: bounds.northeast.lng,
         swLat: bounds.southwest.lat,
@@ -236,7 +236,7 @@ function randomNiceAdjective(cityId) {
 }
 
 
-function randomPlacementId(cityId, posterStyle) {
+function randomPlacementId(cityId, posterStyle, mapStyle) {
   const choices = [
     'green-hearted-coffee-square',
     'flowers-in-blue-black-frame-square',
@@ -247,7 +247,7 @@ function randomPlacementId(cityId, posterStyle) {
   }
 
   // Same city and same posterStyle will always lead to same placement, but it's random
-  return randomChoice(choices, { seed: `${cityId}${posterStyle}` });
+  return randomChoice(choices, { seed: `${cityId}${posterStyle}${mapStyle}` });
 }
 
 function randomChoice(arr, opts = {}) {
