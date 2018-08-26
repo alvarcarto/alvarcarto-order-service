@@ -173,6 +173,10 @@ function transformProductAsync(result) {
     const center = latLngBounds.getCenter();
     // Pixels taken from here: https://github.com/kimmobrunfeldt/alvarcarto-designer/blob/master/src/util/index.js
     const zoom = getBoundsZoom(latLngBounds, { width: 375, height: 500 });
+    if (zoom < 7) {
+      throw new Error(`Zoom level under 7: ${zoom}`);
+    }
+
     return _.merge({}, product, {
       link: createProductLink({
         lat: center.lat,
