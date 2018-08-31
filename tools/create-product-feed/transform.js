@@ -100,11 +100,29 @@ function transform(matrix) {
   const results = filterUnavailableProducts(allResults);
   console.error(`Total amount of real products: ${results.length}.`);
 
+  const errors = [];
   return BPromise.map(results, (result) => {
     const { city, posterStyle, mapStyle } = result.combination;
     console.error(`Processing ${city.name} (${city.id}), ${posterStyle.id}, ${mapStyle.id} ..`);
-    return transformProductAsync(result);
+    return transformProductAsync(result)
+      .catch((err) => {
+        if (err.continue) {
+          errors.push(err);
+          return null;
+        }
+
+        throw err;
+      });
   }, { concurrency: 1 })
+  .tap(() => {
+    console.error(`\n\nThere were ${errors.length} errors in processing. These products were left out of the feed:`);
+    _.forEach(errors, (err) => {
+      console.error(err.message, `(${_.get(err, 'metadata.product')})`);
+    });
+
+    console.error(`\nWarning: above products were left out of the feed.`);
+  })
+  .then(arr => _.filter(arr, i => !_.isNull(i)))
   .then((products) => {
     const headers = _.keys(products[0]);
     return [headers].concat(_.map(products, (product) => {
@@ -174,7 +192,12 @@ function transformProductAsync(result) {
     // Pixels taken from here: https://github.com/kimmobrunfeldt/alvarcarto-designer/blob/master/src/util/index.js
     const zoom = getBoundsZoom(latLngBounds, { width: 375, height: 500 });
     if (zoom < 7) {
-      throw new Error(`Zoom level under 7: ${zoom}`);
+      const err = new Error(`Zoom level under 7: ${zoom}`);
+      err.continue = true;
+      err.metadata = {
+        product: `${product.id} ${product.title}`,
+      };
+      throw err;
     }
 
     return _.merge({}, product, {
@@ -211,6 +234,9 @@ function transformProductAsync(result) {
   })
   .catch((err) => {
     console.error('Data:', data);
+    err.metadata = _.merge({}, err.metadata, {
+      geocode: data,
+    });
     throw err;
   });
 }
