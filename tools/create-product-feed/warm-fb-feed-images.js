@@ -6,11 +6,16 @@
 
 const BPromise = require('bluebird');
 const request = require('request-promise');
+const promiseRetryify = require('promise-retryify');
 const chalk = require('chalk');
 const _ = require('lodash');
 const fs = require('fs');
 const csv = require('csv');
 
+const retryingRequest = promiseRetryify(request, {
+  retryTimeout: retryCount => Math.pow(2, retryCount) * 1000,
+  beforeRetry: () => console.log('Retrying request ...'),
+});
 BPromise.promisifyAll(csv);
 
 if (!process.argv[2]) {
@@ -34,7 +39,7 @@ function warm(data) {
   const imageUrls = _.map(rows, r => getColumn('image_link', headers, r));
 
   return BPromise.each(imageUrls, (url) => {
-    return request({ url, time: true, encoding: null, resolveWithFullResponse: true })
+    return retryingRequest({ url, time: true, encoding: null, resolveWithFullResponse: true })
       .then((res) => {
         const rounded = Math.round(res.timingPhases.total);
         const timeMs = `${rounded}ms`;
