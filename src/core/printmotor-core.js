@@ -187,6 +187,12 @@ function _getLandscapeLayoutName(size) {
       return 'api-poster-70x50';
     case '70x100cm':
       return 'api-poster-100x70';
+    case '12x18inch':
+      return 'api-poster-18inchx12inch';
+    case '18x24inch':
+      return 'api-poster-24inch-18inch';
+    case '24x36inch':
+      return 'api-poster-36inch-24inch';
   }
 
   throw new Error(`Unknown size: ${size}`);
@@ -200,6 +206,12 @@ function _getPortraitLayoutName(size) {
       return 'api-poster-50x70';
     case '70x100cm':
       return 'api-poster-70x100';
+    case '12x18inch':
+      return 'api-poster-12inchx18inch';
+    case '18x24inch':
+      return 'api-poster-18inch-24inch';
+    case '24x36inch':
+      return 'api-poster-24inch-36inch';
   }
 
   throw new Error(`Unknown size: ${size}`);

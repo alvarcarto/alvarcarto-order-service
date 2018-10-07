@@ -32,6 +32,10 @@ const data = {
     request: require('./resources/order7-request.json'),
     response: require('./resources/order7-response.json'),
   },
+  order8: {
+    request: require('./resources/order8-request.json'),
+    response: require('./resources/order8-response.json'),
+  },
 };
 
 function test() {
@@ -69,6 +73,7 @@ function test() {
 
       const getRes = await request().get(`/api/orders/${postRes.body.orderId}`).expect(200);
       const order = getRes.body;
+
       const expectedResponse = _.merge({}, data.order7.response, {
         // Add backend generated fields
         orderId: order.orderId,
@@ -135,7 +140,7 @@ function test() {
         .expect(200);
 
       const requestInstance = request();
-      for (let i = 0; i < 50; ++i) {
+      for (let i = 0; i < 20; ++i) {
         await requestInstance.get(`/api/orders/${res.body.orderId}`).expect(200);
       }
 
@@ -204,6 +209,25 @@ function test() {
       });
       await request().post('/api/orders').send(orderWithPromotion).expect(200);
       await request().post('/api/orders').send(orderWithPromotion).expect(400);
+    });
+
+    it('Brad Pitt orders maps of each inch size', async () => {
+      const postRes = await request()
+        .post('/api/orders')
+        .send(data.order8.request)
+        .expect(200);
+
+      const getRes = await request().get(`/api/orders/${postRes.body.orderId}`).expect(200);
+      const order = getRes.body;
+      const fs = require('fs')
+      fs.writeFileSync('response.json', JSON.stringify(order, null, 2), { encoding: 'utf8' });
+      const expectedResponse = _.merge({}, data.order8.response, {
+        // Add backend generated fields
+        orderId: order.orderId,
+        createdAt: order.createdAt,
+      });
+
+      expect(order).to.deep.equal(expectedResponse);
     });
   });
 }

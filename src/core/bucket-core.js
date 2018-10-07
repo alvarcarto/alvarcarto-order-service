@@ -59,7 +59,7 @@ function uploadPoster(order, item, itemId) {
   .tap(data => logger.info(`Uploaded poster to S3: ${data.Location}`))
   .then(response => response.Location)
   .catch((err) => {
-    logger.error(`Error uploading poster to S3: ${err}`);
+    logger.error(`Error uploading poster to S3: ${err} Body: ${_.get(err, 'response.body')}`);
     throw err;
   });
 }
