@@ -166,6 +166,7 @@ function combinationToProduct(comb) {
     item_group_id: comb.city.id,
     color: comb.mapStyle.name,
     size: comb.sizeId,
+    custom_label_1: comb.city.countryCode,
   };
 
   return _.merge({}, defaultFbAttrs, attrs);
