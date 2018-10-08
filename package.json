@@ -9,7 +9,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "alvarcarto-price-util": "git+https://alvarcarto-integration:1c9888484a1db3a46fb46c4d465ea4edc6d93196@github.com/kimmobrunfeldt/alvarcarto-price-util.git#v4.1.0",
-    "aws-sdk": "^2.36.0",
+    "aws-sdk": "2.36.x",
     "babel-cli": "^6.18.0",
     "babel-preset-es2015": "^6.18.0",
     "bluebird": "^3.4.6",
