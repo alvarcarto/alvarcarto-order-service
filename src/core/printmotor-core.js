@@ -21,7 +21,7 @@ function createOrder(internalOrder) {
   const mapCart = filterMapPosterCart(internalOrder.cart);
 
   return BPromise.map(mapCart, (item, i) => uploadPoster(internalOrder, item, i), {
-    concurrency: 3,
+    concurrency: 1,
   })
     .then((imageUrls) => {
       const params = {
