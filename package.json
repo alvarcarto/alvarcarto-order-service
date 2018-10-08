@@ -2,7 +2,7 @@
   "name": "alvarcarto-order-service",
   "version": "1.0.0",
   "engines": {
-    "node": "6.x.x"
+    "node": "8.x.x"
   },
   "description": "",
   "author": "Alvar Carto",
