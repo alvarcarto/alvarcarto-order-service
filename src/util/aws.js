@@ -15,5 +15,5 @@ if (config.AWS_DEBUG) {
 AWS.config.update(awsConfig);
 
 module.exports = {
-  createS3: () => BPromise.promisifyAll(new AWS.S3({ apiVersion: '2006-03-01' })),
+  s3: BPromise.promisifyAll(new AWS.S3({ apiVersion: '2006-03-01' })),
 };
