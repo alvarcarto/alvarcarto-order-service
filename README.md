@@ -83,3 +83,14 @@ on each push.
     branch to **dev**: `git push dev my-local-branch:master`.
 
 5. Check that the environment responds and logs(Papertrail) look ok.
+
+
+### Send test "Your order has been shipped" email
+
+First modify the printmotor-webhook-example.json to have correct order id and printmotor id.
+
+Then run:
+
+```
+curl -XPOST -H"content-type: application/json" -d@docs/printmotor-webhook-example.json https://order-api-qa.alvarcarto.com/api/webhooks/printmotor
+```
