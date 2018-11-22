@@ -77,26 +77,26 @@ function getDeliveryEstimate(countryCode, cart) {
   if (countryCode === 'FI') {
     delivery = {
       min: 1,
-      max: 2,
+      max: 3,
       timeUnit: 'BUSINESS_DAY',
     };
   } else if (isEuCountry(countryCode)) {
     delivery = {
       min: 1,
-      max: 2,
+      max: 3,
       timeUnit: 'BUSINESS_DAY',
     };
   } else if (countryCode === 'US') {
     // "North America" is simplified here
     delivery = {
       min: 2,
-      max: 3,
+      max: 4,
       timeUnit: 'BUSINESS_DAY',
     };
   } else {
     delivery = {
       min: 3,
-      max: 4,
+      max: 5,
       timeUnit: 'BUSINESS_DAY',
     };
   }
