@@ -8,7 +8,7 @@ Hi, {{name}}!
 
 Thank you so much for ordering from Alvar Carto. This email is a receipt and order confirmation for your purchase. The posters will be printed and shipped soon, we'll keep you up to date via email. In our estimation, you should get the posters in {{min_delivery_business_days}} - {{max_delivery_business_days}} business days.
 
-This purchase will appear as “{{credit_card_statement_name}}” on your credit card statement for your {{credit_card_brand}} ending in {{credit_card_last4}}.
+{{purchase_information}}
 
 
 Receipt #{{order_id}}
@@ -30,7 +30,7 @@ Includes VAT ({{vat_percentage}}%): {{total_vat_amount}}
 Delivery details
 ----------------
 
-The order will be delivered to the following address:
+The order will be delivered to the {{shipping_destination_description}}:
 
 {{shipping_address}}
 {{shipping_postal_code}}, {{shipping_city}}

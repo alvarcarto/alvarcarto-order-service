@@ -2,6 +2,7 @@ const BPromise = require('bluebird');
 const postmark = require('postmark');
 const Mustache = require('mustache');
 const _ = require('lodash');
+const { oneLine } = require('common-tags');
 const moment = require('moment');
 const countries = require('i18n-iso-countries');
 const logger = require('../util/logger')(__filename);
@@ -67,6 +68,7 @@ function createDeliveryStartedTemplateModel(order, trackingInfo) {
     tracking_code: trackingInfo.code,
     tracking_url: trackingInfo.url,
     order_id: order.orderId,
+    shipping_destination_description: getOrderDestinationDescription(order),
     shipping_address: getAddress(order),
     shipping_city: getCity(order),
     shipping_postal_code: getPostalCode(order),
@@ -112,12 +114,11 @@ function createReceiptTemplateModel(order) {
   return {
     purchase_date: order.createdAt.format('MMMM Do YYYY'),
     name: getFirstName(customerName),
-    credit_card_statement_name: config.CREDIT_CARD_STATEMENT_NAME,
-    credit_card_brand: _.get(order.stripeChargeResponse, 'source.brand', 'Unknown'),
-    credit_card_last4: _.get(order.stripeChargeResponse, 'source.last4', 'XXXX'),
+    purchase_information: getPurchaseInformation(order),
     order_id: order.orderId,
     receipt_details: receiptItems,
     total: totalPrice.label,
+    shipping_destination_description: getOrderDestinationDescription(order),
     shipping_address: getAddress(order),
     shipping_city: getCity(order),
     shipping_postal_code: getPostalCode(order),
@@ -185,6 +186,30 @@ function getCountry(order) {
   }
 
   return country;
+}
+
+function getOrderDestinationDescription(order) {
+  const countryCode = _.get(order, 'shippingAddress.countryCode', 'FI');
+  if (countryCode === 'FI') {
+    return 'a Matkahuolto service point near the following address';
+  }
+
+  return 'the following address';
+}
+
+function getPurchaseInformation(order) {
+  if (!order.stripeChargeResponse) {
+    return 'The order was free of charge.';
+  }
+
+  const creditCardBrand = _.get(order.stripeChargeResponse, 'source.brand', 'Unknown card');
+  const creditCardLast4 = _.get(order.stripeChargeResponse, 'source.last4', 'XXXX');
+
+  return oneLine`
+    This purchase will appear as “${config.CREDIT_CARD_STATEMENT_NAME}”
+    on your credit card statement for your ${creditCardBrand} ending in
+    ${creditCardLast4}.
+  `;
 }
 
 function sendEmailAsync(messageObject) {

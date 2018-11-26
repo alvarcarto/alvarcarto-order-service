@@ -434,8 +434,7 @@
                       <h1>Hi, {{name}}!</h1>
                       <p>Thank you so much for ordering from Alvar Carto. This email is a receipt and order confirmation for your purchase. The posters will be printed and shipped soon, we'll keep you up to date via email. In our estimation, you should get the posters in {{min_delivery_business_days}} - {{max_delivery_business_days}} business days.</p>
 
-                      <p>This purchase will appear as “{{credit_card_statement_name}}” on your credit card statement for your {{credit_card_brand}} ending in {{credit_card_last4}}.
-                      </p>
+                      <p>{{purchase_information}}</p>
 
                       <table class="purchase" width="100%" cellpadding="0" cellspacing="0">
                         <tr>
@@ -482,7 +481,7 @@
                         </tr>
                       </table>
 
-                      <p>The order will be delivered to the following address:</p>
+                      <p>The order will be delivered to {{shipping_destination_description}}:</p>
 
                       <table class="delivery_details" width="100%" cellpadding="0" cellspacing="0">
                         <tr>

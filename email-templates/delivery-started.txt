@@ -11,7 +11,7 @@ Great news, your order has been shipped from our printing studio. The estimated 
 Track your order ( {{ tracking_url }} )
 
 
-The order will be delivered to the following address:
+The order will be delivered to {{shipping_destination_description}}:
 {{shipping_address}}
 {{shipping_postal_code}}, {{shipping_city}}
 {{shipping_country}}
