@@ -56,6 +56,23 @@ function createOrder(internalOrder) {
     });
 }
 
+function getOrder(printmotorOrderId) {
+  const params = {
+    method: 'GET',
+    url: `${BASE_URL}/api/v1/order/${printmotorOrderId}`,
+    json: true,
+    headers: {
+      'X-Printmotor-Service': config.PRINTMOTOR_SERVICE_ID,
+    },
+  };
+
+  return request(params);
+}
+
+function isOrderCancelled(printmotorOrder) {
+  return _.get(printmotorOrder, 'processingStatusDescription') === 'Cancelled';
+}
+
 function getDeliveryEstimate(countryCode, cart) {
   const productionClass = resolveProductionClass(cart);
 
@@ -241,6 +258,8 @@ function _getProductionClass(internalOrder) {
 
 module.exports = {
   createOrder,
+  getOrder,
   getDeliveryEstimate,
+  isOrderCancelled,
   BASE_URL,
 };

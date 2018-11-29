@@ -1,5 +1,6 @@
 /* eslint-disable no-process-env */
 const requireEnvs = require('./util/require-envs');
+require('./configure-moment');
 
 requireEnvs([
   'API_KEY',
@@ -46,6 +47,9 @@ const config = {
   CREDIT_CARD_STATEMENT_NAME: process.env.CREDIT_CARD_STATEMENT_NAME || 'alvarcarto.com',
   MOCK_EMAIL: process.env.MOCK_EMAIL === 'true',
   SKIP_S3_POSTER_UPLOAD: process.env.SKIP_S3_POSTER_UPLOAD === 'true',
+
+  // Use personal email as a fallback to prevent accidental spam
+  PRINTMOTOR_SUPPORT_EMAIL: process.env.PRINTMOTOR_SUPPORT_EMAIL || 'kimmo.brunfeldt@alvarcarto.com',
 };
 
 if (!config.ALLOW_UNVERIFIED_WEBHOOKS) {
@@ -54,6 +58,12 @@ if (!config.ALLOW_UNVERIFIED_WEBHOOKS) {
 
 if (!config.MOCK_EMAIL) {
   requireEnvs(['POSTMARK_API_KEY']);
+}
+
+if (process.env.DELIVERY_IS_LATE_BUSINESS_DAYS) {
+  config.DELIVERY_IS_LATE_BUSINESS_DAYS = Number(process.env.DELIVERY_IS_LATE_BUSINESS_DAYS);
+} else {
+  config.DELIVERY_IS_LATE_BUSINESS_DAYS = 4;
 }
 
 module.exports = config;

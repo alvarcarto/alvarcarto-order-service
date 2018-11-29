@@ -9,8 +9,10 @@ const ADDRESS_TYPE = require('../enums/address-type');
 const { knex } = require('../util/database');
 const { resolveProductionClass, resolveShippingClass } = require('../util');
 const promotionCore = require('./promotion-core');
+const printmotorCore = require('./printmotor-core');
 const config = require('../config');
 const { retryingSaveFailedOrder } = require('./fail-safe-core');
+const { diffInWorkingDays } = require('../util/time');
 
 function createOrder(order) {
   let fullOrder = _.merge({}, order, { prettyOrderId: 'NONE' });
@@ -104,7 +106,7 @@ function getOrder(orderId, opts = {}) {
     });
 }
 
-function getOrdersReadyToProduction(orderId, opts = {}) {
+function getOrdersReadyToProduction(opts = {}) {
   const trx = opts.trx || knex;
 
   return selectOrders({
@@ -114,6 +116,53 @@ function getOrdersReadyToProduction(orderId, opts = {}) {
     `,
     trx,
   });
+}
+
+function getOrdersWithTooLongProductionTime(opts = {}) {
+  const trx = opts.trx || knex;
+
+  return trx.raw(`
+    SELECT
+      MAX(CASE WHEN webhook_events.event='USER_ORDER_DELIVERED' THEN 1 ELSE 0 END) delivered,
+      orders.*
+    FROM orders
+    LEFT JOIN webhook_events
+      ON orders.id = webhook_events.order_id
+    WHERE webhook_events.order_id IS NOT NULL
+      AND orders.printmotor_order_id IS NOT NULL
+      AND orders.created_at <= NOW() - INTERVAL '2 days'
+    GROUP BY orders.id
+    HAVING MAX(CASE WHEN webhook_events.event='USER_ORDER_DELIVERED' THEN 1 ELSE 0 END) = 0
+    ORDER BY orders.created_at
+  `)
+    .then((result) => {
+      const now = moment();
+      const possiblyLateOrders = _.filter(result.rows, (row) => {
+        const orderDate = moment(row.created_at);
+        const diffInDays = diffInWorkingDays(now, orderDate);
+        const isLate = diffInDays > config.DELIVERY_IS_LATE_BUSINESS_DAYS;
+        return isLate;
+      });
+
+      // These orders might still contain cancelled orders
+      return BPromise.filter(possiblyLateOrders, (order) => {
+        return printmotorCore.getOrder(order.printmotor_order_id)
+          .then((printmotorOrder) => {
+            return !printmotorCore.isOrderCancelled(printmotorOrder);
+          });
+      }, { concurrency: 1 });
+    })
+    .then((lateOrders) => {
+      if (_.isArray(lateOrders) && lateOrders.length < 1) {
+        return [];
+      }
+
+      const lateOrdersStr = _.map(lateOrders, 'id').join(', ');
+      return selectOrders({
+        addQuery: `WHERE orders.id IN (${lateOrdersStr})`,
+        trx,
+      });
+    });
 }
 
 // opts.addQuery MUST BE SAFE INPUT, DO NOT USE USER INPUT FOR THAT VALUE
@@ -521,5 +570,6 @@ module.exports = {
   selectOrders,
   getOrder,
   getOrdersReadyToProduction,
+  getOrdersWithTooLongProductionTime,
   markOrderSentToProduction,
 };

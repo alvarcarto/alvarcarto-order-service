@@ -3,13 +3,14 @@ const postmark = require('postmark');
 const Mustache = require('mustache');
 const _ = require('lodash');
 const { oneLine } = require('common-tags');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const countries = require('i18n-iso-countries');
 const logger = require('../util/logger')(__filename);
 const { readFileSync } = require('../util');
 const { calculateItemPrice, calculateCartPrice, getCurrencySymbol, getItemLabel } = require('alvarcarto-price-util');
 const config = require('../config');
 const { getDeliveryEstimate } = require('./printmotor-core');
+const { diffInWorkingDays } = require('../util/time');
 
 const client = config.MOCK_EMAIL || config.NODE_ENV === 'test'
   ? null
@@ -19,6 +20,7 @@ const receiptHtmlTemplate = readFileSync('email-templates/receipt.inlined.html')
 const receiptTextTemplate = readFileSync('email-templates/receipt.txt');
 const deliveryStartedHtmlTemplate = readFileSync('email-templates/delivery-started.inlined.html');
 const deliveryStartedTextTemplate = readFileSync('email-templates/delivery-started.txt');
+const deliveryReminderToPrintmotorTextTemplate = readFileSync('email-templates/delivery-reminder-to-printmotor.txt');
 
 function sendReceipt(order) {
   logger.logEncrypted('info', 'Sending receipt email to', order.email);
@@ -46,6 +48,20 @@ function sendDeliveryStarted(order, trackingInfo) {
   });
 }
 
+function sendDeliveryReminderToPrintmotor(lateOrders) {
+  logger.info(`Sending delivery reminder email to ${config.PRINTMOTOR_SUPPORT_EMAIL}`);
+
+  const templateModel = createDeliveryReminderToPrintmotorTemplateModel(lateOrders);
+  return sendEmailAsync({
+    From: 'help@alvarcarto.com',
+    To: config.PRINTMOTOR_SUPPORT_EMAIL,
+    Subject: lateOrders.length > 1
+      ? `Status of orders (at ${moment().locale('en').format('MMMM Do YYYY')})`
+      : `Status of order #${lateOrders[0].orderId}`,
+    TextBody: Mustache.render(deliveryReminderToPrintmotorTextTemplate, templateModel),
+  });
+}
+
 function renderReceiptToText(order) {
   const templateModel = createReceiptTemplateModel(order);
   return Mustache.render(receiptTextTemplate, templateModel);
@@ -57,10 +73,7 @@ function renderReceiptToHtml(order) {
 }
 
 function createDeliveryStartedTemplateModel(order, trackingInfo) {
-  const customerName = order.differentBillingAddress
-    ? _.get(order, 'billingAddress.personName', 'Poster Designer')
-    : _.get(order, 'shippingAddress.personName', 'Poster Designer');
-
+  const customerName = getBuyerCustomerName(order);
   const countryCode = _.get(order, 'shippingAddress.countryCode');
   const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
   return {
@@ -80,10 +93,30 @@ function createDeliveryStartedTemplateModel(order, trackingInfo) {
   };
 }
 
+function createDeliveryReminderToPrintmotorTemplateModel(lateOrders) {
+  if (lateOrders.length < 1) {
+    throw new Error('Can\'t send email when lateOrders is empty');
+  }
+
+  return {
+    orders: _.map(lateOrders, (order) => {
+      return {
+        order_id: order.orderId,
+        business_days_after_order: Math.floor(diffInWorkingDays(moment(), order.createdAt)),
+        // XXX: Assumption: Printmotor is in this timezone
+        pretty_order_timestamp: moment(order.createdAt)
+          .locale('en-custom')
+          .tz('Europe/Helsinki')
+          .calendar(),
+        receiver_customer_info: `${getReceiverCustomerName(order)}, ${getCity(order)}`,
+      };
+    }),
+    only_one_order: lateOrders.length === 1,
+  };
+}
+
 function createReceiptTemplateModel(order) {
-  const customerName = order.differentBillingAddress
-    ? _.get(order, 'billingAddress.personName', 'Poster Designer')
-    : _.get(order, 'shippingAddress.personName', 'Poster Designer');
+  const customerName = getBuyerCustomerName(order);
 
   const totalPrice = calculateCartPrice(order.cart, {
     promotion: order.promotion,
@@ -140,6 +173,18 @@ function cartToReceiptItems(cart) {
       ? `${item.quantity}x ${getUnitPrice(item)}`
       : `${getUnitPrice(item)}`,
   }));
+}
+
+function getBuyerCustomerName(order) {
+  if (order.differentBillingAddress) {
+    return _.get(order, 'billingAddress.personName', 'Poster Designer');
+  }
+
+  return _.get(order, 'shippingAddress.personName', 'Poster Designer');
+}
+
+function getReceiverCustomerName(order) {
+  return _.get(order, 'shippingAddress.personName', 'Poster Designer');
 }
 
 function getFirstName(fullName) {
@@ -235,6 +280,7 @@ function sendEmailAsync(messageObject) {
 module.exports = {
   sendReceipt,
   sendDeliveryStarted,
+  sendDeliveryReminderToPrintmotor,
   renderReceiptToText,
   renderReceiptToHtml,
   createReceiptTemplateModel,
