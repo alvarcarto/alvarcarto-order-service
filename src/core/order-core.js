@@ -139,7 +139,6 @@ function getOrdersWithTooLongProductionTime(opts = {}) {
     -- and that we haven't yet sent the reminder to printmotor for the given order
       AND MAX(CASE WHEN sent_emails.type='delivery-reminder-to-printmotor' THEN 1 ELSE 0 END) = 0
     ORDER BY orders.id
-    LIMIT 1
   `)
     .then((result) => {
       const uniqueOrderRows = _.uniqBy(result.rows, row => row.order_id);
