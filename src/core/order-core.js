@@ -123,21 +123,29 @@ function getOrdersWithTooLongProductionTime(opts = {}) {
 
   return trx.raw(`
     SELECT
-      MAX(CASE WHEN webhook_events.event='USER_ORDER_DELIVERED' THEN 1 ELSE 0 END) delivered,
+      orders.id as order_id,
       orders.*
     FROM orders
     LEFT JOIN webhook_events
       ON orders.id = webhook_events.order_id
+    LEFT JOIN sent_emails
+      ON orders.id = sent_emails.order_id
     WHERE webhook_events.order_id IS NOT NULL
       AND orders.printmotor_order_id IS NOT NULL
       AND orders.created_at <= NOW() - INTERVAL '2 days'
     GROUP BY orders.id
+    -- Make sure we haven't received "user order delivered" from printmotor yet
     HAVING MAX(CASE WHEN webhook_events.event='USER_ORDER_DELIVERED' THEN 1 ELSE 0 END) = 0
-    ORDER BY orders.created_at
+    -- and that we haven't yet sent the reminder to printmotor for the given order
+      AND MAX(CASE WHEN sent_emails.type='delivery-reminder-to-printmotor' THEN 1 ELSE 0 END) = 0
+    ORDER BY orders.id
+    LIMIT 1
   `)
     .then((result) => {
+      const uniqueOrderRows = _.uniqBy(result.rows, row => row.order_id);
+
       const now = moment();
-      const possiblyLateOrders = _.filter(result.rows, (row) => {
+      const possiblyLateOrders = _.filter(uniqueOrderRows, (row) => {
         const orderDate = moment(row.created_at);
         const diffInDays = diffInWorkingDays(now, orderDate);
         const isLate = diffInDays > config.DELIVERY_IS_LATE_BUSINESS_DAYS;
@@ -270,6 +278,17 @@ function selectOrders(_opts = {}) {
           .then(promotion => _.merge({}, order, { promotion }));
       })
     );
+}
+
+function addEmailSent(orderId, type, opts = {}) {
+  const trx = opts.trx || knex;
+
+  return trx('sent_emails').insert({
+    order_id: knex.raw('(SELECT id FROM orders WHERE pretty_order_id = :orderId)', { orderId }),
+    type,
+  })
+    .returning('*')
+    .then(rows => rows[0]);
 }
 
 function markOrderSentToProduction(orderId, printmotorOrderId, response, requestParams) {
@@ -568,6 +587,7 @@ function randomInteger(min, max) {
 module.exports = {
   createOrder,
   selectOrders,
+  addEmailSent,
   getOrder,
   getOrdersReadyToProduction,
   getOrdersWithTooLongProductionTime,

@@ -109,7 +109,7 @@ const reactions = {
           order,
         });
       })
-      .then(({ order, rows }) => {
+      .tap(({ order, rows }) => {
         if (_.isArray(rows) && rows.length > 1) {
           throw new Error('USER_ORDER_DELIVERED called multiple times');
         }
@@ -127,7 +127,8 @@ const reactions = {
         };
 
         return emailCore.sendDeliveryStarted(order, trackingInfo);
-      });
+      })
+      .tap(({ order }) => orderCore.addEmailSent(order.orderId, 'delivery-started'));
   },
 };
 

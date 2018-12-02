@@ -24,7 +24,7 @@ function main(opts = {}) {
           return BPromise.each(orders, (order) => {
             logger.info(`TODO: Sending an email about late order (#${order.orderId}) ..`);
 
-            return BPromise.resolve()
+            return orderCore.addEmailSent(order.orderId, 'delivery-reminder-to-printmotor')
               .catch((err) => {
                 logSingleProcessError(err, order);
                 logger.info('Continuing with next order ..');

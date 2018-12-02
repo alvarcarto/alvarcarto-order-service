@@ -90,6 +90,7 @@ function executeCheckout(inputOrder) {
       logger.info('New order received!');
       return emailCore.sendReceipt(orderWithId);
     })
+    .tap(createdOrder => orderCore.addEmailSent(createdOrder.orderId, 'receipt'))
     .tap((createdOrder) => {
       if (createdOrder.promotion) {
         return promotionCore.increasePromotionUsageCount(createdOrder.promotion.promotionCode);
