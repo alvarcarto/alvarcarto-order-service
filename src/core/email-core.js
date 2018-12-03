@@ -4,6 +4,7 @@ const Mustache = require('mustache');
 const _ = require('lodash');
 const { oneLine } = require('common-tags');
 const moment = require('moment-timezone');
+const uuidv4 = require('uuid/v4');
 const countries = require('i18n-iso-countries');
 const logger = require('../util/logger')(__filename);
 const { readFileSync } = require('../util');
@@ -289,9 +290,11 @@ function getPurchaseInformation(order) {
 }
 
 function saveEmailEvent(type, orders, messageObject) {
+  const randomUuid = uuidv4();
   return BPromise.mapSeries(orders, (order) => {
     return orderCore.addEmailSent(order.orderId, {
       type,
+      emailId: randomUuid,
       to: messageObject.To,
       cc: messageObject.Cc,
       subject: messageObject.Subject,

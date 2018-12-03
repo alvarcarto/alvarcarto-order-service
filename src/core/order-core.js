@@ -292,6 +292,7 @@ function addEmailSent(orderId, email, opts = {}) {
 
   return trx('sent_emails').insert({
     order_id: knex.raw('(SELECT id FROM orders WHERE pretty_order_id = :orderId)', { orderId }),
+    email_id: email.emailId,
     type: email.type,
     to: email.to,
     cc: email.cc,
