@@ -3,7 +3,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Your order delivery has taken longer than average</title>
+    <title>Your order production has taken longer than average</title>
     <!--
     The style block is collapsed on page load to save you some scrolling.
     Postmark automatically inlines all CSS properties for maximum email client
@@ -396,7 +396,7 @@
     </style>
   </head>
   <body>
-    <span class="preheader">Your order delivery has taken longer than average.</span>
+    <span class="preheader">Your order production has taken longer than average.</span>
     <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td align="center">
@@ -416,9 +416,9 @@
                   <tr>
                     <td class="content-cell">
                       <h1>Hello, {{ name }}!</h1>
-                      <p>Unfortunately the production and delivery of your order has taken longer than average. We're so sorry about that.</p>
+                      <p>Unfortunately the production and delivery of your order (#{{ order_id }}) has taken longer than average. We're sorry about that.</p>
 
-                      <p>Our production team is doing their best to get your package on its way as soon as possible. The tracking code will be sent to you immediately after that.</p>
+                      <p>We sent an additional notification to our printing studio. Our production team is doing their best to get your package on its way as soon as possible. The tracking code will be sent to you immediately after that.</p>
 
                       <p>If you have any further questions, simply reply to this email or visit our <a href="{{support_url}}">help page</a> for frequently asked questions.</p>
 

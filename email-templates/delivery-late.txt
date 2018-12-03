@@ -1,4 +1,4 @@
-Your order delivery has taken longer than average.
+Your order production has taken longer than average.
 
 [Alvar Carto] ( https://alvarcarto.com )
 
@@ -6,9 +6,9 @@ Your order delivery has taken longer than average.
 Hello, {{name}}!
 *************
 
-Unfortunately the production and delivery of your order has taken longer than average. We're so sorry about that.
+Unfortunately the production and delivery of your order (#{{ order_id }}) has taken longer than average. We're sorry about that.
 
-Our production team is doing their best to get your package on its way as soon as possible. The tracking code will be sent to you immediately after that.
+We sent an additional notification to our printing studio. Our production team is doing their best to get your package on its way as soon as possible. The tracking code will be sent to you immediately after that.
 
 
 If you have any further questions, simply reply to this email or visit our help page ( {{ support_url }} ) for frequently asked questions.
@@ -23,3 +23,5 @@ Alvar Carto Oy (VAT ID: FI28852264)
 Rantakatu 3
 90100 Oulu
 Finland
+
+I'm also thinking about implementing a verification system, so it would send an email to help@alvarcarto.com confirming "about to send notifications about these late deliveries
