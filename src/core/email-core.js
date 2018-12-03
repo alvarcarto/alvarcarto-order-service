@@ -4,7 +4,6 @@ const Mustache = require('mustache');
 const _ = require('lodash');
 const { oneLine } = require('common-tags');
 const moment = require('moment-timezone');
-const uuidv4 = require('uuid/v4');
 const countries = require('i18n-iso-countries');
 const logger = require('../util/logger')(__filename);
 const { readFileSync } = require('../util');
@@ -38,7 +37,7 @@ function sendReceipt(order) {
     HtmlBody: Mustache.render(receiptHtmlTemplate, templateModel),
   };
   return sendEmailAsync(messageObject)
-    .tap(() => saveEmailEvent('receipt', [order], messageObject));
+    .tap(response => saveEmailEvent('receipt', [order], messageObject, response));
 }
 
 function sendDeliveryStarted(order, trackingInfo) {
@@ -53,7 +52,7 @@ function sendDeliveryStarted(order, trackingInfo) {
     HtmlBody: Mustache.render(deliveryStartedHtmlTemplate, templateModel),
   };
   return sendEmailAsync(messageObject)
-    .tap(() => saveEmailEvent('delivery-started', [order], messageObject));
+    .tap(response => saveEmailEvent('delivery-started', [order], messageObject, response));
 }
 
 function sendDeliveryReminderToPrintmotor(lateOrders) {
@@ -70,7 +69,7 @@ function sendDeliveryReminderToPrintmotor(lateOrders) {
     TextBody: Mustache.render(deliveryReminderToPrintmotorTextTemplate, templateModel),
   };
   return sendEmailAsync(messageObject)
-    .tap(() => saveEmailEvent('delivery-reminder-to-printmotor', lateOrders, messageObject));
+    .tap(response => saveEmailEvent('delivery-reminder-to-printmotor', lateOrders, messageObject, response));
 }
 
 function sendDeliveryLate(order) {
@@ -91,7 +90,7 @@ function sendDeliveryLate(order) {
     HtmlBody: Mustache.render(deliveryLateHtmlTemplate, templateModel),
   };
   return sendEmailAsync(messageObject)
-    .tap(() => saveEmailEvent('delivery-late', [order], messageObject));
+    .tap(response => saveEmailEvent('delivery-late', [order], messageObject, response));
 }
 
 function renderReceiptToText(order) {
@@ -289,12 +288,11 @@ function getPurchaseInformation(order) {
   `;
 }
 
-function saveEmailEvent(type, orders, messageObject) {
-  const randomUuid = uuidv4();
+function saveEmailEvent(type, orders, messageObject, postmarkResponse) {
   return BPromise.mapSeries(orders, (order) => {
     return orderCore.addEmailSent(order.orderId, {
       type,
-      emailId: randomUuid,
+      emailId: postmarkResponse.MessageID,
       to: messageObject.To,
       cc: messageObject.Cc,
       subject: messageObject.Subject,
