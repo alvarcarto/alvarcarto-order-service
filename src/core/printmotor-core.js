@@ -69,8 +69,8 @@ function getOrder(printmotorOrderId) {
   return request(params);
 }
 
-function isOrderCancelled(printmotorOrder) {
-  return _.get(printmotorOrder, 'processingStatusDescription') === 'Cancelled';
+function isOrderInProduction(printmotorOrder) {
+  return _.get(printmotorOrder, 'processingStatusDescription') === 'In production';
 }
 
 function getDeliveryEstimate(countryCode, cart) {
@@ -260,6 +260,6 @@ module.exports = {
   createOrder,
   getOrder,
   getDeliveryEstimate,
-  isOrderCancelled,
+  isOrderInProduction,
   BASE_URL,
 };

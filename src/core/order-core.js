@@ -132,6 +132,7 @@ function getOrdersWithTooLongProductionTime(opts = {}) {
       ON orders.id = sent_emails.order_id
     WHERE webhook_events.order_id IS NOT NULL
       AND orders.printmotor_order_id IS NOT NULL
+      AND orders.created_at <= NOW() - INTERVAL '15 days'
       AND orders.created_at <= NOW() - INTERVAL '2 days'
     GROUP BY orders.id
     -- Make sure we haven't received "user order delivered" from printmotor yet
@@ -151,11 +152,12 @@ function getOrdersWithTooLongProductionTime(opts = {}) {
         return isLate;
       });
 
-      // These orders might still contain cancelled orders
+      // These orders might still contain cancelled orders or already delivered orders
+      // in case we haven't correctly received or saved the USER_ORDER_DELIVERED webhook
       return BPromise.filter(possiblyLateOrders, (order) => {
         return printmotorCore.getOrder(order.printmotor_order_id)
           .then((printmotorOrder) => {
-            return !printmotorCore.isOrderCancelled(printmotorOrder);
+            return printmotorCore.isOrderInProduction(printmotorOrder);
           });
       }, { concurrency: 1 });
     })
