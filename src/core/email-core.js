@@ -10,6 +10,7 @@ const { readFileSync } = require('../util');
 const { calculateItemPrice, calculateCartPrice, getCurrencySymbol, getItemLabel } = require('alvarcarto-price-util');
 const config = require('../config');
 const { getDeliveryEstimate } = require('./printmotor-core');
+const orderCore = require('./order-core');
 const { diffInWorkingDays } = require('../util/time');
 
 const client = config.MOCK_EMAIL || config.NODE_ENV === 'test'
@@ -20,46 +21,76 @@ const receiptHtmlTemplate = readFileSync('email-templates/receipt.inlined.html')
 const receiptTextTemplate = readFileSync('email-templates/receipt.txt');
 const deliveryStartedHtmlTemplate = readFileSync('email-templates/delivery-started.inlined.html');
 const deliveryStartedTextTemplate = readFileSync('email-templates/delivery-started.txt');
+const deliveryLateHtmlTemplate = readFileSync('email-templates/delivery-late.inlined.html');
+const deliveryLateTextTemplate = readFileSync('email-templates/delivery-late.txt');
 const deliveryReminderToPrintmotorTextTemplate = readFileSync('email-templates/delivery-reminder-to-printmotor.txt');
 
 function sendReceipt(order) {
   logger.logEncrypted('info', 'Sending receipt email to', order.email);
 
   const templateModel = createReceiptTemplateModel(order);
-  return sendEmailAsync({
+  const messageObject = {
     From: 'help@alvarcarto.com',
     To: order.email,
     Subject: `Receipt for your purchase (#${order.orderId})`,
     TextBody: Mustache.render(receiptTextTemplate, templateModel),
     HtmlBody: Mustache.render(receiptHtmlTemplate, templateModel),
-  });
+  };
+  return sendEmailAsync(messageObject)
+    .tap(() => saveEmailEvent('receipt', [order], messageObject));
 }
 
 function sendDeliveryStarted(order, trackingInfo) {
   logger.logEncrypted('info', 'Sending delivery started email to', order.email);
 
   const templateModel = createDeliveryStartedTemplateModel(order, trackingInfo);
-  return sendEmailAsync({
+  const messageObject = {
     From: 'help@alvarcarto.com',
     To: order.email,
     Subject: `Your order has been shipped (#${order.orderId})`,
     TextBody: Mustache.render(deliveryStartedTextTemplate, templateModel),
     HtmlBody: Mustache.render(deliveryStartedHtmlTemplate, templateModel),
-  });
+  };
+  return sendEmailAsync(messageObject)
+    .tap(() => saveEmailEvent('delivery-started', [order], messageObject));
 }
 
 function sendDeliveryReminderToPrintmotor(lateOrders) {
   logger.info(`Sending delivery reminder email to ${config.PRINTMOTOR_SUPPORT_EMAIL}`);
 
   const templateModel = createDeliveryReminderToPrintmotorTemplateModel(lateOrders);
-  return sendEmailAsync({
+  const messageObject = {
     From: 'help@alvarcarto.com',
     To: config.PRINTMOTOR_SUPPORT_EMAIL,
+    Cc: 'help@alvarcarto.com',
     Subject: lateOrders.length > 1
       ? `Status of orders (at ${moment().locale('en').format('MMMM Do YYYY')})`
       : `Status of order #${lateOrders[0].orderId}`,
     TextBody: Mustache.render(deliveryReminderToPrintmotorTextTemplate, templateModel),
-  });
+  };
+  return sendEmailAsync(messageObject)
+    .tap(() => saveEmailEvent('delivery-reminder-to-printmotor', lateOrders, messageObject));
+}
+
+function sendDeliveryLate(order) {
+  logger.logEncrypted('info', 'Sending order delayed email to', order.email);
+
+  const customerName = getBuyerCustomerName(order);
+  const templateModel = {
+    order_id: order.orderId,
+    name: getFirstName(customerName),
+    support_url: 'https://alvarcarto.com/help',
+    year: moment().format('YYYY'),
+  };
+  const messageObject = {
+    From: 'help@alvarcarto.com',
+    To: 'help@alvarcarto.com',
+    Subject: 'Your order production has taken longer than average',
+    TextBody: Mustache.render(deliveryLateTextTemplate, templateModel),
+    HtmlBody: Mustache.render(deliveryLateHtmlTemplate, templateModel),
+  };
+  return sendEmailAsync(messageObject)
+    .tap(() => saveEmailEvent('delivery-late', [order], messageObject));
 }
 
 function renderReceiptToText(order) {
@@ -102,7 +133,7 @@ function createDeliveryReminderToPrintmotorTemplateModel(lateOrders) {
     orders: _.map(lateOrders, (order) => {
       return {
         order_id: order.orderId,
-        business_days_after_order: Math.floor(diffInWorkingDays(moment(), order.createdAt)),
+        business_days_after_order: Math.floor(diffInWorkingDays(moment(), moment(order.createdAt))),
         // XXX: Assumption: Printmotor is in this timezone
         pretty_order_timestamp: moment(order.createdAt)
           .locale('en-custom')
@@ -257,6 +288,23 @@ function getPurchaseInformation(order) {
   `;
 }
 
+function saveEmailEvent(type, orders, messageObject) {
+  return BPromise.mapSeries(orders, (order) => {
+    return orderCore.addEmailSent(order.orderId, {
+      type,
+      to: messageObject.To,
+      cc: messageObject.Cc,
+      subject: messageObject.Subject,
+    });
+  })
+    .catch((err) => {
+      logger.error('alert-normal Failed to save email events to database');
+      logger.error(`Message was type ${type}`);
+      logger.error(`Orders: ${_.map(orders, o => o.orderId).join(', ')}`);
+      throw err;
+    });
+}
+
 function sendEmailAsync(messageObject) {
   if (config.MOCK_EMAIL) {
     logger.info(`Mock email enabled, skipping send to ${messageObject.To} ..`);
@@ -281,6 +329,7 @@ module.exports = {
   sendReceipt,
   sendDeliveryStarted,
   sendDeliveryReminderToPrintmotor,
+  sendDeliveryLate,
   renderReceiptToText,
   renderReceiptToHtml,
   createReceiptTemplateModel,

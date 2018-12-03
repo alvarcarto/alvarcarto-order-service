@@ -127,8 +127,7 @@ const reactions = {
         };
 
         return emailCore.sendDeliveryStarted(order, trackingInfo);
-      })
-      .tap(({ order }) => orderCore.addEmailSent(order.orderId, 'delivery-started'));
+      });
   },
 };
 

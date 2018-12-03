@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const BPromise = require('bluebird');
 const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
@@ -22,16 +23,22 @@ function main(opts = {}) {
       return emailCore.sendDeliveryReminderToPrintmotor(orders)
         .then(() => {
           return BPromise.each(orders, (order) => {
-            logger.info(`TODO: Sending an email about late order (#${order.orderId}) ..`);
+            logger.info(`Sending an email about late order (#${order.orderId}) ..`);
 
-            return orderCore.addEmailSent(order.orderId, 'delivery-reminder-to-printmotor')
+            const hasBeenSent = _.findIndex(order.sentEmails, e => e.type === 'delivery-late') !== -1;
+            if (hasBeenSent) {
+              logger.info(`Delivery late notification already sent for (#${order.orderId}).`);
+              return BPromise.resolve();
+            }
+
+            return emailCore.sendDeliveryLate(order)
               .catch((err) => {
                 logSingleProcessError(err, order);
                 logger.info('Continuing with next order ..');
                 if (opts.throwOnError) {
                   throw err;
                 }
-                // Otherwis ignore error for single order creation
+                // Otherwise ignore error for single order creation
               });
           });
         });

@@ -182,7 +182,7 @@ function selectOrders(_opts = {}) {
   return trx.raw(`
     SELECT
       orders.pretty_order_id as pretty_order_id,
-      orders.created_at as created_at,
+      orders.created_at as order_created_at,
       orders.customer_email as customer_email,
       orders.email_subscription as email_subscription,
       orders.promotion_code as promotion_code,
@@ -195,6 +195,9 @@ function selectOrders(_opts = {}) {
       addresses.country_code as shipping_country_code,
       addresses.state as shipping_state,
       addresses.contact_phone as shipping_contact_phone,
+      sent_emails.id as sent_email_id,
+      sent_emails.type as sent_email_type,
+      sent_emails.created_at as sent_email_created_at,
       *
     FROM (
       SELECT
@@ -255,10 +258,13 @@ function selectOrders(_opts = {}) {
       ON orders.id = sub_query.order_id
     LEFT JOIN addresses as addresses
       ON addresses.order_id = orders.id AND addresses.type = 'SHIPPING'
+    LEFT JOIN sent_emails as sent_emails
+      ON sent_emails.order_id = orders.id
     ${opts.addQuery}
   `, opts.params)
     .then((result) => {
-      // Each ordered poster is in its own row
+      // Multiple rows might be returned per order, all ordered posters are own rows, and so are
+      // sent emails
       const grouped = _.groupBy(result.rows, row => row.pretty_order_id);
 
       const orders = {};
@@ -279,12 +285,15 @@ function selectOrders(_opts = {}) {
     );
 }
 
-function addEmailSent(orderId, type, opts = {}) {
+function addEmailSent(orderId, email, opts = {}) {
   const trx = opts.trx || knex;
 
   return trx('sent_emails').insert({
     order_id: knex.raw('(SELECT id FROM orders WHERE pretty_order_id = :orderId)', { orderId }),
-    type,
+    type: email.type,
+    to: email.to,
+    cc: email.cc,
+    subject: email.subject,
   })
     .returning('*')
     .then(rows => rows[0]);
@@ -308,8 +317,25 @@ function markOrderSentToProduction(orderId, printmotorOrderId, response, request
 
 // Each cart item is its own row
 function _rowsToOrderObject(rows) {
-  const cart = _.map(rows, (row) => {
-    if (row.gift_item_id) {
+  const onlyCartRows = _.filter(rows, (row) => {
+    const isCartItemRow = row.ordered_poster_id !== null || row.gift_item_id !== null;
+    return isCartItemRow;
+  });
+
+  // Take all unique ordered posters rows
+  const uniqueCartRows = _.uniqBy(onlyCartRows, (row) => {
+    if (row.ordered_poster_id !== null) {
+      return `poster-${row.ordered_poster_id}`;
+    } else if (row.gift_item_id !== null) {
+      return `gift-item-${row.gift_item_id}`;
+    }
+
+    // This should not happen as we just filtered the rows above
+    throw new Error(`Unknown type of cart row found: ${JSON.stringify(row)}`);
+  });
+
+  const cart = _.map(uniqueCartRows, (row) => {
+    if (row.gift_item_id !== null) {
       return _.omitBy({
         id: row.gift_item_id,
         type: row.gift_item_type,
@@ -355,14 +381,25 @@ function _rowsToOrderObject(rows) {
     sortedCart.push({ type: 'productionClass', value: firstRow.production_class, quantity: 1 });
   }
 
+  const sentEmailsRows = _.uniqBy(_.filter(rows, row => row.sent_email_id !== null), (row) => {
+    return row.sent_email_id;
+  });
+
+  const sentEmails = _.map(sentEmailsRows, row => ({
+    id: Number(row.sent_email_id),
+    type: row.sent_email_type,
+    createdAt: row.sent_email_created_at,
+  }));
+
   const order = {
     email: firstRow.customer_email,
     emailSubscription: firstRow.email_subscription,
     stripeChargeResponse: firstRow.stripe_charge_response,
     orderId: firstRow.pretty_order_id,
     promotionCode: firstRow.promotion_code,
+    sentEmails: _.sortBy(sentEmails, 'id'),
     cart: _.map(sortedCart, i => _.omit(i, ['id'])),
-    createdAt: moment(firstRow.created_at),
+    createdAt: moment(firstRow.order_created_at),
   };
 
   if (firstRow.shipping_city) {
