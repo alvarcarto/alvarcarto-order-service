@@ -10,6 +10,12 @@ const postPrintmotor = ex.createJsonRoute((req) => {
     .then(() => ({ status: 'OK' }));
 });
 
+const postOneflow = ex.createJsonRoute((req) => {
+  logger.info('Oneflow webhook called:', req.body);
+  logger.info('Headers:', req.headers);
+});
+
 module.exports = {
   postPrintmotor,
+  postOneflow,
 };

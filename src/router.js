@@ -97,10 +97,14 @@ function createRouter() {
     promotion.getPromotion,
   );
 
-  const postWebHook = {
+  const postWebhookPrintmotor = {
     body: printmotorWebhookPayloadSchema,
   };
-  router.post('/api/webhooks/printmotor', validate(postWebHook), webhook.postPrintmotor);
+  router.post('/api/webhooks/printmotor', validate(postWebhookPrintmotor), webhook.postPrintmotor);
+
+  // TODO: Add validation
+  router.post('/api/webhooks/oneflow', webhook.postOneflow);
+
 
   const getCities = {
     query: latLngSchema,
