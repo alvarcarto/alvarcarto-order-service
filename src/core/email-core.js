@@ -289,6 +289,11 @@ function getPurchaseInformation(order) {
 }
 
 function saveEmailEvent(type, orders, messageObject, postmarkResponse) {
+  if (config.MOCK_EMAIL) {
+    logger.info('Mock email enabled, not saving email event.');
+    return BPromise.resolve();
+  }
+
   return BPromise.mapSeries(orders, (order) => {
     return orderCore.addEmailSent(order.orderId, {
       type,
