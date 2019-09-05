@@ -4,7 +4,7 @@
 if [[ $NODE_ENV == 'production' ]]
 then
     echo -e '\n -- Running migrations\n'
-    npm install -g knex
+    npm install -g knex@0.14.2
     DEBUG=knex knex migrate:latest
     echo -e '\n -- End of migrations\n'
 else
