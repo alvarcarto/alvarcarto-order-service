@@ -63,7 +63,7 @@ function _reactToEvent(payload) {
   const { eventType } = payload;
 
   if (_.has(reactions, eventType)) {
-    return reactions[eventType](payload)
+    return reactions[eventType](payload);
   }
 
   logger.logEncrypted('warn', `No reaction found for event type: ${eventType}, payload:`, payload);
@@ -71,6 +71,12 @@ function _reactToEvent(payload) {
 }
 
 const reactions = {
+  USER_ORDER_CREATED: (payload) => {
+    const printmotorOrderId = _.get(payload, 'userOrder.orderNumber');
+    logger.info(`Received webhook event USER_ORDER_CREATED for order ${printmotorOrderId}`);
+    return BPromise.resolve();
+  },
+
   USER_ORDER_DELIVERED: (payload) => {
     const trackingCode = _.get(payload, 'userOrder.meta.trackingCode');
     if (!trackingCode) {
