@@ -22,7 +22,8 @@ function savePrintmotorEvent(payload, incomingHmac) {
     .then(() => _reactToEvent(payload))
     .catch((err) => {
       const printmotorOrderId = _.get(payload, 'userOrder.orderNumber');
-      const msg = `alert-critical Could not process webhook event. Printmotor ID: ${printmotorOrderId}`;
+      const alertPrefix = err.skipAlert ? '' : 'alert-critical ';
+      const msg = `${alertPrefix}Could not process webhook event. Printmotor ID: ${printmotorOrderId}`;
       logger.logEncrypted('error', msg, payload);
       throw err;
     });
@@ -36,7 +37,11 @@ function _saveEvent(payload) {
     .where({ printmotor_order_id: printmotorId })
     .then((rows) => {
       if (!_.isArray(rows) || rows.length === 0) {
-        throw new Error(`Order not found with printmotor id: ${printmotorId}`);
+        const msg = `Order not found with printmotor id: ${printmotorId}`;
+        logger.logEncrypted('warn', msg, payload);
+        const err = new Error(msg);
+        err.skipAlert = true;
+        throw err;
       }
 
       return knex('webhook_events')
@@ -59,12 +64,9 @@ function _reactToEvent(payload) {
 
   if (_.has(reactions, eventType)) {
     return reactions[eventType](payload)
-      .catch((err) => {
-        logger.logEncrypted('error', 'alert-critical Error reacting to webhook event:', payload);
-        throw err;
-      });
   }
 
+  logger.logEncrypted('warn', `No reaction found for event type: ${eventType}, payload:`, payload);
   return BPromise.resolve();
 }
 
@@ -86,7 +88,11 @@ const reactions = {
       .then((rows) => {
         const prettyOrderId = _.get(rows, '0.pretty_order_id');
         if (!prettyOrderId) {
-          throw new Error(`Order not found with printmotor id: ${printmotorId}`);
+          const msg = `Order not found with printmotor id: ${printmotorId}`;
+          logger.logEncrypted('warn', msg, payload);
+          const err = new Error(msg);
+          err.skipAlert = true;
+          throw err;
         }
 
         return BPromise.props({
