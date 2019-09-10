@@ -132,11 +132,13 @@ function getOrdersWithTooLongProductionTime(opts = {}) {
       ON orders.id = sent_emails.order_id
     WHERE webhook_events.order_id IS NOT NULL
       AND orders.printmotor_order_id IS NOT NULL
-      AND orders.created_at <= NOW() - INTERVAL '15 days'
-      AND orders.created_at <= NOW() - INTERVAL '2 days'
+      AND orders.created_at >= NOW() - INTERVAL '15' day
+      AND orders.created_at <= NOW() - INTERVAL '1' day
     GROUP BY orders.id
     -- Make sure we haven't received "user order delivered" from printmotor yet
     HAVING MAX(CASE WHEN webhook_events.event='USER_ORDER_DELIVERED' THEN 1 ELSE 0 END) = 0
+    -- and that we haven't received "user order cancelled" from printmotor yet
+      AND MAX(CASE WHEN webhook_events.event='USER_ORDER_CANCELLED' THEN 1 ELSE 0 END) = 0
     -- and that we haven't yet sent the reminder to printmotor for the given order
       AND MAX(CASE WHEN sent_emails.type='delivery-reminder-to-printmotor' THEN 1 ELSE 0 END) = 0
     ORDER BY orders.id
