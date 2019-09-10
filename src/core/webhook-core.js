@@ -18,14 +18,36 @@ function savePrintmotorEvent(payload, incomingHmac) {
     }
   }
 
-  return _saveEvent(payload)
-    .then(() => _reactToEvent(payload))
+  const { userOrder } = payload;
+  const printmotorId = String(userOrder.orderNumber);
+
+  return _doesOrderWithPrintmotorIdExist(printmotorId)
+    .then((orderExists) => {
+      if (!orderExists) {
+        // This usually means that we have manually created an order to Printmotor UI.
+        const msg = `Order not found with printmotor id: ${printmotorId}`;
+        logger.logEncrypted('warn', msg, payload);
+        return BPromise.resolve();
+      }
+
+      return _saveEvent(payload)
+        .then(() => _reactToEvent(payload));
+    })
     .catch((err) => {
       const printmotorOrderId = _.get(payload, 'userOrder.orderNumber');
-      const alertPrefix = err.skipAlert ? '' : 'alert-critical ';
-      const msg = `${alertPrefix}Could not process webhook event. Printmotor ID: ${printmotorOrderId}`;
+      const msg = `alert-critical Could not process webhook event. Printmotor ID: ${printmotorOrderId}. ${err}`;
       logger.logEncrypted('error', msg, payload);
       throw err;
+    });
+}
+
+function _doesOrderWithPrintmotorIdExist(printmotorId) {
+  return knex('orders')
+    .select('id')
+    .where({ printmotor_order_id: printmotorId })
+    .then((rows) => {
+      const doesOrderExist = _.isArray(rows) && rows.length > 0;
+      return doesOrderExist;
     });
 }
 
@@ -37,11 +59,11 @@ function _saveEvent(payload) {
     .where({ printmotor_order_id: printmotorId })
     .then((rows) => {
       if (!_.isArray(rows) || rows.length === 0) {
-        const msg = `Order not found with printmotor id: ${printmotorId}`;
-        logger.logEncrypted('warn', msg, payload);
-        const err = new Error(msg);
-        err.skipAlert = true;
-        throw err;
+        throw new Error(`Order not found with printmotor id: ${printmotorId}`);
+      }
+
+      if (rows.length > 1) {
+        throw new Error(`More than one order found with printmotor id: ${printmotorId}`);
       }
 
       return knex('webhook_events')
@@ -94,10 +116,9 @@ const reactions = {
       .then((rows) => {
         const prettyOrderId = _.get(rows, '0.pretty_order_id');
         if (!prettyOrderId) {
-          const msg = `Order not found with printmotor id: ${printmotorId}`;
+          const msg = `Pretty order id not found from printmotor id: ${printmotorId}`;
           logger.logEncrypted('warn', msg, payload);
           const err = new Error(msg);
-          err.skipAlert = true;
           throw err;
         }
 
