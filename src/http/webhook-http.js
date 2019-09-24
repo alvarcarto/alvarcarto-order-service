@@ -15,7 +15,13 @@ const postOneflow = ex.createJsonRoute((req) => {
   logger.info('Headers:', req.headers);
 });
 
+const postStripe = ex.createJsonRoute((req) => {
+  logger.info('Stripe webhook called:', req.body);
+  logger.info('Headers:', req.headers);
+});
+
 module.exports = {
   postPrintmotor,
   postOneflow,
+  postStripe,
 };

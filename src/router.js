@@ -105,6 +105,8 @@ function createRouter() {
   // TODO: Add validation
   router.post('/api/webhooks/oneflow', webhook.postOneflow);
 
+  // TODO: Add validation
+  router.post('/api/webhooks/stripe', webhook.postStripe);
 
   const getCities = {
     query: latLngSchema,
