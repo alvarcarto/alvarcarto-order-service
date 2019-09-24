@@ -75,6 +75,7 @@ function isOrderInProduction(printmotorOrder) {
 
 function getDeliveryEstimate(countryCode, cart) {
   const productionClass = resolveProductionClass(cart);
+  const shippingClass = resolveShippingClass(cart);
 
   const regularProduction = {
     min: 2,
@@ -89,7 +90,6 @@ function getDeliveryEstimate(countryCode, cart) {
 
   const production = productionClass === 'HIGH' ? highProduction : regularProduction;
 
-  // Shipping class is expected to be EXPRESS currently
   let delivery;
   if (countryCode === 'FI') {
     delivery = {
@@ -98,11 +98,19 @@ function getDeliveryEstimate(countryCode, cart) {
       timeUnit: 'BUSINESS_DAY',
     };
   } else if (isEuCountry(countryCode)) {
-    delivery = {
-      min: 1,
-      max: 3,
-      timeUnit: 'BUSINESS_DAY',
-    };
+    if (shippingClass === 'EXPRESS') {
+      delivery = {
+        min: 1,
+        max: 3,
+        timeUnit: 'BUSINESS_DAY',
+      };
+    } else {
+      delivery = {
+        min: 1,
+        max: 3,
+        timeUnit: 'BUSINESS_DAY',
+      };
+    }
   } else if (countryCode === 'US') {
     // "North America" is simplified here
     delivery = {
@@ -236,7 +244,10 @@ function _getPortraitLayoutName(size) {
 
 function _getPostalClass(internalOrder) {
   const className = resolveShippingClass(internalOrder.cart);
-  if (!className) {
+  const countryCode = _.get(internalOrder, 'shippingAddress.countryCode');
+  if (isEuCountry(countryCode) && !className) {
+    return 'PRIORITY';
+  } else if (!className) {
     return 'EXPRESS';
   }
 
