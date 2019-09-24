@@ -82,6 +82,7 @@
     "lint": "eslint ./src",
     "test": "npm run inline-emails && source .env.test && mocha",
     "test-integration": "npm run inline-emails && source .env.test && mocha -g 'integration'",
-    "inline-emails": "./tools/inline-emails.sh"
+    "inline-emails": "./tools/inline-emails.sh",
+    "generate-fb-feed": "node tools/create-product-feed/index.js tools/create-product-feed/cities.csv > feed.csv"
   }
 }
