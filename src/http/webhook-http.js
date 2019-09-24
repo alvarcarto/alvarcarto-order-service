@@ -1,4 +1,7 @@
+const _ = require('lodash');
 const ex = require('../util/express');
+const config = require('../config');
+const stripe = require('../util/stripe');
 const logger = require('../util/logger')(__filename);
 const webhookCore = require('../core/webhook-core');
 
@@ -15,9 +18,21 @@ const postOneflow = ex.createJsonRoute((req) => {
   logger.info('Headers:', req.headers);
 });
 
-const postStripe = ex.createJsonRoute((req) => {
+const postStripe = ex.createJsonRoute(async (req) => {
   logger.info('Stripe webhook called:', req.body);
   logger.info('Headers:', req.headers);
+
+  const ipAddresses = await stripe.getWebhookIpAddresses();
+  const isFromSafeSource = _.includes(ipAddresses, req.ip) || config.ALLOW_UNVERIFIED_WEBHOOKS;
+  if (!isFromSafeSource) {
+    ex.throwStatus(403, 'Only verified sources are allowed');
+  }
+
+  const signature = req.headers['stripe-signature'];
+  const event = stripe.webhooks.constructEvent(req.body, signature, config.STRIPE_WEBHOOK_SECRET);
+  logger.info('Stripe event:', event);
+
+  return { status: 'OK' };
 });
 
 module.exports = {

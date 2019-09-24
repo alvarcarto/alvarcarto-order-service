@@ -4,12 +4,14 @@ const _ = require('lodash');
 const sinon = require('sinon');
 const nock = require('nock');
 const request = require('./util/request');
-const stripeUtil = require('../src/util/stripe');
+const stripe = require('../src/util/stripe');
 const bucketCore = require('../src/core/bucket-core');
 const sendToProductionWorker = require('../src/worker/send-posters-to-production');
 const fixturePromotions = require('./fixtures/promotions');
 const { runFixture } = require('./util/knex');
 const { expectDeepEqual } = require('./util');
+
+const stripeUtil = stripe.stripeInstance;
 
 const sendToProduction = sendToProductionWorker.main;
 

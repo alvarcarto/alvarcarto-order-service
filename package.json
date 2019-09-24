@@ -42,7 +42,7 @@
     "request-promise": "^4.2.0",
     "server-destroy": "^1.0.1",
     "simple-encryptor": "^1.1.0",
-    "stripe": "^4.15.0",
+    "stripe": "^7.9.1",
     "uuid": "^3.3.2",
     "winston": "^2.3.1"
   },

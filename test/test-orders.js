@@ -4,9 +4,11 @@ const { expect } = require('chai');
 const _ = require('lodash');
 const sinon = require('sinon');
 const request = require('./util/request');
-const stripeUtil = require('../src/util/stripe');
+const stripe = require('../src/util/stripe');
 const fixturePromotions = require('./fixtures/promotions');
 const { runFixture } = require('./util/knex');
+
+const stripeUtil = stripe.stripeInstance;
 
 /* eslint-disable global-require */
 const data = {
@@ -219,8 +221,6 @@ function test() {
 
       const getRes = await request().get(`/api/orders/${postRes.body.orderId}`).expect(200);
       const order = getRes.body;
-      const fs = require('fs')
-      fs.writeFileSync('response.json', JSON.stringify(order, null, 2), { encoding: 'utf8' });
       const expectedResponse = _.merge({}, data.order8.response, {
         // Add backend generated fields
         orderId: order.orderId,

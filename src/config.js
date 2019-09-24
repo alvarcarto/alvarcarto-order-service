@@ -7,6 +7,7 @@ requireEnvs([
   'DATABASE_URL',
   'RENDER_API_KEY',
   'STRIPE_SECRET_KEY',
+  'STRIPE_WEBHOOK_SECRET',
   'LOG_ENCRYPT_KEY',
   'PRINTMOTOR_HOST',
   'PRINTMOTOR_USER',
@@ -29,6 +30,7 @@ const config = {
   IP_LOGGER: process.env.IP_LOGGER === 'true',
   LOG_ENCRYPT_KEY: process.env.LOG_ENCRYPT_KEY,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   POSTMARK_API_KEY: process.env.POSTMARK_API_KEY,
   // Printmotor hostname without any url details
   PRINTMOTOR_HOST: process.env.PRINTMOTOR_HOST || 'test.printmotor.io',

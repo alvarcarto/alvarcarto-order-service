@@ -7,7 +7,7 @@ const { throwStatus } = require('../util/express');
 const orderCore = require('../core/order-core');
 const emailCore = require('../core/email-core');
 const promotionCore = require('../core/promotion-core');
-const stripe = require('../util/stripe');
+const { stripeInstance } = require('../util/stripe');
 const { filterMapPosterCart } = require('../util');
 const config = require('../config');
 
@@ -66,7 +66,7 @@ function executeCheckout(inputOrder) {
 
       return BPromise.props({
         price,
-        stripeChargeResponse: stripe.charges.create(stripeCharge),
+        stripeChargeResponse: stripeInstance.charges.create(stripeCharge),
       });
     })
     .then((result) => {
