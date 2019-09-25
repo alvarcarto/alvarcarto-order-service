@@ -1,4 +1,4 @@
-exports.up = function(knex, Promise) {
+exports.up = function(knex) {
   return knex.schema.table('orders', function(table) {
     table.string('printmotor_order_id').index().defaultTo(null);
     table.jsonb('printmotor_order_response').defaultTo(null);
@@ -22,7 +22,7 @@ exports.up = function(knex, Promise) {
   )
 };
 
-exports.down = function(knex, Promise) {
+exports.down = function(knex) {
   return knex.schema.table('orders', function(table) {
     table.dropColumn('printmotor_order_id');
     table.dropColumn('printmotor_order_response');

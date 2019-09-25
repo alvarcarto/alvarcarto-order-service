@@ -1,1 +1,1 @@
-web: ./tools/inline-emails.sh && babel-node --presets es2015 src/index.js
+web: ./tools/inline-emails.sh && node src/index.js

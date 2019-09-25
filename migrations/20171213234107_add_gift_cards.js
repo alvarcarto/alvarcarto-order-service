@@ -1,4 +1,4 @@
-exports.up = (knex, Promise) => {
+exports.up = (knex) => {
   return knex.schema.createTable('ordered_gift_items', (table) => {
     table.bigIncrements('id').primary().index();
     table.bigInteger('order_id').notNullable().index();
@@ -20,6 +20,6 @@ exports.up = (knex, Promise) => {
   });
 };
 
-exports.down = (knex, Promise) => {
+exports.down = (knex) => {
   return knex.schema.dropTable('ordered_gift_items');
 };

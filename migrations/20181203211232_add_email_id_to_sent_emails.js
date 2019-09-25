@@ -1,7 +1,7 @@
 const BPromise = require('bluebird');
 const uuidv4 = require('uuid/v4');
 
-exports.up = function(knex, Promise) {
+exports.up = function(knex) {
   return knex.schema.table('sent_emails', function(table) {
     table.uuid('email_id');
   })
@@ -19,7 +19,7 @@ exports.up = function(knex, Promise) {
   );
 };
 
-exports.down = function(knex, Promise) {
+exports.down = function(knex) {
   return knex.schema.table('sent_emails', function(table) {
     table.dropColumn('email_id');
   });

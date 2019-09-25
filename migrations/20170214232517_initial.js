@@ -1,4 +1,4 @@
-exports.up = function(knex, Promise) {
+exports.up = function(knex) {
   return knex.schema.createTable('orders', function(table) {
     table.bigIncrements('id').primary().index();
     table.string('pretty_order_id', 512).unique().notNullable();

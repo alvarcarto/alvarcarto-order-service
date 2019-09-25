@@ -30,18 +30,33 @@ Dependencies:
   If this doesn't work, you can manually run SQL commands from ./tools/init-database.sql
   in Postgres console.
 
-* `cp .env.sample .env`
-* Fill in the blanks in `.env`
+* `cp .env.sample .env && cp .env.test.sample .env.test`
+* Fill in the blanks in `.env` and `.env.test`
 * `source .env` or `bash .env`
 
   Or use [autoenv](https://github.com/kennethreitz/autoenv).
 
+* `docker-compose up -d` to start docker container (Postgres) in the background
 * `npm install`
 * `npm install -g knex`
 * `knex migrate:latest` Run migrations to local database
 * `knex seed:run` Create seed data to local database
 * `npm start` Start express server locally
 * Server runs at http://localhost:3001
+
+### Useful commands:
+
+* `knex migrate:rollback` to rollback the latest batch of migrations
+* `knex migrate:make <name>` to create a new migration file
+* `psql postgres://alvar:alvar@localhost:4001/alvar_order` connect to Postgres in docker
+* `docker-compose logs -f postgres` to see tailing logs of postgres docker container
+* `docker-compose down` to stop docker containers (Postgres)
+* Remove all data from Postgres
+
+  ```
+  docker-compose down
+  docker volume rm postgres
+  ```
 
 ## Techstack
 

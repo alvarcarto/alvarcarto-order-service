@@ -44,13 +44,13 @@ function test() {
 
     before(() => {
       sinon.stub(stripeUtil.charges, 'create').callsFake(() => data.order1.stripeResponse);
-      sinon.stub(bucketCore.s3, 'uploadAsync')
+      sinon.stub(bucketCore.s3, 'uploadBluebirdAsync')
         .callsFake(() => ({ Location: 'https://fake-s3-url.com/posters/order-item0.png' }));
     });
 
     after(() => {
       stripeUtil.charges.create.restore();
-      bucketCore.s3.uploadAsync.restore();
+      bucketCore.s3.uploadBluebirdAsync.restore();
     });
 
     it('sending order to production should work', async () => {

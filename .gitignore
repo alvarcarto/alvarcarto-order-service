@@ -6,3 +6,4 @@ node_modules
 *.inlined.html
 .geocode-cache.json
 .tracking-cache.json
+.vscode

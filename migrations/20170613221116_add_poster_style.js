@@ -1,4 +1,4 @@
-exports.up = function(knex, Promise) {
+exports.up = function(knex) {
   return knex.schema.table('ordered_posters', function(table) {
     table.string('poster_style');
   })
@@ -10,7 +10,7 @@ exports.up = function(knex, Promise) {
   );
 };
 
-exports.down = function(knex, Promise) {
+exports.down = function(knex) {
   return knex.schema.table('ordered_posters', function(table) {
     table.dropColumn('poster_style');
   });

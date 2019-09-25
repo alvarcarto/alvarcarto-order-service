@@ -52,7 +52,7 @@ function uploadPoster(order, item, itemId) {
       },
     };
 
-    return s3.uploadAsync(params);
+    return s3.uploadBluebirdAsync(params);
   })
   .tap(data => logger.info(`Uploaded poster to S3: ${data.Location}`))
   .then(response => response.Location)

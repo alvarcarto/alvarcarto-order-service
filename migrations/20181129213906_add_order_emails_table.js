@@ -1,4 +1,4 @@
-exports.up = function(knex, Promise) {
+exports.up = function(knex) {
   return Promise.resolve()
     .then(() =>
       knex.schema.createTable('sent_emails', (table) => {
@@ -21,7 +21,7 @@ exports.up = function(knex, Promise) {
     )
 };
 
-exports.down = function(knex, Promise) {
+exports.down = function(knex) {
   return Promise.resolve()
     .then(() => knex.schema.dropTable('sent_emails'));
 };

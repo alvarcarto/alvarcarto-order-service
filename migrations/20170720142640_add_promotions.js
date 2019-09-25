@@ -1,4 +1,4 @@
-exports.up = function(knex, Promise) {
+exports.up = function(knex) {
   return knex.schema.createTable('promotions', function(table) {
     table.bigIncrements('id').primary().index();
     table.string('type', 512).notNullable();
@@ -17,7 +17,7 @@ exports.up = function(knex, Promise) {
   }));
 };
 
-exports.down = function(knex, Promise) {
+exports.down = function(knex) {
   return knex.schema.dropTable('promotions')
     .then(() => knex.schema.table('orders', function(table) {
       table.dropColumn('promotion_code');

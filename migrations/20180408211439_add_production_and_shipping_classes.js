@@ -1,4 +1,4 @@
-exports.up = function(knex, Promise) {
+exports.up = function(knex) {
   return Promise.resolve()
   .then(() => knex.schema.table('orders', function(table) {
     table.string('shipping_class');
@@ -6,7 +6,7 @@ exports.up = function(knex, Promise) {
   }));
 };
 
-exports.down = function(knex, Promise) {
+exports.down = function(knex) {
   return Promise.resolve()
     .then(() => knex.schema.table('orders', function(table) {
       table.dropColumn('shipping_class');

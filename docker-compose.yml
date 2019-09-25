@@ -1,0 +1,18 @@
+
+# https://hub.docker.com/r/_/postgres/
+
+postgres:
+  image: postgres:10.3
+  restart: always
+  container_name: alvar-order
+  environment:
+    # "Will create the specified user with superuser power and a database with the same name."
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+  volumes:
+    - postgres:/var/lib/postgresql
+    - ./tools/docker-postgres:/docker-entrypoint-initdb.d
+  ports:
+    # host_port:container_port
+    # If you want to expose the Postgres to 4001 port in host machine, write "4001:5432"
+    - "4001:5432"
