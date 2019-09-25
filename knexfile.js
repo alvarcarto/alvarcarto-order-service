@@ -19,7 +19,7 @@ if (config.NODE_ENV === 'production' && !disableCaVerify) {
 
 const databaseConfig = {
   client: 'pg',
-  connection: connectionUrl,
+  connection: connectionUrl.href,
   pool: {
     min: 2,
     max: 10,
