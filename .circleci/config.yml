@@ -11,32 +11,32 @@ jobs:
 
       # Postgres database is setup with docker-compose
       - run:
-        name: Install docker-compose
-        command: |
-          curl -L https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m) > ~/docker-compose
-          chmod +x ~/docker-compose
-          sudo mv ~/docker-compose /usr/local/bin/docker-compose
+          name: Install docker-compose
+          command: |
+            curl -L https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m) > ~/docker-compose
+            chmod +x ~/docker-compose
+            sudo mv ~/docker-compose /usr/local/bin/docker-compose
 
       # Node 10 is needed for e.g. async/await
       - run:
-        name: Install nvm and node@10
-        command: |
-          set +e
-          curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | bash
-          export NVM_DIR="/opt/circleci/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install 12
-          nvm alias default 12
+          name: Install nvm and node@10
+          command: |
+            set +e
+            curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | bash
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install 12
+            nvm alias default 12
 
-          # Each "run" step uses the same `$BASH_ENV`, so need to modify it
-          echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
-          echo "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"" >> $BASH_ENV
+            # Each "run" step uses the same `$BASH_ENV`, so need to modify it
+            echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
+            echo "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"" >> $BASH_ENV
 
-          echo -e "\nBASH_ENV=$BASH_ENV"
-          echo -e "HOME=$HOME"
+            echo -e "\nBASH_ENV=$BASH_ENV"
+            echo -e "HOME=$HOME"
 
-          echo -e "\n$BASH_ENV file contents:"
-          cat $BASH_ENV
+            echo -e "\n$BASH_ENV file contents:"
+            cat $BASH_ENV
 
       - run:
           name: Tests and lint
