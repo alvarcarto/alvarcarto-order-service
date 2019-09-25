@@ -8,7 +8,7 @@ const cache = {
 
 async function getWebhookIpAddresses() {
   if (cache.allowedWebhookIpAddresses.length === 0) {
-    const data = await request('https://stripe.com/files/ips/ips_webhooks.json');
+    const data = await request('https://stripe.com/files/ips/ips_webhooks.json', { json: true });
     cache.allowedWebhookIpAddresses = data.WEBHOOKS;
   }
 

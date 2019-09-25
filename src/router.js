@@ -1,9 +1,9 @@
 const _ = require('lodash');
 const Joi = require('joi');
+const bodyParser = require('body-parser');
 const validate = require('express-validation');
 const RateLimit = require('express-rate-limit');
 const express = require('express');
-const config = require('./config');
 const ROLES = require('./enums/roles');
 const order = require('./http/order-http');
 const product = require('./http/product-http');
@@ -20,8 +20,6 @@ const {
   latLngSchema,
 } = require('./validation');
 
-const validTokens = config.API_KEY.split(',');
-
 function _requireRole(role) {
   return function middleware(req, res, next) {
     if (_.get(req, 'user.role') !== role) {
@@ -34,26 +32,8 @@ function _requireRole(role) {
   };
 }
 
-function createRouter() {
+function createJsonRouter() {
   const router = express.Router();
-  // Simple token authentication
-  router.use((req, res, next) => {
-    const apiKey = req.headers['x-api-key'] || req.query.apiKey;
-    if (_.includes(validTokens, apiKey)) {
-      // eslint-disable-next-line
-      req.user = {
-        role: ROLES.ADMIN,
-      };
-    } else {
-      // eslint-disable-next-line
-      req.user = {
-        role: ROLES.ANONYMOUS,
-      };
-    }
-
-    return next();
-  });
-
   router.get('/api/health', health.getHealth);
 
   const postOrderSchema = {
@@ -105,9 +85,6 @@ function createRouter() {
   // TODO: Add validation
   router.post('/api/webhooks/oneflow', webhook.postOneflow);
 
-  // TODO: Add validation
-  router.post('/api/webhooks/stripe', webhook.postStripe);
-
   const getCities = {
     query: latLngSchema,
   };
@@ -127,4 +104,13 @@ function createRouter() {
   return router;
 }
 
-module.exports = createRouter;
+function createRawRouter() {
+  const router = express.Router();
+  router.post('/api/webhooks/stripe', bodyParser.raw({ type: 'application/json' }), webhook.postStripe);
+  return router;
+}
+
+module.exports = {
+  createJsonRouter,
+  createRawRouter,
+};

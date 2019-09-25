@@ -5,6 +5,8 @@ const stripe = require('../util/stripe');
 const logger = require('../util/logger')(__filename);
 const webhookCore = require('../core/webhook-core');
 
+const { stripeInstance } = stripe;
+
 const postPrintmotor = ex.createJsonRoute((req) => {
   logger.logEncrypted('info', 'Webhook called:', req.body);
 
@@ -29,7 +31,9 @@ const postStripe = ex.createJsonRoute(async (req) => {
   }
 
   const signature = req.headers['stripe-signature'];
-  const event = stripe.webhooks.constructEvent(req.body, signature, config.STRIPE_WEBHOOK_SECRET);
+  logger.info('signature', signature)
+  logger.info('secret', config.STRIPE_WEBHOOK_SECRET)
+  const event = stripeInstance.webhooks.constructEvent(req.body, signature, config.STRIPE_WEBHOOK_SECRET);
   logger.info('Stripe event:', event);
 
   return { status: 'OK' };

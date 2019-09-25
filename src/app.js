@@ -8,7 +8,8 @@ const errorResponder = require('./middleware/error-responder');
 const ipLogger = require('./middleware/ip-logger');
 const errorLogger = require('./middleware/error-logger');
 const requireHttps = require('./middleware/require-https');
-const createRouter = require('./router');
+const injectApiKeyUser = require('./middleware/inject-api-key-user');
+const { createJsonRouter, createRawRouter } = require('./router');
 const config = require('./config');
 
 function createApp() {
@@ -39,15 +40,22 @@ function createApp() {
   };
   logger.info('Using CORS options:', corsOpts);
   app.use(cors(corsOpts));
-  app.use(bodyParser.json({ limit: '1mb' }));
   app.use(compression({
     // Compress everything over 10 bytes
     threshold: 10,
   }));
 
+  // Add req.user object
+  app.use(injectApiKeyUser());
+
+  // Stripe lib needs the raw body for signature verification
+  const rawRouter = createRawRouter();
+  app.use('/', rawRouter);
+
   // Initialize routes
-  const router = createRouter();
-  app.use('/', router);
+  const jsonRouter = createJsonRouter();
+  app.use(bodyParser.json({ limit: '1mb' }));
+  app.use('/', jsonRouter);
 
   app.use(errorLogger());
   app.use(errorResponder());

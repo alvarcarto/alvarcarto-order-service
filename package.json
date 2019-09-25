@@ -55,6 +55,7 @@
     "chalk": "^2.3.0",
     "city-timezones": "^1.0.2",
     "cli-table": "^0.3.1",
+    "concurrently": "^4.1.2",
     "csv": "^1.1.1",
     "dcr": "^0.3.0",
     "eslint": "^3.11.1",
@@ -78,7 +79,9 @@
   },
   "scripts": {
     "postinstall": "./tools/run-migrations.sh",
-    "start": "npm run inline-emails && nodemon --watch ./src -e js --exec \"babel-node --presets es2015 src/index.js\"",
+    "start": "npm run inline-emails && concurrently \"npm run watch\" \"npm run stripe\"",
+    "watch": "nodemon --watch ./src -e js --exec \"babel-node --presets es2015 src/index.js\"",
+    "stripe": "stripe listen --forward-to localhost:$PORT/api/webhooks/stripe",
     "lint": "eslint ./src",
     "test": "npm run inline-emails && source .env.test && mocha",
     "test-integration": "npm run inline-emails && source .env.test && mocha -g 'integration'",

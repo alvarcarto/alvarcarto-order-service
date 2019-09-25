@@ -18,6 +18,13 @@ Dependencies:
 
 ## Get started
 
+* Install [Stripe CLI](https://stripe.com/docs/stripe-cli) before continuing.
+* `stripe login` and login with your account
+
+    It creates a restricted API key for the Test mode
+
+* Run `npm run stripe` once and copy the secret to STRIPE_WEBHOOK_SECRET in .env and then stop the process
+
 * `bash ./tools/reset-database.sh`
 
   If this doesn't work, you can manually run SQL commands from ./tools/init-database.sql
