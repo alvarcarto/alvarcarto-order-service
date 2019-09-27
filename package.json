@@ -80,7 +80,7 @@
     "postinstall": "./tools/run-migrations.sh",
     "start": "NODE_ENV=development npm run inline-emails && concurrently --names \"WATCH,STRIPE\" \"npm run watch\" \"npm run stripe\"",
     "watch": "nodemon --watch ./src -e js src/index.js",
-    "stripe": "stripe listen --forward-to localhost:$PORT/api/webhooks/stripe",
+    "stripe": "stripe listen --forward-to localhost:$(grep PORT .env | cut -d '=' -f2)/api/webhooks/stripe",
     "lint": "eslint ./src",
     "test": "npm run inline-emails && NODE_ENV=test mocha",
     "test-integration": "npm run inline-emails && NODE_ENV=test mocha -g 'integration'",
