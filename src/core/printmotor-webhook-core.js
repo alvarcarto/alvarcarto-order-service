@@ -66,9 +66,10 @@ function _saveEvent(payload) {
         throw new Error(`More than one order found with printmotor id: ${printmotorId}`);
       }
 
-      return knex('webhook_events')
+      return knex('order_events')
         .insert({
           order_id: rows[0].id,
+          source: 'PRINTMOTOR',
           event: eventType,
           payload,
         });

@@ -1,4 +1,4 @@
-exports.up = function(knex) {
+exports.up = (knex) => {
   return Promise.resolve()
     .then(() =>
       knex.schema.createTable('payments', (table) => {
@@ -67,15 +67,20 @@ exports.up = function(knex) {
       table.dropColumn('stripe_token_response');
       table.dropColumn('stripe_charge_response');
     }))
-    .then(() => knex.schema.dropTable('webhook_events'));
+    .then(() => knex.schema.renameTable('webhook_events', 'order_events'))
+    .then(() => knex.schema.table('order_events', (table) => {
+      table.string('source', 64);
+    }))
+    .then(() => knex.raw('UPDATE order_events SET source=\'PRINTMOTOR\''))
+    .then(() => knex.raw('ALTER TABLE order_events ALTER COLUMN source SET NOT NULL'));
 };
 
-exports.down = function(knex) {
+exports.down = (knex) => {
   return Promise.resolve()
     .then(() => knex.schema.table('orders', (table) => {
-      //table.string('stripe_token_id', 64).unique().index();
-      //table.jsonb('stripe_token_response');
-      //table.jsonb('stripe_charge_response');
+      table.string('stripe_token_id', 64).unique().index();
+      table.jsonb('stripe_token_response');
+      table.jsonb('stripe_charge_response');
     }))
     // Move all stripe charges
     .then(() => knex.raw(`
@@ -88,5 +93,9 @@ exports.down = function(knex) {
       WHERE orders.id = payments.order_id
       AND payments.stripe_token_id IS NOT NULL
     `))
-    .then(() => knex.schema.dropTable('payments'));
+    .then(() => knex.schema.dropTable('payments'))
+    .then(() => knex.schema.table('order_events', (table) => {
+      table.dropColumn('source');
+    }))
+    .then(() => knex.schema.renameTable('order_events', 'webhook_events'));
 };

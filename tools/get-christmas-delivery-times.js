@@ -121,11 +121,11 @@ function main() {
         orders.printmotor_order_id as printmotor_order_id,
         ((stripe_charge_response->>'amount')::int / 100.0) as stripe_charge_in_eur,
         orders.created_at as created_at,
-        (SELECT created_at FROM webhook_events WHERE order_id = orders.id AND event = 'USER_ORDER_DELIVERED' ORDER BY created_at ASC LIMIT 1) as delivery_started_at,
+        (SELECT created_at FROM order_events WHERE order_id = orders.id AND source = 'PRINTMOTOR' AND event = 'USER_ORDER_DELIVERED' ORDER BY created_at ASC LIMIT 1) as delivery_started_at,
 
         -- Sometimes the tracking code comes later via a new USER_ORDER_DELIVERED event
         -- That's why we take the latest event instead of the first one
-        (SELECT payload->'userOrder'->'meta'->>'trackingCode' FROM webhook_events WHERE order_id = orders.id AND event = 'USER_ORDER_DELIVERED' ORDER BY created_at DESC LIMIT 1) as tracking_code,
+        (SELECT payload->'userOrder'->'meta'->>'trackingCode' FROM order_events WHERE order_id = orders.id AND source = 'PRINTMOTOR' AND event = 'USER_ORDER_DELIVERED' ORDER BY created_at DESC LIMIT 1) as tracking_code,
 
         addresses.city as shipping_city,
         addresses.postal_code as shipping_postal_code,
