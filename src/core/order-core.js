@@ -1,13 +1,17 @@
+const util = require('util');
 const _ = require('lodash');
-const crypto = require('crypto');
 const moment = require('moment');
 const { calculateItemPrice } = require('alvarcarto-price-util');
 const promiseRetryify = require('promise-retryify');
 const BPromise = require('bluebird');
 const logger = require('../util/logger')(__filename);
 const ADDRESS_TYPE = require('../enums/address-type');
+const PAYMENT_TYPE = require('../enums/payment-type');
+const PAYMENT_PROVIDER = require('../enums/payment-provider');
+const PAYMENT_PROVIDER_METHOD = require('../enums/payment-provider-method');
+const ORDER_EVENT_SOURCE = require('../enums/order-event-source');
 const { knex } = require('../util/database');
-const { resolveProductionClass, resolveShippingClass } = require('../util');
+const { resolveProductionClass, resolveShippingClass, createRandomOrderId } = require('../util');
 const promotionCore = require('./promotion-core');
 const printmotorCore = require('./printmotor-core');
 const config = require('../config');
@@ -189,8 +193,6 @@ function selectOrders(_opts = {}) {
       orders.created_at as order_created_at,
       orders.customer_email as customer_email,
       orders.email_subscription as email_subscription,
-      orders.promotion_code as promotion_code,
-      orders.stripe_charge_response as stripe_charge_response,
       addresses.person_name as shipping_person_name,
       addresses.street_address as shipping_street_address,
       addresses.street_address_extra as shipping_street_address_extra,
@@ -202,6 +204,7 @@ function selectOrders(_opts = {}) {
       sent_emails.id as sent_email_id,
       sent_emails.type as sent_email_type,
       sent_emails.created_at as sent_email_created_at,
+      promotions.promotion_code as promotion_code,
       *
     FROM (
       SELECT
@@ -264,6 +267,10 @@ function selectOrders(_opts = {}) {
       ON addresses.order_id = orders.id AND addresses.type = 'SHIPPING'
     LEFT JOIN sent_emails as sent_emails
       ON sent_emails.order_id = orders.id
+    LEFT JOIN payments as payments
+      ON payments.order_id = orders.id
+    LEFT JOIN promotions as promotions
+      ON promotions.id = orders.promotion_id
     ${opts.addQuery}
   `, opts.params)
     .then((result) => {
@@ -302,6 +309,66 @@ function addEmailSent(orderId, email, opts = {}) {
   })
     .returning('*')
     .then(rows => rows[0]);
+}
+
+async function createPayment(orderId, payment, opts = {}) {
+  const trx = opts.trx || knex;
+
+  if (!_.has(PAYMENT_TYPE, payment.type)) {
+    throw new Error(`Unknown payment type: ${util.inspect(payment.type)}`);
+  }
+
+  if (!_.has(PAYMENT_PROVIDER, payment.paymentProvider)) {
+    throw new Error(`Unknown payment provider: ${util.inspect(payment.paymentProvider)}`);
+  }
+
+  if (payment.paymentProviderMethod && !_.has(PAYMENT_PROVIDER_METHOD, payment.paymentProviderMethod)) {
+    throw new Error(`Unknown payment provider method: ${util.inspect(payment.paymentProviderMethod)}`);
+  }
+
+  const insertObj = {
+    order_id: knex.raw('(SELECT id FROM orders WHERE pretty_order_id = :orderId)', { orderId }),
+    type: payment.type,
+    payment_provider: payment.paymentProvider,
+    payment_provider_method: payment.paymentProviderMethod,
+    amount: payment.amount,
+    currency: payment.currency,
+    stripe_payment_intent_id: payment.stripePaymentIntentId,
+    stripe_payment_intent_success_event: payment.stripePaymentIntentSuccessEvent,
+  };
+
+  if (payment.promotionCode) {
+    insertObj.promotion_id = knex.raw('(SELECT id FROM promotions WHERE promotion_code = ?)', [payment.promotionCode]);
+  }
+
+  const res = await trx('payments').insert(insertObj);
+
+  return res;
+}
+
+async function createOrderEvent(prettyOrderId, event, opts = {}) {
+  const trx = opts.trx || knex;
+
+  if (!_.has(ORDER_EVENT_SOURCE, event.source)) {
+    throw new Error(`Unknown order event source: ${util.inspect(event.source)}`);
+  }
+
+  return trx('orders')
+    .select('id')
+    .where({ pretty_order_id: prettyOrderId })
+    .then((rows) => {
+      if (!_.isArray(rows) || rows.length === 0) {
+        throw new Error(`Order not found with pretty order id: ${prettyOrderId}`);
+      }
+
+      return trx('order_events')
+        .insert({
+          order_id: knex.raw('(SELECT id FROM orders WHERE pretty_order_id = ?)', [prettyOrderId]),
+          source: event.source,
+          event: event.event,
+          payload: event.payload,
+        });
+    });
 }
 
 function markOrderSentToProduction(orderId, printmotorOrderId, response, requestParams) {
@@ -399,9 +466,8 @@ function _rowsToOrderObject(rows) {
   const order = {
     email: firstRow.customer_email,
     emailSubscription: firstRow.email_subscription,
-    stripeChargeResponse: firstRow.stripe_charge_response,
-    orderId: firstRow.pretty_order_id,
     promotionCode: firstRow.promotion_code,
+    orderId: firstRow.pretty_order_id,
     sentEmails: _.sortBy(sentEmails, 'id'),
     cart: _.map(sortedCart, i => _.omit(i, ['id'])),
     createdAt: moment(firstRow.order_created_at),
@@ -453,27 +519,24 @@ function _saveErrorInBackgroundAndRethrow(err, fullOrder) {
 function _createOrder(order, opts = {}) {
   const trx = opts.trx || knex;
 
-  // https://support.stripe.com/questions/what-information-can-i-safely-store-about-my-users-payment-information
-  // https://stripe.com/docs/security#out-of-scope-card-data
-  //  The only sensitive data that you want to avoid handling is your customers'
-  //  credit card number and CVC; other than that, you’re welcome to store
-  //  any other information on your local machines.
-  //  As a good rule, you can store anything returned by our API. In particular,
-  // you would not have any issues storing the last four digits of your
-  // customer’s card number or the expiration date for easy reference.
-  return trx('orders').insert({
+  const insertObj = {
     pretty_order_id: order.prettyOrderId,
     customer_email: order.email,
     different_billing_address: _.get(order, 'differentBillingAddress', false),
     email_subscription: _.get(order, 'emailSubscription', false),
-    stripe_token_id: _.get(order, 'stripeTokenResponse.id', null),
-    stripe_token_response: _.get(order, 'stripeTokenResponse', null),
-    stripe_charge_response: _.get(order, 'stripeChargeResponse', null),
-    promotion_code: order.promotionCode,
     production_class: resolveProductionClass(order.cart),
     shipping_class: resolveShippingClass(order.cart),
     sent_to_production_at: null,
-  })
+  };
+
+  if (order.promotionCode) {
+    insertObj.promotion_id = knex.raw(
+      '(SELECT id FROM promotions WHERE promotion_code = ?)',
+      [order.promotionCode],
+    );
+  }
+
+  return trx('orders').insert(insertObj)
     .returning('*')
     .then(rows => rows[0]);
 }
@@ -563,13 +626,11 @@ function _createOrderedGiftItems(orderId, cart, opts = {}) {
 //       milliseconds ago. It is still possible with very bad luck that
 //       a concurrent request created the same ID also thinking that the
 //       ID is unique.
-//       This is a risk I'm willing to take. Other option would be to
-//       wrap the whole order creation in a retry, but there's a risk to
-//       write orders twice in the database.
+//       This is a calculated risk.
 const _createUniqueOrderId = promiseRetryify((opts = {}) => {
   const trx = opts.trx || knex;
 
-  const newOrderId = _createOrderId();
+  const newOrderId = createRandomOrderId();
   return trx('orders')
     .select('*')
     .where({
@@ -596,39 +657,12 @@ const _createUniqueOrderId = promiseRetryify((opts = {}) => {
   onAllFailed: () => logger.error('alert-critical Critical order collision! All tries to create order id failed.'),
 });
 
-// TODO: move this id creation shit to another module
-
-function _createOrderId() {
-  const now = moment.utc();
-  return `${now.format('YYYY-MMDD')}-${rand4()}-${rand4()}`;
-}
-
-function rand4() {
-  const num = String(randomInteger(0, 9999));
-  return _.padStart(num, 4, '0');
-}
-
-const MAX_INT_32 = Math.pow(2, 32);
-function randomInteger(min, max) {
-  const buf = crypto.randomBytes(4);
-  const hex = buf.toString('hex');
-
-  // Enforce that MAX_INT_32 - 1 is the largest number
-  // generated. This biases the distribution a little
-  // but doesn't matter in practice
-  // when generating smaller numbers.
-  // Without this enforcement, we'd return too large numbers
-  // on the case when crypto generated MAX_INT_32
-  const int32 = Math.min(parseInt(hex, 16), MAX_INT_32 - 1);
-  const ratio = int32 / MAX_INT_32;
-  // eslint-disable-next-line
-  return Math.floor(ratio * (max - min + 1)) + min;
-}
-
 module.exports = {
   createOrder,
   selectOrders,
   addEmailSent,
+  createPayment,
+  createOrderEvent,
   getOrder,
   getOrdersReadyToProduction,
   getOrdersWithTooLongProductionTime,

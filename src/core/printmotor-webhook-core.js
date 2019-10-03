@@ -134,10 +134,11 @@ const reactions = {
         }
 
         return BPromise.props({
-          rows: knex('webhook_events')
+          rows: knex('order_events')
             .select('*')
             .where({
               order_id: knex.raw('(SELECT id FROM orders WHERE printmotor_order_id = ?)', [printmotorId]),
+              source: 'PRINTMOTOR',
               event: 'USER_ORDER_DELIVERED',
             }),
           order,

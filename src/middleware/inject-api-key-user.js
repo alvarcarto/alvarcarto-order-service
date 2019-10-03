@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const ROLES = require('../enums/roles');
+const ROLES = require('../enums/role');
 const config = require('../config');
 
 const validTokens = config.API_KEY.split(',');

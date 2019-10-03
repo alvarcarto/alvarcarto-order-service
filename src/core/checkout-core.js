@@ -17,111 +17,79 @@ const HARD_LIMIT_MAX = 10000 * 100;
 const ALERT_LIMIT_MIN = 25 * 100;
 const ALERT_LIMIT_MAX = 500 * 100;
 
-function executeCheckout(inputOrder) {
-  let order;
-  let stripeCharge = null;
-  return _getPromotion(inputOrder.promotionCode)
-    .then((promotion) => {
-      if (_.get(promotion, 'hasExpired')) {
-        throwStatus(400, `Promotion code ${promotion.promotionCode} has expired`);
-      }
+async function executeCheckout(inputOrder) {
+  const promotion = await _getPromotion(inputOrder.promotionCode);
 
-      // Promotion is either null or promotion object
-      const price = calculateCartPrice(inputOrder.cart, { promotion });
-      if (price.value >= HARD_LIMIT_MAX) {
-        logger.error(`Calculated price exceeded maximum safe limit: ${price}`);
-        throwStatus(400, oneLine`
-          The total price of the order is very high.
-          Please contact help@alvarcarto.com to continue with the order.
-        `);
-      }
+  if (_.get(promotion, 'hasExpired')) {
+    throwStatus(400, `Promotion code ${promotion.promotionCode} has expired`);
+  }
 
-      if (price.value >= ALERT_LIMIT_MAX) {
-        logger.warn(`alert-business-critical Calculated price was over alert limit: ${price.label}`);
-        logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
-      }
+  // Promotion is either null or promotion object
+  const price = calculateCartPrice(inputOrder.cart, { promotion });
+  if (price.value >= HARD_LIMIT_MAX) {
+    logger.error(`Calculated price exceeded maximum safe limit: ${price}`);
+    throwStatus(400, oneLine`
+      The total price of the order is very high.
+      Please contact help@alvarcarto.com to continue with the order.
+    `);
+  }
 
-      if (price.value <= ALERT_LIMIT_MIN) {
-        logger.warn(`Calculated price was under low alert limit: ${price.label}`);
-        logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
-      }
+  if (price.value >= ALERT_LIMIT_MAX) {
+    logger.warn(`alert-business-critical Calculated price was over alert limit: ${price.label}`);
+    logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
+  }
 
-      const isFreeOrder = price.value <= 0;
-      if (!isFreeOrder && !_.has(inputOrder, 'stripeTokenResponse')) {
-        logger.warn('alert-critical Request without stripeTokenResponse noticed');
-        logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
+  if (price.value <= ALERT_LIMIT_MIN) {
+    logger.warn(`Calculated price was under low alert limit: ${price.label}`);
+    logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
+  }
 
-        throwStatus(400, 'Required field stripeTokenResponse is missing.');
-      }
+  const createdOrder = await orderCore.createOrder(inputOrder);
 
-      if (isFreeOrder) {
-        // User has used a promotion code which allows a free purchase
-        return BPromise.props({
-          price,
-          stripeChargeResponse: null,
-        });
-      }
-
-      stripeCharge = _createStripeChargeObject(inputOrder, price);
-
-      return BPromise.props({
-        price,
-        stripeChargeResponse: stripeInstance.charges.create(stripeCharge),
-      });
-    })
-    .then((result) => {
-      const { price, stripeChargeResponse } = result;
-
-      order = _.merge({}, inputOrder, {
-        chargedPrice: price,  // Saved in case of failures
-        stripeChargeRequest: stripeCharge,
-        stripeChargeResponse,
-      });
-
-      return orderCore.createOrder(order);
-    })
-    .tap((createdOrder) => {
-      const orderWithId = _.merge({
-        orderId: createdOrder.orderId,
-        promotion: createdOrder.promotion,
-        createdAt: createdOrder.createdAt,
-      }, order);
-
-      logger.info('New order received!');
-      return emailCore.sendReceipt(orderWithId);
-    })
-    .tap((createdOrder) => {
-      if (createdOrder.promotion) {
-        return promotionCore.increasePromotionUsageCount(createdOrder.promotion.promotionCode);
-      }
-
-      return BPromise.resolve();
-    })
-    .then(createdOrder => ({
-      orderId: createdOrder.orderId,
-    }))
-    .catch((err) => {
-      logger.error('alert-normal Creating order failed!');
-      logger.logEncrypted('error', 'Stripe charge:', stripeCharge);
-      logger.logEncrypted('error', 'Full order:', order);
-      throw err;
+  const isFreeOrder = price.value <= 0;
+  if (isFreeOrder) {
+    const originalPrice = calculateCartPrice(inputOrder.cart);
+    await orderCore.createPayment({
+      paymentProvider: 'INTERNAL_GIFT',
+      type: 'CHARGE',
+      amount: originalPrice.value,
+      currency: price.currency,
+      promotionCode: inputOrder.promotionCode,
     });
+
+    return {
+      order: createdOrder,
+    };
+  }
+
+  // Use a complete order object which contains the orderId and all address details
+  const mergedOrder = _.merge({}, inputOrder, createdOrder);
+  const stripePaymentIntent = _createStripePaymentIntentObject(mergedOrder, price);
+  const stripePaymentIntentRes = await stripeInstance.paymentIntents.create(stripePaymentIntent);
+
+  return {
+    order: createdOrder,
+    stripePaymentIntent: _.pick(stripePaymentIntentRes, ['client_secret']),
+  };
 }
 
-function _createStripeChargeObject(inputOrder, price) {
+function _createStripePaymentIntentObject(fullOrder, price) {
   return {
+    payment_method_types: ['card'],
     amount: price.value,
     currency: price.currency.toLowerCase(),
-    source: inputOrder.stripeTokenResponse.id,
-    metadata: _createStripeMetaData(inputOrder),
-    description: `Charge for ${inputOrder.email}`,
+    metadata: _createStripeMetaData(fullOrder),
+    description: `Charge for ${fullOrder.email}`,
     statement_descriptor: config.CREDIT_CARD_STATEMENT_NAME,
   };
 }
 
-function _createStripeMetaData(inputOrder) {
-  const { shippingAddress } = inputOrder;
-  const meta = {};
+function _createStripeMetaData(fullOrder) {
+  const { shippingAddress } = fullOrder;
+  const meta = {
+    prettyOrderId: fullOrder.orderId,
+  };
+
   if (_.isPlainObject(shippingAddress)) {
     meta.shippingName = shippingAddress.personName;
     meta.shippingAddress = shippingAddress.streetAddress;
@@ -131,7 +99,7 @@ function _createStripeMetaData(inputOrder) {
     meta.shippingPhone = shippingAddress.contactPhone;
   }
 
-  const mapCart = filterMapPosterCart(inputOrder.cart);
+  const mapCart = filterMapPosterCart(fullOrder.cart);
   return trimStripeMeta(_.merge(meta, _createCartMetas(mapCart)));
 }
 

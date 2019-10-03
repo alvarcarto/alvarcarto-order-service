@@ -14,6 +14,12 @@
     "no-use-before-define": ["error", { "functions": false }],
     "no-underscore-dangle": "off",
     "arrow-body-style": "off",
-    "no-plusplus": "off"
+    "no-plusplus": "off",
+    // Allowing Math.pow rather than forcing `**`
+    // https://eslint.org/docs/rules/no-restricted-properties
+    "no-restricted-properties": ["off", {
+      "object": "Math",
+      "property": "pow"
+    }]
   }
 }

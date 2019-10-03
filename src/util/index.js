@@ -1,7 +1,9 @@
 const path = require('path');
+const crypto = require('crypto');
 const fs = require('fs');
 const qs = require('qs');
 const _ = require('lodash');
+const moment = require('moment');
 const config = require('../config');
 
 function readFileSync(filePath) {
@@ -65,6 +67,32 @@ function toLog(obj) {
   return String(obj);
 }
 
+function createRandomOrderId() {
+  const now = moment.utc();
+  return `${now.format('YYYY-MMDD')}-${rand4()}-${rand4()}`;
+}
+
+function rand4() {
+  const num = String(randomInteger(0, 9999));
+  return _.padStart(num, 4, '0');
+}
+
+const MAX_INT_32 = Math.pow(2, 32);
+function randomInteger(min, max) {
+  const buf = crypto.randomBytes(4);
+  const hex = buf.toString('hex');
+
+  // Enforce that MAX_INT_32 - 1 is the largest number
+  // generated. This biases the distribution a little
+  // but doesn't matter in practice
+  // when generating smaller numbers.
+  // Without this enforcement, we'd return too large numbers
+  // on the case when crypto generated MAX_INT_32
+  const int32 = Math.min(parseInt(hex, 16), MAX_INT_32 - 1);
+  const ratio = int32 / MAX_INT_32;
+  return Math.floor(ratio * (max - min + 1)) + min;
+}
+
 module.exports = {
   readFileSync,
   createPosterImageUrl,
@@ -72,4 +100,5 @@ module.exports = {
   resolveShippingClass,
   toLog,
   filterMapPosterCart,
+  createRandomOrderId,
 };

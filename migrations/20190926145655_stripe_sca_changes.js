@@ -19,11 +19,19 @@ exports.up = (knex) => {
         // EUR / USD
         table.string('currency', 32).notNullable();
 
-        // "STRIPE" or "INTERNAL_GIFT" or "PURCHASED_GIFT"
+        // "STRIPE" or "PROMOTION" or "GIFTCARD"
         table.string('payment_provider', 256).notNullable().index();
 
         // STRIPE: "STRIPE_CHARGE" or "STRIPE_PAYMENT_INTENT"
         table.string('payment_provider_method', 256).index();
+
+        // When a gift code is used
+        table.bigInteger('promotion_id').index();
+        table.foreign('promotion_id')
+          .references('id')
+          .inTable('promotions')
+          .onDelete('RESTRICT')
+          .onUpdate('RESTRICT');
 
         // The old stripe charge method data
         table.string('stripe_token_id', 64).index();
@@ -32,9 +40,7 @@ exports.up = (knex) => {
 
         // The stripe payment intent method data
         table.string('stripe_payment_intent_id', 64).index();
-        table.jsonb('stripe_payment_intent_create_response');
-        table.jsonb('stripe_payment_intent_final_event');
-
+        table.jsonb('stripe_payment_intent_success_event');
 
         table.timestamp('created_at').index().notNullable().defaultTo(knex.fn.now());
         table.timestamp('updated_at').index().notNullable().defaultTo(knex.fn.now());
@@ -47,9 +53,9 @@ exports.up = (knex) => {
       FROM orders
       WHERE orders.stripe_token_id IS NOT NULL
     `))
-    // Move all internal gift purchases
+    // Move all promotion purchases
     .then(() => knex.raw(`
-      INSERT INTO payments (order_id, type, amount, currency, payment_provider)
+      INSERT INTO payments (order_id, type, amount, currency, payment_provider, promotion_id)
       SELECT
         orders.id,
         'CHARGE',
@@ -58,7 +64,8 @@ exports.up = (knex) => {
             WHERE ordered_posters.order_id = orders.id
         ),
         'EUR',
-        'INTERNAL_GIFT'
+        'PROMOTION',
+        (SELECT id FROM promotions WHERE promotions.promotion_code = orders.promotion_code)
       FROM orders
       WHERE orders.stripe_token_id IS NULL
     `))
@@ -66,7 +73,24 @@ exports.up = (knex) => {
       table.dropColumn('stripe_token_id');
       table.dropColumn('stripe_token_response');
       table.dropColumn('stripe_charge_response');
+      table.dropColumn('promotion_code');
+
+      // When a promotion code is used
+      table.bigInteger('promotion_id').index();
+      table.foreign('promotion_id')
+        .references('id')
+        .inTable('promotions')
+        .onDelete('RESTRICT')
+        .onUpdate('RESTRICT');
     }))
+    .then(() => knex.raw(`
+      UPDATE orders
+      SET
+        promotion_id = payments.promotion_id
+      FROM payments
+      WHERE orders.id = payments.order_id
+      AND payments.promotion_id IS NOT NULL
+    `))
     .then(() => knex.schema.renameTable('webhook_events', 'order_events'))
     .then(() => knex.schema.table('order_events', (table) => {
       table.string('source', 64);
@@ -81,6 +105,8 @@ exports.down = (knex) => {
       table.string('stripe_token_id', 64).unique().index();
       table.jsonb('stripe_token_response');
       table.jsonb('stripe_charge_response');
+      table.string('promotion_code', 512);
+      table.dropColumn('promotion_id');
     }))
     // Move all stripe charges
     .then(() => knex.raw(`
@@ -92,6 +118,15 @@ exports.down = (knex) => {
       FROM payments
       WHERE orders.id = payments.order_id
       AND payments.stripe_token_id IS NOT NULL
+    `))
+    // Move gift orders charges
+    .then(() => knex.raw(`
+      UPDATE orders
+      SET
+        promotion_code = (SELECT promotion_code FROM promotions WHERE id = payments.promotion_id)
+      FROM payments
+      WHERE orders.id = payments.order_id
+      AND payments.promotion_id IS NOT NULL
     `))
     .then(() => knex.schema.dropTable('payments'))
     .then(() => knex.schema.table('order_events', (table) => {

@@ -84,12 +84,15 @@ function loadEnvs() {
       console.warn('\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
       console.warn('Warning: DATABASE_URL env variable is defined in your shell');
       console.warn('Make sure it is not pointing to a remote environment accidentally.');
-      console.warn('To remove this warning, run `unset DATABASE_URL` in your shell.');
+      console.warn('To remove this warning, run `unset DATABASE_URL` in your shell');
+      console.warn('or use REMOTE_DB=true environment variable to ignore this warning');
       console.warn('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n');
 
-      if (NODE_ENV === 'test' && process.env.REMOTE_DB !== 'true') {
-        throw new Error('DATABASE_URL is set manually. Run `REMOTE_DB=true npm test` if you really mean it.');
+      if (process.env.REMOTE_DB !== 'true') {
+        throw new Error('DATABASE_URL is set manually. Run with `REMOTE_DB=true` if you really mean it.');
       }
+
+      console.warn('REMOTE_DB=true, ignoring above warning!');
     }
 
     const filePath = path.join(__dirname, '../..', envFiles[NODE_ENV]);

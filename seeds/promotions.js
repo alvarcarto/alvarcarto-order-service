@@ -21,5 +21,12 @@ exports.seed = function(knex, Promise) {
     promotion_code: 'PERCENTAGE100',
     label: '-100%',
     value: 1.0,
+  }))
+  .then(() => util.insertOrUpdate(knex, 'promotions', {
+    id: 3,
+    type: 'FIXED',
+    promotion_code: 'FREEMAP',
+    label: '-69€',
+    value: 6900,
   }));
 };
