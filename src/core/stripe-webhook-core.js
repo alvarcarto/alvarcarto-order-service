@@ -26,13 +26,13 @@ async function processPaymentSucceeded(event) {
   const intent = event.data.object;
   logger.info(`Succeeded payment intent: ${intent.id}`);
 
-  await knex.transaction(async (trx) => {
-    const { prettyOrderId } = intent.metadata;
-    const order = await orderCore.getOrder(prettyOrderId, { trx });
-    const { promotion } = order;
-    const originalPrice = calculateCartPrice(order.cart);
-    const discountPrice = calculateCartPrice(order.cart, { promotion });
+  const { prettyOrderId } = intent.metadata;
+  const order = await orderCore.getOrder(prettyOrderId, { allFields: true });
+  const { promotion } = order;
+  const originalPrice = calculateCartPrice(order.cart);
+  const discountPrice = calculateCartPrice(order.cart, { promotion });
 
+  await knex.transaction(async (trx) => {
     if (promotion) {
       const amountPaidWithPromotion = originalPrice.value - discountPrice.value;
       const paymentProvider = promotion.paymentProvider === 'GIFTCARD'
@@ -50,7 +50,7 @@ async function processPaymentSucceeded(event) {
 
     if (intent.amount_received !== discountPrice.value) {
       logger.error('alert-business-critical The payment intent has different amount than calculated cart price!');
-      logger.error(`Intent received ${util.inspect(intent.amount_received)}, cart price: ${util.inspect(discountPrice.value)}`);
+      logger.error(`Intent amount received ${util.inspect(intent.amount_received)}, cart price: ${util.inspect(discountPrice.value)}`);
       throw new Error('The payment intent has different amount than calculated cart price');
     }
 
@@ -63,9 +63,10 @@ async function processPaymentSucceeded(event) {
       stripePaymentIntentId: intent.id,
       stripePaymentIntentSuccessEvent: event,
     }, { trx });
-
-    // TODO: Send receipt email
   });
+
+  const updatedOrder = await orderCore.getOrder(prettyOrderId, { allFields: true });
+  await emailCore.sendReceipt(updatedOrder);
 }
 
 async function processPaymentFailed(event) {

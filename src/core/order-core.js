@@ -1,7 +1,7 @@
 const util = require('util');
 const _ = require('lodash');
 const moment = require('moment');
-const { calculateItemPrice } = require('alvarcarto-price-util');
+const { calculateItemPrice, calculateCartPrice } = require('alvarcarto-price-util');
 const promiseRetryify = require('promise-retryify');
 const BPromise = require('bluebird');
 const logger = require('../util/logger')(__filename);
@@ -96,6 +96,7 @@ function getOrder(orderId, opts = {}) {
       const partialOrder = {
         orderId: fullOrder.orderId,
         cart: fullOrder.cart,
+        paid: fullOrder.paid,
         promotion: fullOrder.promotion,
         createdAt: fullOrder.createdAt,
       };
@@ -204,6 +205,19 @@ function selectOrders(_opts = {}) {
       sent_emails.id as sent_email_id,
       sent_emails.type as sent_email_type,
       sent_emails.created_at as sent_email_created_at,
+      payments.id as payment_id,
+      payments.type as payment_type,
+      payments.amount as payment_amount,
+      payments.currency as payment_currency,
+      payments.payment_provider as payment_payment_provider,
+      payments.payment_provider_method as payment_payment_provider_method,
+      (SELECT promotion_code FROM promotions WHERE payments.promotion_id = promotions.id) as payment_promotion_code,
+      payments.stripe_token_id as payment_stripe_token_id,
+      payments.stripe_token_response as payment_stripe_token_response,
+      payments.stripe_charge_response as payment_stripe_charge_response,
+      payments.stripe_payment_intent_id as payment_stripe_payment_intent_id,
+      payments.stripe_payment_intent_success_event as payment_stripe_payment_intent_success_event,
+      payments.created_at as payment_created_at,
       promotions.promotion_code as promotion_code,
       *
     FROM (
@@ -273,27 +287,22 @@ function selectOrders(_opts = {}) {
       ON promotions.id = orders.promotion_id
     ${opts.addQuery}
   `, opts.params)
-    .then((result) => {
+    .then(async (result) => {
       // Multiple rows might be returned per order, all ordered posters are own rows, and so are
       // sent emails
       const grouped = _.groupBy(result.rows, row => row.pretty_order_id);
+      const arr = _.map(grouped, (rows, orderId) => ({ rows, orderId }));
 
       const orders = {};
-      _.each(grouped, (rows, orderId) => {
-        const orderObj = _rowsToOrderObject(rows);
+      await BPromise.each(arr, async ({ rows, orderId }) => {
+        const orderObj = await _rowsToOrderObject(rows);
         orders[orderId] = orderObj;
       });
 
       const uniqueOrderIds = _.uniq(_.keys(grouped));
       // Make sure the order of returned rows is not changed
       return _.map(uniqueOrderIds, orderId => orders[orderId]);
-    })
-    .then(orders =>
-      BPromise.mapSeries(orders, (order) => {
-        return promotionCore.getPromotion(order.promotionCode)
-          .then(promotion => _.merge({}, order, { promotion }));
-      })
-    );
+    });
 }
 
 function addEmailSent(orderId, email, opts = {}) {
@@ -388,7 +397,7 @@ function markOrderSentToProduction(orderId, printmotorOrderId, response, request
 }
 
 // Each cart item is its own row
-function _rowsToOrderObject(rows) {
+async function _rowsToOrderObject(rows) {
   const onlyCartRows = _.filter(rows, (row) => {
     const isCartItemRow = row.ordered_poster_id !== null || row.gift_item_id !== null;
     return isCartItemRow;
@@ -463,15 +472,56 @@ function _rowsToOrderObject(rows) {
     createdAt: row.sent_email_created_at,
   }));
 
+  const paymentsRows = _.uniqBy(_.filter(rows, row => row.payment_id !== null), (row) => {
+    return row.payment_id;
+  });
+
+  const payments = _.map(paymentsRows, (row) => ({
+    id: Number(row.payment_id),
+    type: row.payment_type,
+    amount: row.payment_amount,
+    currency: row.payment_currency,
+    paymentProvider: row.payment_payment_provider,
+    paymentProviderMethod: row.payment_payment_provider_method,
+    promotionCode: row.payment_promotion_code,
+    stripeTokenId: row.payment_stripe_token_id,
+    stripeTokenResponse: row.payment_stripe_token_response,
+    stripeChargeResponse: row.payment_stripe_charge_response,
+    stripePaymentIntentId: row.payment_stripe_payment_intent_id,
+    stripePaymentIntentSuccessEvent: row.payment_stripe_payment_intent_success_event,
+    createdAt: row.payment_created_at,
+  }));
+
   const order = {
     email: firstRow.customer_email,
     emailSubscription: firstRow.email_subscription,
     promotionCode: firstRow.promotion_code,
     orderId: firstRow.pretty_order_id,
     sentEmails: _.sortBy(sentEmails, 'id'),
+    payments: _.sortBy(payments, 'id'),
     cart: _.map(sortedCart, i => _.omit(i, ['id'])),
     createdAt: moment(firstRow.order_created_at),
   };
+
+  if (order.promotionCode) {
+    order.promotion = await promotionCore.getPromotion(order.promotionCode);
+  }
+
+  // XXX: Currency unsupported
+  const originalPrice = calculateCartPrice(order.cart);
+  const paidSum = _.sumBy(order.payments, (payment) => {
+    if (payment.type !== PAYMENT_TYPE.CHARGE) {
+      return 0;
+    }
+
+    return payment.amount;
+  });
+
+  order.paid = originalPrice.value - paidSum <= 0;
+
+  if (originalPrice.value - paidSum < 0) {
+    logger.warn(`More payments than needed were found, order id: ${order.orderId}`);
+  }
 
   if (firstRow.shipping_city) {
     // Shipping address is missing if only digital card was ordered

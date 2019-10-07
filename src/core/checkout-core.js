@@ -49,13 +49,16 @@ async function executeCheckout(inputOrder) {
   const isFreeOrder = price.value <= 0;
   if (isFreeOrder) {
     const originalPrice = calculateCartPrice(inputOrder.cart);
-    await orderCore.createPayment({
-      paymentProvider: 'INTERNAL_GIFT',
+    await orderCore.createPayment(createdOrder.orderId, {
+      paymentProvider: 'PROMOTION',
       type: 'CHARGE',
       amount: originalPrice.value,
       currency: price.currency,
       promotionCode: inputOrder.promotionCode,
     });
+
+    const fullOrder = await orderCore.getOrder(createdOrder.orderId, { allFields: true });
+    await emailCore.sendReceipt(fullOrder);
 
     return {
       order: createdOrder,

@@ -7,6 +7,8 @@ const moment = require('moment-timezone');
 const countries = require('i18n-iso-countries');
 const logger = require('../util/logger')(__filename);
 const { readFileSync } = require('../util');
+const PAYMENT_PROVIDER = require('../enums/payment-provider');
+const PAYMENT_PROVIDER_METHOD = require('../enums/payment-provider-method');
 const { calculateItemPrice, calculateCartPrice, getCurrencySymbol, getItemLabel } = require('alvarcarto-price-util');
 const config = require('../config');
 const { getDeliveryEstimate } = require('./printmotor-core');
@@ -24,6 +26,17 @@ const deliveryStartedTextTemplate = readFileSync('email-templates/delivery-start
 const deliveryLateHtmlTemplate = readFileSync('email-templates/delivery-late.inlined.html');
 const deliveryLateTextTemplate = readFileSync('email-templates/delivery-late.txt');
 const deliveryReminderToPrintmotorTextTemplate = readFileSync('email-templates/delivery-reminder-to-printmotor.txt');
+
+// http://stackoverflow.com/questions/42262887/enabling-brand-icon-in-cardnumber-type-element-in-stripe
+const CARD_TYPE_TO_LABEL = {
+  visa: 'Visa',
+  mastercard: 'Mastercard',
+  amex: 'American Express',
+  discover: 'Discover',
+  diners: 'Diner\'s',
+  jcb: 'JCB',
+  unknown: 'Unknown',
+};
 
 function sendReceipt(order) {
   logger.logEncrypted('info', 'Sending receipt email to', order.email);
@@ -161,7 +174,7 @@ function createReceiptTemplateModel(order) {
   if (order.promotion) {
     const discountCurrencySymbol = getCurrencySymbol(totalPrice.discount.currency);
     const discountHumanValue = (-totalPrice.discount.value / 100).toFixed(2);
-    const discountPriceLabel = `${discountHumanValue} ${discountCurrencySymbol}`;
+    const discountPriceLabel = `${discountHumanValue}${discountCurrencySymbol}`;
 
     receiptItems.push({
       description: `${order.promotion.label}`,
@@ -273,18 +286,52 @@ function getOrderDestinationDescription(order) {
   return 'the following address';
 }
 
+function isOrderFree(order) {
+  const paymentProviders = _.map(order.payments, p => p.paymentProvider);
+  console.log('paymentProviders', paymentProviders)
+  return _.every(
+    paymentProviders,
+    p => p === PAYMENT_PROVIDER.GIFTCARD || p === PAYMENT_PROVIDER.PROMOTION,
+  );
+}
+
+function paymentMethodDetailsToDescription(paymentMethodDetails) {
+  if (paymentMethodDetails.type !== 'card') {
+    throw new Error(`Unknown payment method type: ${paymentMethodDetails.type}`);
+  }
+
+  const brand = _.get(paymentMethodDetails, 'card.brand', 'Unknown brand');
+  const last4 = _.get(paymentMethodDetails, 'card.last4', 'XXXX');
+  return `${CARD_TYPE_TO_LABEL[brand]} credit card ending in ${last4}`;
+}
+
+function getPaymentMethodDescription(order) {
+  const payment = _.find(order.payments, p => p.paymentProvider === PAYMENT_PROVIDER.STRIPE);
+
+  let paymentMethodDetails;
+  if (payment.paymentProviderMethod === PAYMENT_PROVIDER_METHOD.STRIPE_CHARGE) {
+    paymentMethodDetails = _.get(payment.stripeChargeResponse, 'payment_method_details');
+  } else if (payment.paymentProviderMethod === PAYMENT_PROVIDER_METHOD.STRIPE_PAYMENT_INTENT) {
+    const charges = _.get(payment.stripePaymentIntentSuccessEvent, 'data.object.charges.data');
+    const charge = _.find(charges, c => c.status === 'succeeded');
+    paymentMethodDetails = _.get(charge, 'payment_method_details');
+  } else {
+    throw new Error(`Unknown payment provider method: ${payment.paymentProviderMethod}`);
+  }
+
+  return paymentMethodDetailsToDescription(paymentMethodDetails);
+}
+
 function getPurchaseInformation(order) {
-  if (!order.stripeChargeResponse) {
+  if (isOrderFree(order)) {
     return 'The order was free of charge.';
   }
 
-  const creditCardBrand = _.get(order.stripeChargeResponse, 'source.brand', 'Unknown card');
-  const creditCardLast4 = _.get(order.stripeChargeResponse, 'source.last4', 'XXXX');
+  const paymentMethodDescription = getPaymentMethodDescription(order);
 
   return oneLine`
-    This purchase will appear as “${config.CREDIT_CARD_STATEMENT_NAME}”
-    on your credit card statement for your ${creditCardBrand} ending in
-    ${creditCardLast4}.
+    The purchase was completed with your ${paymentMethodDescription}.
+    The transaction will appear as “${config.CREDIT_CARD_STATEMENT_NAME}” on your statement.
   `;
 }
 
