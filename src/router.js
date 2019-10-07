@@ -48,7 +48,7 @@ function createJsonRouter() {
   // Uses req.ip as the default identifier
   const apiLimiter = new RateLimit({
     windowMs: 10 * 60 * 1000,
-    max: 20,
+    max: 30,
     delayMs: 0,
   });
 
