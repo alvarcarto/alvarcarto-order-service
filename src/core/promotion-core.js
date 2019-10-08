@@ -1,6 +1,6 @@
 const BPromise = require('bluebird');
 const _ = require('lodash');
-const moment = require('moment');
+const { moment } = require('../util/moment');
 const { knex } = require('../util/database');
 
 function getPromotions() {

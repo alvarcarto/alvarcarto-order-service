@@ -30,8 +30,14 @@ const locale = {
     LLL: 'MMMM Do [at] LT',
   },
 };
-moment.defineLocale('en-custom', locale);
-momentTimezone.defineLocale('en-custom', locale);
+moment.updateLocale('en', locale);
+momentTimezone.updateLocale('en', locale);
 
 // Set to en
 moment.locale('en');
+momentTimezone.locale('en');
+
+module.exports = {
+  moment,
+  momentTimezone,
+};

@@ -1,9 +1,9 @@
 const util = require('util');
 const _ = require('lodash');
-const moment = require('moment');
 const { calculateItemPrice, calculateCartPrice } = require('alvarcarto-price-util');
 const promiseRetryify = require('promise-retryify');
 const BPromise = require('bluebird');
+const { moment } = require('../util/moment');
 const logger = require('../util/logger')(__filename);
 const ADDRESS_TYPE = require('../enums/address-type');
 const PAYMENT_TYPE = require('../enums/payment-type');
@@ -135,12 +135,10 @@ function getOrdersWithTooLongProductionTime(opts = {}) {
       ON orders.id = order_events.order_id
     LEFT JOIN sent_emails
       ON orders.id = sent_emails.order_id
-    WHERE order_events.order_id IS NOT NULL
-      AND orders.printmotor_order_id IS NOT NULL
-      AND orders.created_at >= NOW() - INTERVAL '15' day
-      AND orders.created_at <= NOW() - INTERVAL '1' day
+    WHERE orders.sent_to_production_at IS NOT NULL
+      AND orders.sent_to_production_at >= NOW() - INTERVAL '15' day
+      AND orders.sent_to_production_at <= NOW() - INTERVAL '1' day
     GROUP BY orders.id
-    -- Make sure we haven't received "user order delivered" from printmotor yet
     HAVING MAX(CASE WHEN order_events.source='PRINTMOTOR' AND order_events.event='USER_ORDER_DELIVERED' THEN 1 ELSE 0 END) = 0
     -- and that we haven't received "user order cancelled" from printmotor yet
       AND MAX(CASE WHEN order_events.source='PRINTMOTOR' AND order_events.event='USER_ORDER_CANCELLED' THEN 1 ELSE 0 END) = 0

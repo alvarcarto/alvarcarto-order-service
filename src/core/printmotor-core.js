@@ -70,7 +70,7 @@ function getOrder(printmotorOrderId) {
 }
 
 function isOrderInProduction(printmotorOrder) {
-  return _.get(printmotorOrder, 'processingStatusDescription') === 'In production';
+  return _.includes(['RECEIVED', 'IN_PRODUCTION'], _.get(printmotorOrder, 'processingStatus'));
 }
 
 function getDeliveryEstimate(countryCode, cart) {

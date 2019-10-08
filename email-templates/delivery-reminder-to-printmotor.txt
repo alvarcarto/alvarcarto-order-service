@@ -1,14 +1,11 @@
 Hi!
 
-{{#only_one_order}}We noticed production delay in the following order:{{/only_one_order}}
-{{^only_one_order}}We noticed production delays in the following orders:{{/only_one_order}}
+{{#only_one_order}}We noticed a production delay in the following order:{{/only_one_order}}{{^only_one_order}}We noticed production delays in the following orders:{{/only_one_order}}
 
-{{#orders}}
-* #{{order_id}} was ordered {{business_days_after_order}} business days ago. Ordered by {{receiver_customer_info}} at {{pretty_order_timestamp}}.
-
+{{#orders}}#{{order_id}} was ordered {{business_days_after_order}} business days ago. Ordered by {{receiver_customer_info}} at {{pretty_order_timestamp}}.
 {{/orders}}
-{{#only_one_order}}Could you please check the status of that order?{{/only_one_order}}
-{{^only_one_order}}Could you please check the status of those orders?{{/only_one_order}}
+
+{{#only_one_order}}Could you please check the status of that order?{{/only_one_order}}{{^only_one_order}}Could you please check the status of those orders?{{/only_one_order}}
 
 Thank you,
 Alvar Carto Team

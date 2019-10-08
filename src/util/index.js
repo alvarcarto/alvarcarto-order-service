@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const qs = require('qs');
 const _ = require('lodash');
-const moment = require('moment');
+const { moment } = require('../util/moment');
 const config = require('../config');
 
 function readFileSync(filePath) {

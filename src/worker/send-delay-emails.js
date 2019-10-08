@@ -4,7 +4,6 @@ const logger = require('../util/logger')(__filename);
 const orderCore = require('../core/order-core');
 const emailCore = require('../core/email-core');
 const { knex } = require('../util/database');
-require('../configure-moment');
 
 function main(opts = {}) {
   logger.info('Checking for orders that are late ..');

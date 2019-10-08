@@ -6,8 +6,7 @@ const {
   string,
   boolean,
   number,
-} = require('./util/env')
-require('./configure-moment');
+} = require('./util/env');
 
 loadEnvs();
 

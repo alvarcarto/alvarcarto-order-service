@@ -3,7 +3,7 @@ const postmark = require('postmark');
 const Mustache = require('mustache');
 const _ = require('lodash');
 const { oneLine } = require('common-tags');
-const moment = require('moment-timezone');
+const moment = require('../util/moment').momentTimezone;
 const countries = require('i18n-iso-countries');
 const logger = require('../util/logger')(__filename);
 const { readFileSync } = require('../util');
@@ -77,7 +77,7 @@ function sendDeliveryReminderToPrintmotor(lateOrders) {
     To: config.PRINTMOTOR_SUPPORT_EMAIL,
     Cc: 'help@alvarcarto.com',
     Subject: lateOrders.length > 1
-      ? `Status of orders (at ${moment().locale('en').format('MMMM Do YYYY')})`
+      ? `Status of orders (at ${moment().format('MMMM Do YYYY')})`
       : `Status of order #${lateOrders[0].orderId}`,
     TextBody: Mustache.render(deliveryReminderToPrintmotorTextTemplate, templateModel),
   };
@@ -97,7 +97,7 @@ function sendDeliveryLate(order) {
   };
   const messageObject = {
     From: 'help@alvarcarto.com',
-    To: 'help@alvarcarto.com',
+    To: 'kimmo.brunfeldt@alvarcarto.com',
     Subject: 'Your order production has taken longer than average',
     TextBody: Mustache.render(deliveryLateTextTemplate, templateModel),
     HtmlBody: Mustache.render(deliveryLateHtmlTemplate, templateModel),
@@ -149,7 +149,7 @@ function createDeliveryReminderToPrintmotorTemplateModel(lateOrders) {
         business_days_after_order: Math.floor(diffInWorkingDays(moment(), moment(order.createdAt))),
         // XXX: Assumption: Printmotor is in this timezone
         pretty_order_timestamp: moment(order.createdAt)
-          .locale('en-custom')
+          .locale('en')
           .tz('Europe/Helsinki')
           .calendar(),
         receiver_customer_info: `${getReceiverCustomerName(order)}, ${getCity(order)}`,
@@ -288,7 +288,6 @@ function getOrderDestinationDescription(order) {
 
 function isOrderFree(order) {
   const paymentProviders = _.map(order.payments, p => p.paymentProvider);
-  console.log('paymentProviders', paymentProviders)
   return _.every(
     paymentProviders,
     p => p === PAYMENT_PROVIDER.GIFTCARD || p === PAYMENT_PROVIDER.PROMOTION,
