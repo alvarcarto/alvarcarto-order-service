@@ -46,14 +46,34 @@ exports.up = (knex) => {
         table.timestamp('updated_at').index().notNullable().defaultTo(knex.fn.now());
       })
     )
-    // Move all stripe charges
+    // Move all 100% stripe charges
     .then(() => knex.raw(`
       INSERT INTO payments (order_id, type, amount, currency, payment_provider, payment_provider_method, stripe_token_id, stripe_token_response, stripe_charge_response)
       SELECT orders.id, 'CHARGE', (orders.stripe_charge_response->>'amount')::int, 'EUR', 'STRIPE', 'STRIPE_CHARGE', orders.stripe_token_id, orders.stripe_token_response, orders.stripe_charge_response
       FROM orders
-      WHERE orders.stripe_token_id IS NOT NULL
+      WHERE orders.stripe_token_id IS NOT NULL AND orders.promotion_code IS NULL
     `))
-    // Move all promotion purchases
+    // Move all stripe charges with promotion code usage
+    .then(() => knex.raw(`
+      INSERT INTO payments (order_id, type, amount, currency, payment_provider, payment_provider_method, stripe_token_id, stripe_token_response, stripe_charge_response)
+      SELECT orders.id, 'CHARGE', (orders.stripe_charge_response->>'amount')::int, 'EUR', 'STRIPE', 'STRIPE_CHARGE', orders.stripe_token_id, orders.stripe_token_response, orders.stripe_charge_response
+      FROM orders
+      WHERE orders.stripe_token_id IS NOT NULL AND orders.promotion_code IS NOT NULL
+    `))
+    .then(() => knex.raw(`
+      INSERT INTO payments (order_id, type, amount, currency, payment_provider, promotion_id)
+      SELECT
+        orders.id,
+        'CHARGE',
+        (SELECT SUM(customer_unit_price_value * quantity) FROM ordered_posters WHERE ordered_posters.order_id = orders.id) -
+        (orders.stripe_charge_response->>'amount')::int,
+        'EUR',
+        'PROMOTION',
+        (SELECT id FROM promotions WHERE promotions.promotion_code = orders.promotion_code)
+      FROM orders
+      WHERE orders.stripe_token_id IS NOT NULL AND orders.promotion_code IS NOT NULL
+    `))
+    // Move all 100% promotion purchases
     .then(() => knex.raw(`
       INSERT INTO payments (order_id, type, amount, currency, payment_provider, promotion_id)
       SELECT
@@ -75,6 +95,10 @@ exports.up = (knex) => {
       table.dropColumn('stripe_charge_response');
       table.dropColumn('promotion_code');
 
+      // Integer, value as in Stripe
+      table.integer('customer_price_value');
+      table.string('price_currency', 16);
+
       // When a promotion code is used
       table.bigInteger('promotion_id').index();
       table.foreign('promotion_id')
@@ -83,6 +107,15 @@ exports.up = (knex) => {
         .onDelete('RESTRICT')
         .onUpdate('RESTRICT');
     }))
+    // Calculate order values
+    .then(() => knex.raw(`
+      UPDATE orders
+      SET
+        customer_price_value = (SELECT SUM(customer_unit_price_value * quantity) FROM ordered_posters WHERE ordered_posters.order_id = orders.id),
+        price_currency = 'EUR'
+    `))
+    .then(() => knex.raw('ALTER TABLE orders ALTER COLUMN customer_price_value SET NOT NULL'))
+    .then(() => knex.raw('ALTER TABLE orders ALTER COLUMN price_currency SET NOT NULL'))
     .then(() => knex.raw(`
       UPDATE orders
       SET
@@ -106,6 +139,17 @@ exports.down = (knex) => {
       table.jsonb('stripe_token_response');
       table.jsonb('stripe_charge_response');
       table.string('promotion_code', 512);
+      table.dropColumn('customer_price_value');
+      table.dropColumn('price_currency');
+    }))
+    // Move gift orders charges
+    .then(() => knex.raw(`
+      UPDATE orders
+      SET
+        promotion_code = (SELECT promotion_code FROM promotions WHERE id = orders.promotion_id)
+      WHERE orders.promotion_id IS NOT NULL
+    `))
+    .then(() => knex.schema.table('orders', (table) => {
       table.dropColumn('promotion_id');
     }))
     // Move all stripe charges
@@ -118,15 +162,6 @@ exports.down = (knex) => {
       FROM payments
       WHERE orders.id = payments.order_id
       AND payments.stripe_token_id IS NOT NULL
-    `))
-    // Move gift orders charges
-    .then(() => knex.raw(`
-      UPDATE orders
-      SET
-        promotion_code = (SELECT promotion_code FROM promotions WHERE id = payments.promotion_id)
-      FROM payments
-      WHERE orders.id = payments.order_id
-      AND payments.promotion_id IS NOT NULL
     `))
     .then(() => knex.schema.dropTable('payments'))
     .then(() => knex.schema.table('order_events', (table) => {

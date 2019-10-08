@@ -29,8 +29,8 @@ async function processPaymentSucceeded(event) {
   const { prettyOrderId } = intent.metadata;
   const order = await orderCore.getOrder(prettyOrderId, { allFields: true });
   const { promotion } = order;
-  const originalPrice = calculateCartPrice(order.cart);
-  const discountPrice = calculateCartPrice(order.cart, { promotion });
+  const originalPrice = calculateCartPrice(order.cart, { currency: order.currency });
+  const discountPrice = calculateCartPrice(order.cart, { currency: order.currency, promotion });
 
   await knex.transaction(async (trx) => {
     if (promotion) {

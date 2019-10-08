@@ -165,6 +165,7 @@ function createReceiptTemplateModel(order) {
   const totalPrice = calculateCartPrice(order.cart, {
     promotion: order.promotion,
     shipToCountry: _.get(order, 'shippingAddress.countryCode', 'FI'),
+    currency: order.currency,
     ignorePromotionExpiry: true,
   });
 

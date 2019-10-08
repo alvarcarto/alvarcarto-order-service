@@ -25,7 +25,7 @@ async function executeCheckout(inputOrder) {
   }
 
   // Promotion is either null or promotion object
-  const price = calculateCartPrice(inputOrder.cart, { promotion });
+  const price = calculateCartPrice(inputOrder.cart, { currency: inputOrder.currency, promotion });
   if (price.value >= HARD_LIMIT_MAX) {
     logger.error(`Calculated price exceeded maximum safe limit: ${price}`);
     throwStatus(400, oneLine`
@@ -48,7 +48,7 @@ async function executeCheckout(inputOrder) {
 
   const isFreeOrder = price.value <= 0;
   if (isFreeOrder) {
-    const originalPrice = calculateCartPrice(inputOrder.cart);
+    const originalPrice = calculateCartPrice(inputOrder.cart, { currency: inputOrder.currency });
     await orderCore.createPayment(createdOrder.orderId, {
       paymentProvider: 'PROMOTION',
       type: 'CHARGE',
@@ -92,6 +92,10 @@ function _createStripeMetaData(fullOrder) {
   const meta = {
     prettyOrderId: fullOrder.orderId,
   };
+
+  if (fullOrder.promotionCode) {
+    meta.promotionCode = fullOrder.promotionCode;
+  }
 
   if (_.isPlainObject(shippingAddress)) {
     meta.shippingName = shippingAddress.personName;

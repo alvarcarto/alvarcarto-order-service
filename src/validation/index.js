@@ -131,6 +131,7 @@ const promotionSchema = Joi.object({
 const orderSchema = Joi.object({
   email: Joi.string().email().required(),
   differentBillingAddress: Joi.boolean().optional(),
+  currency: Joi.string().valid(['EUR', 'USD']).optional(),
   emailSubscription: Joi.boolean().optional(),
   shippingAddress: addressSchema.optional(),
   billingAddress: addressSchema.optional(),

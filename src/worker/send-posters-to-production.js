@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const BPromise = require('bluebird');
 const geolib = require('geolib');
 const logger = require('../util/logger')(__filename);
@@ -26,7 +27,7 @@ function main(opts = {}) {
               order.orderId,
               printmotorId,
               result.response,
-              result.requestParams
+              result.requestParams,
             );
           })
           .then(() => logger.info(`Marked order as sent to production (#${order.orderId})`))
@@ -38,7 +39,12 @@ function main(opts = {}) {
             }
             // Otherwis ignore error for single order creation
           });
-      });
+      })
+        .then(() => orderCore.getPartiallyPaidOrders());
+    })
+    .then((orders) => {
+      logger.info(`alert-critical Found ${orders.length} partially paid orders!`);
+      logger.info(`Found partially paid orders: ${_.map(orders, 'orderId')}`);
     })
     .catch((err) => {
       logError(err);

@@ -111,13 +111,34 @@ function getOrder(orderId, opts = {}) {
     });
 }
 
+function getOrdersReadyToProductionBaseAddQuery() {
+  return `WHERE orders.sent_to_production_at is NULL AND
+    orders.created_at < NOW() - INTERVAL '${config.SEND_TO_PRODUCTION_AFTER}'
+  `;
+}
+
 function getOrdersReadyToProduction(opts = {}) {
   const trx = opts.trx || knex;
 
+  // TODO: Check if express shipping and then send the order immediately to printmotor
   return selectOrders({
-    // TODO: Check if express shipping and then make minimal
-    addQuery: `WHERE orders.sent_to_production_at is NULL AND
-      orders.created_at < NOW() - INTERVAL '${config.SEND_TO_PRODUCTION_AFTER}'
+    // Find orders where the full value has been paid
+    addQuery: `${getOrdersReadyToProductionBaseAddQuery()} AND
+      orders.customer_price_value -
+        (SELECT SUM(amount) FROM payments WHERE payments.order_id = orders.id AND payments.type = '${PAYMENT_TYPE.CHARGE}') <= 0
+    `,
+    trx,
+  });
+}
+
+function getPartiallyPaidOrders(opts = {}) {
+  const trx = opts.trx || knex;
+
+  return selectOrders({
+    // Find orders where the whole amount is not paid, but there are one or more payments made
+    addQuery: `${getOrdersReadyToProductionBaseAddQuery()} AND
+      orders.customer_price_value - (SELECT SUM(amount) FROM payments WHERE payments.order_id = orders.id AND payments.type = '${PAYMENT_TYPE.CHARGE}') > 0 AND
+      (SELECT COUNT(*) FROM payments WHERE payments.order_id = orders.id AND payments.type = '${PAYMENT_TYPE.CHARGE}') > 0
     `,
     trx,
   });
@@ -136,13 +157,16 @@ function getOrdersWithTooLongProductionTime(opts = {}) {
     LEFT JOIN sent_emails
       ON orders.id = sent_emails.order_id
     WHERE orders.sent_to_production_at IS NOT NULL
+      -- 15 day limit so that we don't need to go through all orders in the history,
+      -- this check is anyways ran in a regular interval so no order should "slip" from this
+      -- time window
       AND orders.sent_to_production_at >= NOW() - INTERVAL '15' day
       AND orders.sent_to_production_at <= NOW() - INTERVAL '1' day
     GROUP BY orders.id
-    HAVING MAX(CASE WHEN order_events.source='PRINTMOTOR' AND order_events.event='USER_ORDER_DELIVERED' THEN 1 ELSE 0 END) = 0
-    -- and that we haven't received "user order cancelled" from printmotor yet
-      AND MAX(CASE WHEN order_events.source='PRINTMOTOR' AND order_events.event='USER_ORDER_CANCELLED' THEN 1 ELSE 0 END) = 0
-    -- and that we haven't yet sent the reminder to printmotor for the given order
+    HAVING MAX(CASE WHEN order_events.source='${ORDER_EVENT_SOURCE.PRINTMOTOR}' AND order_events.event='USER_ORDER_DELIVERED' THEN 1 ELSE 0 END) = 0
+      -- and that we haven't received "user order cancelled" from printmotor yet
+      AND MAX(CASE WHEN order_events.source='${ORDER_EVENT_SOURCE.PRINTMOTOR}' AND order_events.event='USER_ORDER_CANCELLED' THEN 1 ELSE 0 END) = 0
+      -- and that we haven't yet sent the reminder to printmotor for the given order
       AND MAX(CASE WHEN sent_emails.type='delivery-reminder-to-printmotor' THEN 1 ELSE 0 END) = 0
     ORDER BY orders.id
   `)
@@ -217,6 +241,7 @@ function selectOrders(_opts = {}) {
       payments.stripe_payment_intent_success_event as payment_stripe_payment_intent_success_event,
       payments.created_at as payment_created_at,
       promotions.promotion_code as promotion_code,
+      (SELECT SUM(amount) FROM payments WHERE payments.order_id = orders.id AND payments.type = '${PAYMENT_TYPE.CHARGE}') as order_paid_amount,
       *
     FROM (
       SELECT
@@ -493,6 +518,8 @@ async function _rowsToOrderObject(rows) {
   const order = {
     email: firstRow.customer_email,
     emailSubscription: firstRow.email_subscription,
+    customerValue: firstRow.customer_price_value,
+    currency: firstRow.price_currency,
     promotionCode: firstRow.promotion_code,
     orderId: firstRow.pretty_order_id,
     sentEmails: _.sortBy(sentEmails, 'id'),
@@ -505,8 +532,7 @@ async function _rowsToOrderObject(rows) {
     order.promotion = await promotionCore.getPromotion(order.promotionCode);
   }
 
-  // XXX: Currency unsupported
-  const originalPrice = calculateCartPrice(order.cart);
+  const originalPrice = calculateCartPrice(order.cart, { currency: order.currency });
   const paidSum = _.sumBy(order.payments, (payment) => {
     if (payment.type !== PAYMENT_TYPE.CHARGE) {
       return 0;
@@ -518,7 +544,13 @@ async function _rowsToOrderObject(rows) {
   order.paid = originalPrice.value - paidSum <= 0;
 
   if (originalPrice.value - paidSum < 0) {
-    logger.warn(`More payments than needed were found, order id: ${order.orderId}`);
+    logger.warn(`alert-critical More payments than needed were found, order id: ${order.orderId}`);
+    logger.warn(`Customer has paid ${util.inspect(paidSum)} cents`);
+  }
+
+  if (order.customerValue !== originalPrice.value) {
+    logger.warn(`alert-critical Database had different order value than calculated, order id: ${order.orderId}`);
+    logger.warn(`${util.inspect(order.customerValue)} should equal to ${util.inspect(originalPrice.value)}`);
   }
 
   if (firstRow.shipping_city) {
@@ -567,9 +599,13 @@ function _saveErrorInBackgroundAndRethrow(err, fullOrder) {
 function _createOrder(order, opts = {}) {
   const trx = opts.trx || knex;
 
+  const originalPrice = calculateCartPrice(order.cart, { currency: order.currency });
+
   const insertObj = {
     pretty_order_id: order.prettyOrderId,
     customer_email: order.email,
+    customer_price_value: originalPrice.value,
+    price_currency: _.get(order, 'currency', 'EUR'),
     different_billing_address: _.get(order, 'differentBillingAddress', false),
     email_subscription: _.get(order, 'emailSubscription', false),
     production_class: resolveProductionClass(order.cart),
@@ -712,6 +748,7 @@ module.exports = {
   createPayment,
   createOrderEvent,
   getOrder,
+  getPartiallyPaidOrders,
   getOrdersReadyToProduction,
   getOrdersWithTooLongProductionTime,
   markOrderSentToProduction,

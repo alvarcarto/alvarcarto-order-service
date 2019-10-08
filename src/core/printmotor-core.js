@@ -154,15 +154,15 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
       phone: internalOrder.shippingAddress.contactPhone || '',
     },
     products: _.map(mapCart, (item, i) =>
-      _internalCartItemToPrintmotorProduct(item, imageUrls[i])
+      _internalCartItemToPrintmotorProduct(item, imageUrls[i], internalOrder.currency)
     ),
     postalClass: _getPostalClass(internalOrder),
     productionClass: _getProductionClass(internalOrder),
   };
 }
 
-function _internalCartItemToPrintmotorProduct(item, imageUrl) {
-  const price = calculateItemPrice(item, { onlyUnitPrice: true });
+function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
+  const price = calculateItemPrice(item, { onlyUnitPrice: true, currency });
   return {
     amount: item.quantity,
     layoutName: _getLayoutName(item.size, item.orientation),
