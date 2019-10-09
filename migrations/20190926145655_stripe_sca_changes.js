@@ -65,7 +65,7 @@ exports.up = (knex) => {
       SELECT
         orders.id,
         'CHARGE',
-        (SELECT SUM(customer_unit_price_value * quantity) FROM ordered_posters WHERE ordered_posters.order_id = orders.id) -
+        (SELECT SUM(customer_unit_price_value * quantity) + CASE WHEN orders.production_class = 'HIGH' THEN 1500 ELSE 0 END FROM ordered_posters WHERE ordered_posters.order_id = orders.id) -
         (orders.stripe_charge_response->>'amount')::int,
         'EUR',
         'PROMOTION',
@@ -80,8 +80,9 @@ exports.up = (knex) => {
         orders.id,
         'CHARGE',
         (
-          SELECT SUM(customer_unit_price_value * quantity) FROM ordered_posters
-            WHERE ordered_posters.order_id = orders.id
+          SELECT SUM(customer_unit_price_value * quantity) + CASE WHEN orders.production_class = 'HIGH' THEN 1500 ELSE 0 END
+          FROM ordered_posters
+          WHERE ordered_posters.order_id = orders.id
         ),
         'EUR',
         'PROMOTION',
@@ -111,8 +112,22 @@ exports.up = (knex) => {
     .then(() => knex.raw(`
       UPDATE orders
       SET
-        customer_price_value = (SELECT SUM(customer_unit_price_value * quantity) FROM ordered_posters WHERE ordered_posters.order_id = orders.id),
+        customer_price_value = (
+          SELECT
+            SUM(customer_unit_price_value * quantity) + CASE WHEN orders.production_class = 'HIGH' THEN 1500 ELSE 0 END
+          FROM ordered_posters
+          WHERE ordered_posters.order_id = orders.id
+        ),
         price_currency = 'EUR'
+    `))
+    // There was one order in the history where we had moved the ordered posters to another order
+    // This action left one order in the database which doesn't have any products(posters) attached
+    .then(() => knex.raw(`
+      UPDATE orders
+      SET
+        customer_price_value = (SELECT SUM(amount) FROM payments WHERE payments.order_id = orders.id AND payments.type = 'CHARGE'),
+        price_currency = 'EUR'
+      WHERE customer_price_value IS NULL
     `))
     .then(() => knex.raw('ALTER TABLE orders ALTER COLUMN customer_price_value SET NOT NULL'))
     .then(() => knex.raw('ALTER TABLE orders ALTER COLUMN price_currency SET NOT NULL'))
@@ -129,7 +144,22 @@ exports.up = (knex) => {
       table.string('source', 64);
     }))
     .then(() => knex.raw('UPDATE order_events SET source=\'PRINTMOTOR\''))
-    .then(() => knex.raw('ALTER TABLE order_events ALTER COLUMN source SET NOT NULL'));
+    .then(() => knex.raw('ALTER TABLE order_events ALTER COLUMN source SET NOT NULL'))
+    // Assert that we have correct results
+    .then(() => knex.raw(`
+      SELECT
+        orders.customer_price_value,
+        (SELECT SUM(amount) FROM payments WHERE payments.order_id = orders.id AND payments.type = 'CHARGE'),
+        *
+      FROM orders
+      WHERE orders.customer_price_value != (SELECT SUM(amount) FROM payments WHERE payments.order_id = orders.id AND payments.type = 'CHARGE')
+    `))
+    .then(({ rows }) => {
+      if (rows.length > 0) {
+        console.error(rows);
+        throw new Error(`Found ${rows.length} orders where payments don't match the order value!`);
+      }
+    })
 };
 
 exports.down = (knex) => {
