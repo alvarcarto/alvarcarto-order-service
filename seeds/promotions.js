@@ -28,5 +28,12 @@ exports.seed = function(knex, Promise) {
     promotion_code: 'FREEMAP',
     label: '-69€',
     value: 6900,
+  }))
+  .then(() => util.insertOrUpdate(knex, 'promotions', {
+    id: 3,
+    type: 'FIXED',
+    promotion_code: 'PLATINUM100',
+    label: '-100€',
+    value: 10000,
   }));
 };
