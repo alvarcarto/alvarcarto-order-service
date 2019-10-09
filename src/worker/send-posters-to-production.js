@@ -43,8 +43,10 @@ function main(opts = {}) {
         .then(() => orderCore.getPartiallyPaidOrders());
     })
     .then((orders) => {
-      logger.info(`alert-critical Found ${orders.length} partially paid orders!`);
-      logger.info(`Found partially paid orders: ${_.map(orders, 'orderId')}`);
+      if (orders.length > 0) {
+        logger.warn(`alert-critical Found ${orders.length} partially paid orders!`);
+        logger.warn(`Found partially paid orders: ${_.map(orders, 'orderId')}`);
+      }
     })
     .catch((err) => {
       logError(err);
