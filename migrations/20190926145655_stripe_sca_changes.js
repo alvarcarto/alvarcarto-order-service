@@ -46,6 +46,12 @@ exports.up = (knex) => {
         table.timestamp('updated_at').index().notNullable().defaultTo(knex.fn.now());
       })
     )
+    .then(() => knex.schema.createTable('deleted_objects', (table) => {
+      table.bigIncrements('id').primary().index();
+      table.string('type', 256).notNullable().index();
+      table.jsonb('payload');
+      table.timestamp('created_at').index().notNullable().defaultTo(knex.fn.now());
+    }))
     // Move all 100% stripe charges
     .then(() => knex.raw(`
       INSERT INTO payments (order_id, type, amount, currency, payment_provider, payment_provider_method, stripe_token_id, stripe_token_response, stripe_charge_response)
@@ -255,6 +261,7 @@ exports.down = (knex) => {
       DELETE FROM orders WHERE promotion_code IS NULL AND stripe_token_id IS NULL
     `))
     .then(() => knex.schema.dropTable('payments'))
+    .then(() => knex.schema.dropTable('deleted_objects'))
     .then(() => knex.schema.table('order_events', (table) => {
       table.dropColumn('source');
     }))

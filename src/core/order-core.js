@@ -182,6 +182,64 @@ function getPartiallyPaidOrders(opts = {}) {
   });
 }
 
+function getOldUnpaidOrders(opts = {}) {
+  const trx = opts.trx || knex;
+
+  return selectOrders({
+    // Find orders where which are not paid
+    addQuery: `${getOrdersReadyToProductionBaseAddQuery()} AND
+      orders.created_at <= NOW() - INTERVAL '30' day AND
+      (SELECT COUNT(*) FROM payments WHERE payments.order_id = orders.id AND payments.type = '${PAYMENT_TYPE.CHARGE}') = 0
+    `,
+    trx,
+  });
+}
+
+// Warning: order ids must be safe input
+async function deleteOrders(prettyOrderIds, opts = {}) {
+  async function innerDelete(trx) {
+    const idStr = _.map(prettyOrderIds, id => `'${id}'`).join(', ');
+
+    const orders = await selectOrders({
+      addQuery: `WHERE orders.pretty_order_id IN (${idStr})`,
+      trx,
+    });
+
+    await BPromise.each(orders, async (order) => {
+      await trx('deleted_objects').insert({
+        type: 'ORDER',
+        payload: order,
+      });
+    });
+
+    // First rows from all referring tables. Each table should have order_id foreign key
+    const referringTables = [
+      'ordered_posters', 'addresses', 'order_events',
+      'payments', 'ordered_gift_items', 'sent_emails',
+    ];
+    await BPromise.each(referringTables, async (name) => {
+      await trx.raw(`DELETE FROM ${name}
+        WHERE order_id IN (SELECT id FROM orders WHERE pretty_order_id IN (${idStr}))
+      `);
+    });
+
+    await trx.raw(`DELETE FROM orders WHERE pretty_order_id IN (${idStr})`);
+
+    return orders;
+  }
+
+  logger.warn(`Warning: deleting ${prettyOrderIds.length} orders! They are saved to deleted_objects.`);
+
+  let deletedOrders;
+  if (opts.trx) {
+    deletedOrders = await innerDelete(opts.trx);
+  } else {
+    deletedOrders = await knex.transaction(trx => innerDelete(trx));
+  }
+
+  return deletedOrders;
+}
+
 function getOrdersWithTooLongProductionTime(opts = {}) {
   const trx = opts.trx || knex;
 
@@ -752,7 +810,9 @@ module.exports = {
   createPayment,
   createOrderEvent,
   getOrder,
+  deleteOrders,
   getPartiallyPaidOrders,
+  getOldUnpaidOrders,
   getOrdersReadyToProduction,
   getOrdersWithTooLongProductionTime,
   markOrderSentToProduction,

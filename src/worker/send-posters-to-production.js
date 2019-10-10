@@ -44,8 +44,19 @@ function main(opts = {}) {
     })
     .then((orders) => {
       if (orders.length > 0) {
-        logger.warn(`alert-critical Found ${orders.length} partially paid orders!`);
+        logger.warn(`alert-critical Found ${orders.length} PARTIALLY paid orders!`);
         logger.warn(`Found partially paid orders: ${_.map(orders, 'orderId')}`);
+      }
+
+      return orderCore.getOldUnpaidOrders();
+    })
+    .then(async (orders) => {
+      if (orders.length > 0) {
+        const orderIds = _.map(orders, 'orderId');
+        logger.warn(`alert-critical Deleting ${orders.length} UNPAID orders!`);
+        logger.warn(`Found unpaid orders: ${orderIds}`);
+
+        await orderCore.deleteOrders(orderIds);
       }
     })
     .catch((err) => {
