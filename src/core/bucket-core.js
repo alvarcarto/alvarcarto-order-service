@@ -32,34 +32,34 @@ function uploadPoster(order, item, itemId) {
     encoding: null,
     resolveWithFullResponse: true,
   })
-  .then((res) => {
-    if (_.has(res.headers, 'content-length')) {
-      const bytes = parseInt(res.headers['content-length'], 10);
-      logger.info(`Downloaded ${prettyBytes(bytes)} data`);
-    } else {
-      logger.info('Downloaded data, but content-length was not defined. Cloudflare URL was possibly used.');
-    }
+    .then((res) => {
+      if (_.has(res.headers, 'content-length')) {
+        const bytes = parseInt(res.headers['content-length'], 10);
+        logger.info(`Downloaded ${prettyBytes(bytes)} data`);
+      } else {
+        logger.info('Downloaded data, but content-length was not defined. Cloudflare URL was possibly used.');
+      }
 
-    const params = {
-      // create unique file name id
-      Bucket: config.AWS_S3_BUCKET_NAME,
-      ACL: 'public-read',
-      Key: `posters/${order.orderId}-item${itemId}.png`,
-      ContentType: 'image/png',
-      Body: res.body,
-      Metadata: {
-        orderId: order.orderId,
-      },
-    };
+      const params = {
+        // create unique file name id
+        Bucket: config.AWS_S3_BUCKET_NAME,
+        ACL: 'public-read',
+        Key: `posters/${order.orderId}-item${itemId}.png`,
+        ContentType: 'image/png',
+        Body: res.body,
+        Metadata: {
+          orderId: order.orderId,
+        },
+      };
 
-    return s3.uploadBluebirdAsync(params);
-  })
-  .tap(data => logger.info(`Uploaded poster to S3: ${data.Location}`))
-  .then(response => response.Location)
-  .catch((err) => {
-    logger.error(`Error uploading poster to S3: ${err} Body: ${_.get(err, 'response.body')}`);
-    throw err;
-  });
+      return s3.uploadBluebirdAsync(params);
+    })
+    .tap(data => logger.info(`Uploaded poster to S3: ${data.Location}`))
+    .then(response => response.Location)
+    .catch((err) => {
+      logger.error(`Error uploading poster to S3: ${err} Body: ${_.get(err, 'response.body')}`);
+      throw err;
+    });
 }
 
 function _createS3Url(orderId, itemId) {
