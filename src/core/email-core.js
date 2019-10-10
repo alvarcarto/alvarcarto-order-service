@@ -9,7 +9,9 @@ const logger = require('../util/logger')(__filename);
 const { readFileSync } = require('../util');
 const PAYMENT_PROVIDER = require('../enums/payment-provider');
 const PAYMENT_PROVIDER_METHOD = require('../enums/payment-provider-method');
-const { calculateItemPrice, calculateCartPrice, getCurrencySymbol, getItemLabel } = require('alvarcarto-price-util');
+const {
+  calculateItemPrice, calculateCartPrice, getCurrencySymbol, getItemLabel,
+} = require('alvarcarto-price-util');
 const config = require('../config');
 const { getDeliveryEstimate } = require('./printmotor-core');
 const orderCore = require('./order-core');

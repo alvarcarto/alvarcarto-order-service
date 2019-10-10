@@ -1,7 +1,7 @@
 const BPromise = require('bluebird');
 const _ = require('lodash');
-const cities = require('../../data/cities.json');
 const geolib = require('geolib');
+const cities = require('../../data/cities.json');
 
 function getCloseCities(lat, lng) {
   const sorted = _.sortBy(cities, c => geolib.getDistance({ lat, lng }, { lat: c.lat, lng: c.lng }));

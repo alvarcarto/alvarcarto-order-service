@@ -1,6 +1,6 @@
-const createApp = require('./app');
 const enableDestroy = require('server-destroy');
 const BPromise = require('bluebird');
+const createApp = require('./app');
 const logger = require('./util/logger')(__filename);
 const config = require('./config');
 
@@ -14,7 +14,7 @@ const server = app.listen(config.PORT, () => {
   logger.info(
     'Express server listening on http://localhost:%d/ in %s mode',
     config.PORT,
-    app.get('env')
+    app.get('env'),
   );
 });
 enableDestroy(server);

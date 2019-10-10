@@ -42,7 +42,7 @@ const mapCartItemSchema = Joi.object({
   labelHeader: Joi.string().min(0).max(100).required(),
   labelSmallHeader: Joi.string().min(0).max(100).required(),
   labelText: Joi.string().min(0).max(500).required(),
-}).unknown();  // Ignore additional fields
+}).unknown(); // Ignore additional fields
 
 const physicalGiftCardCartItemSchema = Joi.object({
   type: Joi.string().valid(['physicalGiftCard']).required(),
@@ -110,7 +110,8 @@ const promotionSchema = Joi.object({
   currency: Joi.string().valid(['EUR']).required(),
   label: Joi.string().min(1).max(30).required(),
   description: Joi.string().min(0).max(10000).optional(),
-  maxAllowedUsageCount: Joi.number().integer().min(1).max(30).optional(),
+  maxAllowedUsageCount: Joi.number().integer().min(1).max(30)
+    .optional(),
   expiresAt: Joi.date().iso().optional(),
 });
 

@@ -10,6 +10,7 @@
     "no-implicit-coercion": "error",
     "no-process-env": "error",
     "no-path-concat": "error",
+    "arrow-parens": [2, "as-needed", { "requireForBlockBody": true }],
     "import/no-extraneous-dependencies": ["error", {"devDependencies": true}],
     "no-use-before-define": ["error", { "functions": false }],
     "no-underscore-dangle": "off",

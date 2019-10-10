@@ -6,14 +6,14 @@ const _ = require('lodash');
 // DO NOT write sensitive data into error messages.
 function createErrorResponder(opts) {
   opts = _.merge({
-    isErrorSafeToRespond: function(status) {
+    isErrorSafeToRespond(status) {
       return status < 500;
     },
   }, opts);
 
   return function errorResponder(err, req, res, next) {
-    var message;
-    var status = err.status ? err.status : 500;
+    let message;
+    let status = err.status ? err.status : 500;
     switch (err.type) {
       case 'StripeCardError':
         // A declined card error
@@ -32,7 +32,7 @@ function createErrorResponder(opts) {
         break;
     }
 
-    var httpMessage = http.STATUS_CODES[status];
+    const httpMessage = http.STATUS_CODES[status];
     if (opts.isErrorSafeToRespond(status)) {
       message = err.message;
     } else {

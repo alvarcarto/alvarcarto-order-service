@@ -4,7 +4,7 @@ const config = require('../config');
 const stripe = require('../util/stripe');
 const logger = require('../util/logger')(__filename);
 const printmotorWebhookCore = require('../core/printmotor-webhook-core');
-const stripeWebhookCore = require('../core/stripe-webhook-core')
+const stripeWebhookCore = require('../core/stripe-webhook-core');
 
 const { stripeInstance } = stripe;
 

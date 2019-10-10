@@ -4,7 +4,9 @@ const { calculateItemPrice } = require('alvarcarto-price-util');
 const request = require('request-promise');
 const config = require('../config');
 const logger = require('../util/logger')(__filename);
-const { toLog, resolveProductionClass, resolveShippingClass, filterMapPosterCart } = require('../util');
+const {
+  toLog, resolveProductionClass, resolveShippingClass, filterMapPosterCart,
+} = require('../util');
 const { isEuCountry } = require('./country-core');
 const { uploadPoster } = require('./bucket-core');
 
@@ -37,7 +39,7 @@ function createOrder(internalOrder) {
       logger.logEncrypted(
         'info',
         `Printmotor request (#${internalOrder.orderId}):`,
-        params
+        params,
       );
 
       return BPromise.props({
@@ -49,7 +51,7 @@ function createOrder(internalOrder) {
       logger.logEncrypted(
         'error',
         `Error creating order to Printmotor (#${internalOrder.orderId}): ${err}`,
-        `Detailed error: ${err}, body: ${toLog(_.get(err, 'response.body'))}`
+        `Detailed error: ${err}, body: ${toLog(_.get(err, 'response.body'))}`,
       );
 
       throw err;
@@ -153,9 +155,7 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
       lastName: nameParts.last,
       phone: internalOrder.shippingAddress.contactPhone || '',
     },
-    products: _.map(mapCart, (item, i) =>
-      _internalCartItemToPrintmotorProduct(item, imageUrls[i], internalOrder.currency)
-    ),
+    products: _.map(mapCart, (item, i) => _internalCartItemToPrintmotorProduct(item, imageUrls[i], internalOrder.currency)),
     postalClass: _getPostalClass(internalOrder),
     productionClass: _getProductionClass(internalOrder),
   };

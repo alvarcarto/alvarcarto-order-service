@@ -3,12 +3,12 @@ const logger = require('../util/logger')(__filename);
 
 function createErrorLogger(opts) {
   opts = _.merge({
-    logRequest: status => {
+    logRequest: (status) => {
       return status >= 400 && status !== 404 && status !== 503;
     },
-    logStackTrace: status => {
+    logStackTrace: (status) => {
       return status >= 500 && status !== 503;
-    }
+    },
   }, opts);
 
   return function errorHandler(err, req, res, next) {
@@ -22,8 +22,7 @@ function createErrorLogger(opts) {
 
     if (opts.logStackTrace(status)) {
       log(err, err.stack);
-    }
-    else {
+    } else {
       log(err.toString());
     }
 
@@ -42,10 +41,10 @@ function logRequestDetails(logLevel, req, status) {
 }
 
 function deepSupressLongStrings(obj) {
-  let newObj = {};
+  const newObj = {};
   _.each(obj, (val, key) => {
     if (_.isString(val) && val.length > 100) {
-      newObj[key] = val.slice(0, 100) + '... [CONTENT SLICED]';
+      newObj[key] = `${val.slice(0, 100)}... [CONTENT SLICED]`;
     } else if (_.isPlainObject(val)) {
       return deepSupressLongStrings(val);
     } else {

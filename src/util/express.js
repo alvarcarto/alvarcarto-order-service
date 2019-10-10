@@ -4,7 +4,7 @@ const BPromise = require('bluebird');
 // Route which assumes that the Promise `func` returns, will be resolved
 // with data which will be sent as json response.
 function createJsonRoute(func) {
-  return createRoute(func, function sendJsonResponse(data, req, res, next) {
+  return createRoute(func, (data, req, res, next) => {
     res.json(data);
   });
 }
@@ -21,10 +21,10 @@ function createJsonRoute(func) {
 function createRoute(func, responseHandler) {
   return function route(req, res, next) {
     try {
-      var callback = _.isFunction(responseHandler) ? func.bind(this, req, res) :
-        func.bind(this, req, res, next);
+      const callback = _.isFunction(responseHandler) ? func.bind(this, req, res)
+        : func.bind(this, req, res, next);
 
-      var valuePromise = callback();
+      let valuePromise = callback();
       if (!_.isFunction(_.get(valuePromise, 'then'))) {
         // It was a not a Promise, so wrap it as a Promise
         valuePromise = BPromise.resolve(valuePromise);
@@ -32,17 +32,14 @@ function createRoute(func, responseHandler) {
 
       if (_.isFunction(responseHandler)) {
         valuePromise
-          .then(function(data) {
+          .then((data) => {
             return responseHandler(data, req, res, next);
           })
           .catch(next);
-      }
-      else {
+      } else {
         valuePromise.catch(next);
       }
-
-    }
-    catch (err) {
+    } catch (err) {
       next(err);
     }
   };

@@ -21,42 +21,40 @@ const { diffInWorkingDays } = require('../util/time');
 function createOrder(order) {
   let fullOrder = _.merge({}, order, { prettyOrderId: 'NONE' });
 
-  return knex.transaction(trx =>
-    _createUniqueOrderId({ trx })
-      .then((prettyOrderId) => {
-        // Share to upper function scope to be able to log this
-        fullOrder = _.merge({}, order, {
-          prettyOrderId,
-        });
+  return knex.transaction(trx => _createUniqueOrderId({ trx })
+    .then((prettyOrderId) => {
+      // Share to upper function scope to be able to log this
+      fullOrder = _.merge({}, order, {
+        prettyOrderId,
+      });
 
-        return _createOrder(fullOrder, { trx });
-      })
-      .tap(orderRow => _createOrderedPosters(orderRow.id, order.cart, { trx }))
-      .tap(orderRow => _createOrderedGiftItems(orderRow.id, order.cart, { trx }))
-      .tap((orderRow) => {
-        if (!order.shippingAddress) {
-          return BPromise.resolve();
-        }
+      return _createOrder(fullOrder, { trx });
+    })
+    .tap(orderRow => _createOrderedPosters(orderRow.id, order.cart, { trx }))
+    .tap(orderRow => _createOrderedGiftItems(orderRow.id, order.cart, { trx }))
+    .tap((orderRow) => {
+      if (!order.shippingAddress) {
+        return BPromise.resolve();
+      }
 
-        const address = _.merge({}, order.shippingAddress, {
-          type: ADDRESS_TYPE.SHIPPING,
-        });
-        return _createAddress(orderRow.id, address, { trx });
-      })
-      .tap((orderRow) => {
-        if (!order.billingAddress) {
-          return BPromise.resolve();
-        }
+      const address = _.merge({}, order.shippingAddress, {
+        type: ADDRESS_TYPE.SHIPPING,
+      });
+      return _createAddress(orderRow.id, address, { trx });
+    })
+    .tap((orderRow) => {
+      if (!order.billingAddress) {
+        return BPromise.resolve();
+      }
 
-        const address = _.merge({}, order.billingAddress, {
-          type: ADDRESS_TYPE.BILLING,
-        });
-        return _createAddress(orderRow.id, address, { trx });
-      })
-      .then(() => getOrder(fullOrder.prettyOrderId, { trx }))
-      .catch(_isUniqueConstraintError, err => _logUniqueConstraintErrorAndRethrow(err))
-      .catch(err => _saveErrorInBackgroundAndRethrow(err, fullOrder))
-  );
+      const address = _.merge({}, order.billingAddress, {
+        type: ADDRESS_TYPE.BILLING,
+      });
+      return _createAddress(orderRow.id, address, { trx });
+    })
+    .then(() => getOrder(fullOrder.prettyOrderId, { trx }))
+    .catch(_isUniqueConstraintError, err => _logUniqueConstraintErrorAndRethrow(err))
+    .catch(err => _saveErrorInBackgroundAndRethrow(err, fullOrder)));
 }
 
 function getOrder(orderId, opts = {}) {
@@ -430,7 +428,9 @@ async function _rowsToOrderObject(rows) {
   const uniqueCartRows = _.uniqBy(onlyCartRows, (row) => {
     if (row.ordered_poster_id !== null) {
       return `poster-${row.ordered_poster_id}`;
-    } else if (row.gift_item_id !== null) {
+    }
+
+    if (row.gift_item_id !== null) {
       return `gift-item-${row.gift_item_id}`;
     }
 
@@ -499,7 +499,7 @@ async function _rowsToOrderObject(rows) {
     return row.payment_id;
   });
 
-  const payments = _.map(paymentsRows, (row) => ({
+  const payments = _.map(paymentsRows, row => ({
     id: Number(row.payment_id),
     type: row.payment_type,
     amount: row.payment_amount,
