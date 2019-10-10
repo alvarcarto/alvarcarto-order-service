@@ -9,7 +9,10 @@ const basePaymentIntentSuccessEvent = require('../resources/base-payment-intent-
 const createRequestInstance = require('./request');
 const config = require('../../src/config');
 
-async function createAndPayOrder(clientOrder, opts = {}) {
+async function createAndPayOrder(clientOrder, _opts) {
+  const opts = _.merge({
+    skipPayment: false,
+  }, _opts);
   const request = opts.request || createRequestInstance;
 
   let postRes;
