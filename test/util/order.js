@@ -46,9 +46,9 @@ async function createAndPayOrder(clientOrder, _opts) {
     _.set(modifiedPostResBody, 'promotion.hasExpired', _.get(getRes.body, 'promotion.hasExpired'));
   }
 
-  console.log(JSON.stringify(modifiedPostResBody, null, 2))
+  console.log('modifiedPostResBody', JSON.stringify(modifiedPostResBody, null, 2))
   console.log('\n\n')
-  console.log(JSON.stringify(getRes.body, null, 2))
+  console.log('getRes.body', JSON.stringify(getRes.body, null, 2))
   expect(modifiedPostResBody).to.deep.equal(getRes.body);
   const fetchedOrder = getRes.body;
   return fetchedOrder;

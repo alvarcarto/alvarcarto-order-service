@@ -575,6 +575,8 @@ async function _rowsToOrderObject(rows) {
     order.promotion = await promotionCore.getPromotion(order.promotionCode);
   }
 
+  console.log('ORDER', JSON.stringify(order, null, 2))
+
   const originalPrice = calculateCartPrice(order.cart, { currency: order.currency });
   const paidSum = _.sumBy(order.payments, (payment) => {
     if (payment.type !== PAYMENT_TYPE.CHARGE) {
@@ -585,6 +587,8 @@ async function _rowsToOrderObject(rows) {
   });
 
   order.paid = originalPrice.value - paidSum <= 0;
+
+  console.log('\npriginalPrice', originalPrice, 'paidSum', paidSum, 'paid', order.paid)
 
   if (originalPrice.value - paidSum < 0) {
     logger.warn(`alert-critical More payments than needed were found, order id: ${order.orderId}`);
