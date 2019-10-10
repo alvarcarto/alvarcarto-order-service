@@ -605,6 +605,7 @@ function _createOrder(order, opts = {}) {
     pretty_order_id: order.prettyOrderId,
     customer_email: order.email,
     customer_price_value: originalPrice.value,
+    ip_address: order.ipAddress,
     price_currency: _.get(order, 'currency', 'EUR'),
     different_billing_address: _.get(order, 'differentBillingAddress', false),
     email_subscription: _.get(order, 'emailSubscription', false),

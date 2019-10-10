@@ -100,6 +100,9 @@ exports.up = (knex) => {
       table.integer('customer_price_value');
       table.string('price_currency', 16);
 
+      // Since we allow anonymous order creations now, save IP for detecting spam later
+      table.string('ip_address', 64);
+
       // When a promotion code is used
       table.bigInteger('promotion_id').index();
       table.foreign('promotion_id')
@@ -210,6 +213,7 @@ exports.down = (knex) => {
     `))
     .then(() => knex.schema.table('orders', (table) => {
       table.dropColumn('promotion_id');
+      table.dropColumn('ip_address');
     }))
     // Move all stripe charges
     .then(() => knex.raw(`

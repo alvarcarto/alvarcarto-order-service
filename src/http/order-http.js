@@ -8,7 +8,8 @@ const postOrder = ex.createJsonRoute((req) => {
     return ex.throwStatus(400, 'Shipping address is required if cart has shippable products');
   }
 
-  return checkoutCore.executeCheckout(req.body);
+  const clientOrder = _.merge({}, req.body, { ipAddress: req.ip });
+  return checkoutCore.executeCheckout(clientOrder);
 });
 
 const getOrder = ex.createJsonRoute((req) => {
