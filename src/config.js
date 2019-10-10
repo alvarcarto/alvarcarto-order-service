@@ -35,6 +35,7 @@ const config = {
   ALLOW_HTTP: getOptionalEnv('ALLOW_HTTP', boolean, false),
   DELIVERY_IS_LATE_BUSINESS_DAYS: getOptionalEnv('DELIVERY_IS_LATE_BUSINESS_DAYS', number, 4),
   ALLOW_UNVERIFIED_WEBHOOKS: getOptionalEnv('ALLOW_UNVERIFIED_WEBHOOKS', boolean, false),
+  VERBOSE_SEEDS: getOptionalEnv('VERBOSE_SEEDS', boolean, false),
   STRIPE_ALLOW_TEST_WEBHOOK_EVENTS: getOptionalEnv('STRIPE_ALLOW_TEST_WEBHOOK_EVENTS', boolean, false),
   IP_LOGGER: getOptionalEnv('IP_LOGGER', boolean, false),
   AWS_DEBUG: getOptionalEnv('AWS_DEBUG', boolean, false),

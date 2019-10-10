@@ -4,14 +4,14 @@ const _ = require('lodash');
 // This reponder is assuming that all <500 errors are safe to be responded
 // with their .message attribute.
 // DO NOT write sensitive data into error messages.
-function createErrorResponder(opts) {
-  opts = _.merge({
+function createErrorResponder(_opts) {
+  const opts = _.merge({
     isErrorSafeToRespond(status) {
       return status < 500;
     },
-  }, opts);
+  }, _opts);
 
-  return function errorResponder(err, req, res, next) {
+  return function errorResponder(err, req, res) {
     let message;
     let status = err.status ? err.status : 500;
     switch (err.type) {

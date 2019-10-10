@@ -92,7 +92,7 @@ function test() {
       await requestInstance.get(`/api/orders/${order.orderId}`).expect(429);
     });
 
-    it('creating orders too fast and too many times should fail', async function() {
+    it('creating orders too fast and too many times should fail', async function () {
       this.timeout(10000);
 
       const requestInstance = request();

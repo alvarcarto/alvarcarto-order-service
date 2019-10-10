@@ -155,7 +155,9 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
       lastName: nameParts.last,
       phone: internalOrder.shippingAddress.contactPhone || '',
     },
-    products: _.map(mapCart, (item, i) => _internalCartItemToPrintmotorProduct(item, imageUrls[i], internalOrder.currency)),
+    products: _.map(mapCart, (item, i) => {
+      return _internalCartItemToPrintmotorProduct(item, imageUrls[i], internalOrder.currency);
+    }),
     postalClass: _getPostalClass(internalOrder),
     productionClass: _getProductionClass(internalOrder),
   };
@@ -210,6 +212,7 @@ function _getLandscapeLayoutName(size) {
       return 'api-poster-24inchx18inch';
     case '24x36inch':
       return 'api-poster-36inchx24inch';
+    default:
   }
 
   throw new Error(`Unknown size: ${size}`);
@@ -229,6 +232,7 @@ function _getPortraitLayoutName(size) {
       return 'api-poster-18inchx24inch';
     case '24x36inch':
       return 'api-poster-24inchx36inch';
+    default:
   }
 
   throw new Error(`Unknown size: ${size}`);

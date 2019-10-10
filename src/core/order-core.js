@@ -18,10 +18,50 @@ const config = require('../config');
 const { retryingSaveFailedOrder } = require('./fail-safe-core');
 const { diffInWorkingDays } = require('../util/time');
 
+// Creates a guaranteed unique ID by checking that it's not written to orders
+// table yet. Retries to create a new order ID if the previously generated was
+// reserved.
+//
+// NOTE: Race-condition "vulnerable".
+//       This method guarantees that the returned ID *was* unique some
+//       milliseconds ago. It is still possible with very bad luck that
+//       a concurrent request created the same ID also thinking that the
+//       ID is unique.
+//       This is a calculated risk.
+const createUniqueOrderId = promiseRetryify((opts = {}) => {
+  const trx = opts.trx || knex;
+
+  const newOrderId = createRandomOrderId();
+  return trx('orders')
+    .select('*')
+    .where({
+      pretty_order_id: newOrderId,
+    })
+    .limit(1)
+    .then((orders) => {
+      if (!_.isEmpty(orders)) {
+        logger.warn(`alert-critical Order ID already exists: ${newOrderId}`);
+        throw new Error(`Order id already exists: ${newOrderId}`);
+      }
+
+      return newOrderId;
+    })
+    .catch((err) => {
+      logger.warn(`Unique order id creation failed (#${newOrderId}). Error: ${err}`);
+      throw err;
+    });
+}, {
+  maxRetries: 20,
+  // 10ms, 20ms, 40ms, 80ms, 160ms, 320ms, 640ms, 1000ms, 1000ms, 1000ms ...
+  retryTimeout: retryCount => Math.min(Math.pow(2, retryCount) * 10, 1000),
+  beforeRetry: retryCount => logger.warn(`Retrying to create unique id (${retryCount}) ..`),
+  onAllFailed: () => logger.error('alert-critical Critical order collision! All tries to create order id failed.'),
+});
+
 function createOrder(order) {
   let fullOrder = _.merge({}, order, { prettyOrderId: 'NONE' });
 
-  return knex.transaction(trx => _createUniqueOrderId({ trx })
+  return knex.transaction(trx => createUniqueOrderId({ trx })
     .then((prettyOrderId) => {
       // Share to upper function scope to be able to log this
       fullOrder = _.merge({}, order, {
@@ -352,7 +392,10 @@ async function createPayment(orderId, payment, opts = {}) {
     throw new Error(`Unknown payment provider: ${util.inspect(payment.paymentProvider)}`);
   }
 
-  if (payment.paymentProviderMethod && !_.has(PAYMENT_PROVIDER_METHOD, payment.paymentProviderMethod)) {
+  if (
+    payment.paymentProviderMethod
+    && !_.has(PAYMENT_PROVIDER_METHOD, payment.paymentProviderMethod)
+  ) {
     throw new Error(`Unknown payment provider method: ${util.inspect(payment.paymentProviderMethod)}`);
   }
 
@@ -701,46 +744,6 @@ function _createOrderedGiftItems(orderId, cart, opts = {}) {
       .then(rows => rows[0]);
   });
 }
-
-// Creates a guaranteed unique ID by checking that it's not written to orders
-// table yet. Retries to create a new order ID if the previously generated was
-// reserved.
-//
-// NOTE: Race-condition "vulnerable".
-//       This method guarantees that the returned ID *was* unique some
-//       milliseconds ago. It is still possible with very bad luck that
-//       a concurrent request created the same ID also thinking that the
-//       ID is unique.
-//       This is a calculated risk.
-const _createUniqueOrderId = promiseRetryify((opts = {}) => {
-  const trx = opts.trx || knex;
-
-  const newOrderId = createRandomOrderId();
-  return trx('orders')
-    .select('*')
-    .where({
-      pretty_order_id: newOrderId,
-    })
-    .limit(1)
-    .then((orders) => {
-      if (!_.isEmpty(orders)) {
-        logger.warn(`alert-critical Order ID already exists: ${newOrderId}`);
-        throw new Error(`Order id already exists: ${newOrderId}`);
-      }
-
-      return newOrderId;
-    })
-    .catch((err) => {
-      logger.warn(`Unique order id creation failed (#${newOrderId}). Error: ${err}`);
-      throw err;
-    });
-}, {
-  maxRetries: 20,
-  // 10ms, 20ms, 40ms, 80ms, 160ms, 320ms, 640ms, 1000ms, 1000ms, 1000ms ...
-  retryTimeout: retryCount => Math.min(Math.pow(2, retryCount) * 10, 1000),
-  beforeRetry: retryCount => logger.warn(`Retrying to create unique id (${retryCount}) ..`),
-  onAllFailed: () => logger.error('alert-critical Critical order collision! All tries to create order id failed.'),
-});
 
 module.exports = {
   createOrder,

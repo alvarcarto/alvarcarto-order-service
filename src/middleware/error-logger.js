@@ -1,15 +1,15 @@
 const _ = require('lodash');
 const logger = require('../util/logger')(__filename);
 
-function createErrorLogger(opts) {
-  opts = _.merge({
+function createErrorLogger(_opts) {
+  const opts = _.merge({
     logRequest: (status) => {
       return status >= 400 && status !== 404 && status !== 503;
     },
     logStackTrace: (status) => {
       return status >= 500 && status !== 503;
     },
-  }, opts);
+  }, _opts);
 
   return function errorHandler(err, req, res, next) {
     const status = err.status ? err.status : 500;
@@ -34,7 +34,7 @@ function getLogLevel(status) {
   return status >= 500 ? 'error' : 'warn';
 }
 
-function logRequestDetails(logLevel, req, status) {
+function logRequestDetails(logLevel, req) {
   logger[logLevel]('Request headers:', deepSupressLongStrings(req.headers));
   logger[logLevel]('Request parameters:', deepSupressLongStrings(req.params));
   logger.logEncrypted(logLevel, 'Request body:', req.body);
@@ -46,7 +46,7 @@ function deepSupressLongStrings(obj) {
     if (_.isString(val) && val.length > 100) {
       newObj[key] = `${val.slice(0, 100)}... [CONTENT SLICED]`;
     } else if (_.isPlainObject(val)) {
-      return deepSupressLongStrings(val);
+      deepSupressLongStrings(val);
     } else {
       newObj[key] = val;
     }

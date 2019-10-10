@@ -1,8 +1,7 @@
-/* eslint-disable no-process-env */
+/* eslint-disable no-process-env, no-console */
 
 const path = require('path');
 const { inspect } = require('util');
-const { URL } = require('url');
 const fs = require('fs');
 const _ = require('lodash');
 const dotenv = require('dotenv');

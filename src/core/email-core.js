@@ -2,16 +2,16 @@ const BPromise = require('bluebird');
 const postmark = require('postmark');
 const Mustache = require('mustache');
 const _ = require('lodash');
-const { oneLine } = require('common-tags');
-const moment = require('../util/moment').momentTimezone;
 const countries = require('i18n-iso-countries');
+const { oneLine } = require('common-tags');
+const {
+  calculateItemPrice, calculateCartPrice, getCurrencySymbol, getItemLabel,
+} = require('alvarcarto-price-util');
+const moment = require('../util/moment').momentTimezone;
 const logger = require('../util/logger')(__filename);
 const { readFileSync } = require('../util');
 const PAYMENT_PROVIDER = require('../enums/payment-provider');
 const PAYMENT_PROVIDER_METHOD = require('../enums/payment-provider-method');
-const {
-  calculateItemPrice, calculateCartPrice, getCurrencySymbol, getItemLabel,
-} = require('alvarcarto-price-util');
 const config = require('../config');
 const { getDeliveryEstimate } = require('./printmotor-core');
 const orderCore = require('./order-core');

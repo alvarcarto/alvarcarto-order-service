@@ -1,4 +1,6 @@
-const VERBOSE = process.env.VERBOSE_SEEDS === 'true';
+/* eslint-disable no-console */
+
+const config = require('../config');
 
 // Inserts or updates a row to table
 function insertOrUpdate(knex, table, row, column = 'id') {
@@ -14,9 +16,9 @@ function insertOrUpdate(knex, table, row, column = 'id') {
     });
 }
 
-function maybeLog() {
-  if (VERBOSE) {
-    console.log.apply(this, arguments);
+function maybeLog(...args) {
+  if (config.VERBOSE_SEEDS) {
+    console.log(...args);
   }
 }
 

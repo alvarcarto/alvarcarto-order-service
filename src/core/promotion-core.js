@@ -111,8 +111,8 @@ function _rowToPromotionObject(row, opts = {}) {
 }
 
 function _hasPromotionExpired(obj) {
-  const usedMaxTimes = _.isFinite(obj.maxAllowedUsageCount) &&
-                       obj.usageCount >= obj.maxAllowedUsageCount;
+  const usedMaxTimes = _.isFinite(obj.maxAllowedUsageCount)
+                       && obj.usageCount >= obj.maxAllowedUsageCount;
 
   // expiry           now
   // ----------------------------> time

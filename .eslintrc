@@ -16,6 +16,8 @@
     "no-underscore-dangle": "off",
     "arrow-body-style": "off",
     "no-plusplus": "off",
+    "no-await-in-loop": "off",
+    "func-names": "off",
     // Allowing Math.pow rather than forcing `**`
     // https://eslint.org/docs/rules/no-restricted-properties
     "no-restricted-properties": ["off", {

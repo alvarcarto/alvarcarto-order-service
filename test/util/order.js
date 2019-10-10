@@ -84,9 +84,13 @@ async function sendStripePaymentIntentSuccess(fullClientOrder, _opts) {
     promotion = promotionRes.body;
   }
 
+  const price = calculateCartPrice(fullClientOrder.cart, {
+    promotion,
+    ignorePromotionExpiry: true,
+  });
   const opts = _.merge({
     currency: fullClientOrder.currency || 'eur',
-    amount: calculateCartPrice(fullClientOrder.cart, { promotion, ignorePromotionExpiry: true }).value,
+    amount: price.value,
     skipPayment: false,
   }, _opts);
 

@@ -3,7 +3,6 @@
 const _ = require('lodash');
 const sinon = require('sinon');
 const nock = require('nock');
-const request = require('./util/request');
 const bucketCore = require('../src/core/bucket-core');
 const sendToProductionWorker = require('../src/worker/send-posters-to-production');
 const fixturePromotions = require('./fixtures/promotions');
@@ -33,7 +32,7 @@ const data = {
 };
 
 function test() {
-  describe('Printmotor integration', function() {
+  describe('Printmotor integration', function () {
     this.timeout(120000);
     this.slow(30000);
 

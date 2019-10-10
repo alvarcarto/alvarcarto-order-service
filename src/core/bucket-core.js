@@ -2,10 +2,10 @@ const BPromise = require('bluebird');
 const _ = require('lodash');
 const request = require('request-promise');
 const prettyBytes = require('pretty-bytes');
+const { oneLine } = require('common-tags');
 const { s3 } = require('../util/aws');
 const logger = require('../util/logger')(__filename);
 const { createPosterImageUrl } = require('../util');
-const { oneLine } = require('common-tags');
 const config = require('../config');
 
 // Download image from Alvar Carto render API, and then upload it to S3
