@@ -33,6 +33,7 @@ const config = {
   LOG_LEVEL: getOptionalEnv('LOG_LEVEL', string, 'info'),
   CORS_ORIGIN: getOptionalEnv('CORS_ORIGIN', string, 'http://localhost:3000'),
   ALLOW_HTTP: getOptionalEnv('ALLOW_HTTP', boolean, false),
+  STRIPE_API_VERSION: getOptionalEnv('STRIPE_API_VERSION', string, '2019-10-08'),
   DELIVERY_IS_LATE_BUSINESS_DAYS: getOptionalEnv('DELIVERY_IS_LATE_BUSINESS_DAYS', number, 4),
   ALLOW_UNVERIFIED_WEBHOOKS: getOptionalEnv('ALLOW_UNVERIFIED_WEBHOOKS', boolean, false),
   VERBOSE_SEEDS: getOptionalEnv('VERBOSE_SEEDS', boolean, false),

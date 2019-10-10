@@ -15,7 +15,10 @@ async function getWebhookIpAddresses() {
   return cache.allowedWebhookIpAddresses;
 }
 
+const stripeInstance = Stripe(config.STRIPE_SECRET_KEY);
+stripeInstance.setApiVersion(config.STRIPE_API_VERSION);
+
 module.exports = {
-  stripeInstance: Stripe(config.STRIPE_SECRET_KEY),
+  stripeInstance,
   getWebhookIpAddresses,
 };

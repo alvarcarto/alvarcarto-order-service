@@ -89,7 +89,7 @@ async function processStripeEvent(event) {
   if (!event.livemode && config.STRIPE_ALLOW_TEST_WEBHOOK_EVENTS) {
     logger.warn('Warning: test event received, STRIPE_ALLOW_TEST_WEBHOOK_EVENTS=true so processing ..');
   } else if (!event.livemode && !config.STRIPE_ALLOW_TEST_WEBHOOK_EVENTS) {
-    logger.warn('Test event received, will not do anything.');
+    logger.warn('Warning: Test event received, will not do anything.');
     return;
   }
 
