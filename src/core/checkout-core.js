@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const BPromise = require('bluebird');
 const { oneLine } = require('common-tags');
 const { calculateCartPrice } = require('alvarcarto-price-util');
 const logger = require('../util/logger')(__filename);
@@ -18,8 +17,7 @@ const ALERT_LIMIT_MIN = 25 * 100;
 const ALERT_LIMIT_MAX = 500 * 100;
 
 async function executeCheckout(inputOrder) {
-  const promotion = await _getPromotion(inputOrder.promotionCode);
-
+  const promotion = await promotionCore.getPromotion(inputOrder.promotionCode);
   if (_.get(promotion, 'hasExpired')) {
     throwStatus(400, `Promotion code ${promotion.promotionCode} has expired`);
   }
@@ -60,9 +58,7 @@ async function executeCheckout(inputOrder) {
     const fullOrder = await orderCore.getOrder(createdOrder.orderId, { allFields: true });
     await emailCore.sendReceipt(fullOrder);
 
-    return {
-      order: createdOrder,
-    };
+    return createdOrder;
   }
 
   // Use a complete order object which contains the orderId and all address details
@@ -70,10 +66,9 @@ async function executeCheckout(inputOrder) {
   const stripePaymentIntent = _createStripePaymentIntentObject(mergedOrder, price);
   const stripePaymentIntentRes = await stripeInstance.paymentIntents.create(stripePaymentIntent);
 
-  return {
-    order: createdOrder,
+  return _.merge({}, createdOrder, {
     stripePaymentIntent: _.pick(stripePaymentIntentRes, ['client_secret']),
-  };
+  });
 }
 
 function _createStripePaymentIntentObject(fullOrder, price) {
@@ -81,13 +76,13 @@ function _createStripePaymentIntentObject(fullOrder, price) {
     payment_method_types: ['card'],
     amount: price.value,
     currency: price.currency.toLowerCase(),
-    metadata: _createStripeMetaData(fullOrder),
+    metadata: createStripeMetadata(fullOrder),
     description: `Charge for ${fullOrder.email}`,
     statement_descriptor: config.CREDIT_CARD_STATEMENT_NAME,
   };
 }
 
-function _createStripeMetaData(fullOrder) {
+function createStripeMetadata(fullOrder) {
   const { shippingAddress } = fullOrder;
   const meta = {
     prettyOrderId: fullOrder.orderId,
@@ -125,14 +120,6 @@ function _createCartMetas(cart) {
   };
 }
 
-function _getPromotion(code) {
-  if (!code) {
-    return BPromise.resolve(null);
-  }
-
-  return promotionCore.getPromotion(code);
-}
-
 function mapBoundsToStr(bounds) {
   if (!bounds) {
     return '';
@@ -168,4 +155,5 @@ function ensureLength(text, length) {
 
 module.exports = {
   executeCheckout,
+  createStripeMetadata,
 };

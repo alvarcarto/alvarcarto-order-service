@@ -36,11 +36,20 @@ function createJsonRouter() {
   const router = express.Router();
   router.get('/api/health', health.getHealth);
 
+
+  // Uses req.ip as the default identifier
+  const createOrderApiLimiter = new RateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 30,
+    delayMs: 0,
+  });
+
   const postOrderSchema = {
     body: orderSchema,
   };
   router.post(
     '/api/orders',
+    createOrderApiLimiter,
     validate(postOrderSchema),
     order.postOrder,
   );

@@ -12,6 +12,7 @@ const data = {
   badOrder4: require('./resources/bad-order4-request.json'),
   badOrder5: require('./resources/bad-order5-request.json'),
   badOrder6: require('./resources/bad-order6-request.json'),
+  badOrder7: require('./resources/bad-order7-request.json'),
 };
 
 // Joi nowadays reports error path as ['cart', 0, 'quantity'] instead of
@@ -119,6 +120,16 @@ function test() {
         .expect(400);
 
       assertIsErrorResponse(res);
+    });
+
+    it('order without unaccepted currency should fail', async () => {
+      const res = await request()
+        .post('/api/orders')
+        .send(data.badOrder7)
+        .expect(400);
+
+      assertIsErrorResponse(res);
+      assertErrorIsForField(res, 'currency');
     });
   });
 }

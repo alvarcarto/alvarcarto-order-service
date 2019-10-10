@@ -43,5 +43,6 @@
   "shippingAddress": {
     "city": "Helsinki",
     "countryCode": "FI"
-  }
+  },
+  "paid": true
 }

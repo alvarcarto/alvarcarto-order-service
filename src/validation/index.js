@@ -1,19 +1,5 @@
 const Joi = require('joi');
 
-const stripeCreateTokenResponseSchema = Joi.object({
-  id: Joi.string().required(),
-  card: Joi.object({
-    id: Joi.string().required(),
-    name: Joi.string().required(),
-    exp_month: Joi.number().required(),
-    exp_year: Joi.number().required(),
-    last4: Joi.string().required(),
-    brand: Joi.string().required(),
-  }).required(),
-  livemode: Joi.boolean().required(),
-  client_ip: Joi.string().required(),
-}).unknown();
-
 const addressSchema = Joi.object({
   personName: Joi.string().min(1).max(300).required(),
   streetAddress: Joi.string().min(1).max(300).required(),
@@ -135,9 +121,6 @@ const orderSchema = Joi.object({
   emailSubscription: Joi.boolean().optional(),
   shippingAddress: addressSchema.optional(),
   billingAddress: addressSchema.optional(),
-  // If this is not defined, order must have a promotion code which fully
-  // covers the total price
-  stripeTokenResponse: stripeCreateTokenResponseSchema.optional(),
   cart: cartSchema.required(),
   promotionCode: promotionCodeSchema.optional(),
 }).unknown();
@@ -146,7 +129,6 @@ module.exports = {
   addressSchema,
   cartItemSchema,
   cartSchema,
-  stripeCreateTokenResponseSchema,
   printmotorWebhookPayloadSchema,
   orderIdSchema,
   promotionSchema,

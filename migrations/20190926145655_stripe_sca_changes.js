@@ -160,10 +160,39 @@ exports.up = (knex) => {
         throw new Error(`Found ${rows.length} orders where payments don't match the order value!`);
       }
     })
+    .then(() => knex.raw(`
+      SELECT
+        usage_count as claimed_usage_count,
+        (SELECT COUNT(*) FROM payments WHERE payments.promotion_id = promotions.id) as real_usage_count,
+        *
+      FROM promotions
+      WHERE usage_count != (SELECT COUNT(*) FROM payments WHERE payments.promotion_id = promotions.id)
+    `))
+    .then(({ rows }) => {
+      if (rows.length > 0) {
+        console.error(rows);
+        throw new Error(`Found ${rows.length} promotion codes where usage_count doesn't match the actual usage!`);
+      }
+    })
+    .then(() => knex.schema.table('promotions', (table) => {
+      table.dropColumn('usage_count');
+    }));
 };
 
 exports.down = (knex) => {
   return Promise.resolve()
+    .then(() => knex.schema.table('promotions', (table) => {
+      table.integer('usage_count').defaultTo(0);
+    }))
+    // Update back all usage_counts
+    .then(() => knex.raw(`
+      UPDATE promotions
+      SET
+        usage_count = (SELECT COUNT(*) FROM payments WHERE payments.promotion_id = promotions.id)
+      FROM payments
+      WHERE promotions.id = payments.promotion_id
+    `))
+    .then(() => knex.raw('ALTER TABLE promotions ALTER COLUMN usage_count SET NOT NULL'))
     .then(() => knex.schema.table('orders', (table) => {
       table.string('stripe_token_id', 64).unique().index();
       table.jsonb('stripe_token_response');
@@ -193,9 +222,37 @@ exports.down = (knex) => {
       WHERE orders.id = payments.order_id
       AND payments.stripe_token_id IS NOT NULL
     `))
+    // Delete all "new" type orders: paid with payment intent or not paid yet
+    .then(() => knex.raw(`
+      DELETE FROM ordered_posters
+      WHERE order_id IN (SELECT id FROM orders WHERE promotion_code IS NULL AND stripe_token_id IS NULL)
+    `))
+    .then(() => knex.raw(`
+      DELETE FROM addresses
+      WHERE order_id IN (SELECT id FROM orders WHERE promotion_code IS NULL AND stripe_token_id IS NULL)
+    `))
+    .then(() => knex.raw(`
+      DELETE FROM order_events
+      WHERE order_id IN (SELECT id FROM orders WHERE promotion_code IS NULL AND stripe_token_id IS NULL)
+    `))
+    .then(() => knex.raw(`
+      DELETE FROM payments
+      WHERE order_id IN (SELECT id FROM orders WHERE promotion_code IS NULL AND stripe_token_id IS NULL)
+    `))
+    .then(() => knex.raw(`
+      DELETE FROM ordered_gift_items
+      WHERE order_id IN (SELECT id FROM orders WHERE promotion_code IS NULL AND stripe_token_id IS NULL)
+    `))
+    .then(() => knex.raw(`
+      DELETE FROM sent_emails
+      WHERE order_id IN (SELECT id FROM orders WHERE promotion_code IS NULL AND stripe_token_id IS NULL)
+    `))
+    .then(() => knex.raw(`
+      DELETE FROM orders WHERE promotion_code IS NULL AND stripe_token_id IS NULL
+    `))
     .then(() => knex.schema.dropTable('payments'))
     .then(() => knex.schema.table('order_events', (table) => {
       table.dropColumn('source');
     }))
-    .then(() => knex.schema.renameTable('order_events', 'webhook_events'));
+    .then(() => knex.schema.renameTable('order_events', 'webhook_events'))
 };

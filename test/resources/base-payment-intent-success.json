@@ -1,0 +1,162 @@
+{
+  "__THIS_OBJECT_IS_FAKED_FOR_TESTING_PURPOSES": true,
+  "id": "evt_1FRchpCFQq9RQBv8GcyAJZpO",
+  "data": {
+    "object": {
+      "id": "pi_1FRchnCFQq9RQBv8kY2w1XHF",
+      "amount": 13700,
+      "object": "payment_intent",
+      "review": null,
+      "source": null,
+      "status": "succeeded",
+      "charges": {
+        "url": "/v1/charges?payment_intent=pi_1FRchnCFQq9RQBv8kY2w1XHF",
+        "data": [
+          {
+            "id": "ch_1FRchoCFQq9RQBv8RAkGHm0R",
+            "paid": true,
+            "order": null,
+            "amount": 13700,
+            "object": "charge",
+            "review": null,
+            "source": null,
+            "status": "succeeded",
+            "created": 1570618064,
+            "dispute": null,
+            "invoice": null,
+            "outcome": {
+              "type": "authorized",
+              "reason": null,
+              "risk_level": "normal",
+              "risk_score": 28,
+              "network_status": "approved_by_network",
+              "seller_message": "Payment complete."
+            },
+            "refunds": {
+              "url": "/v1/charges/ch_1FRchoCFQq9RQBv8RAkGHm0R/refunds",
+              "data": [],
+              "object": "list",
+              "has_more": false,
+              "total_count": 0
+            },
+            "captured": true,
+            "currency": "eur",
+            "customer": null,
+            "livemode": false,
+            "metadata": {
+
+            },
+            "refunded": false,
+            "shipping": null,
+            "application": null,
+            "description": "Charge for brad.pitt@alvarcarto.com",
+            "destination": null,
+            "receipt_url": "https://pay.stripe.com/receipts/acct_19McQLCFQq9RQBv8/ch_1FRchoCFQq9RQBv8RAkGHm0R/rcpt_FxXnDJ6R5rSk2o1KXOQZpM7ELGP8mOz",
+            "failure_code": null,
+            "on_behalf_of": null,
+            "fraud_details": {},
+            "receipt_email": null,
+            "transfer_data": null,
+            "payment_intent": "pi_1FRchnCFQq9RQBv8kY2w1XHF",
+            "payment_method": "pm_1FRchoCFQq9RQBv8sd96nbok",
+            "receipt_number": null,
+            "transfer_group": null,
+            "amount_refunded": 0,
+            "application_fee": null,
+            "billing_details": {
+              "name": "Brad Pitt",
+              "email": null,
+              "phone": null,
+              "address": {
+                "city": "Helsinki",
+                "line1": "Mannerheimintie 18",
+                "line2": "A 129",
+                "state": null,
+                "country": "FI",
+                "postal_code": "00100"
+              }
+            },
+            "failure_message": null,
+            "source_transfer": null,
+            "balance_transaction": "txn_1FRchpCFQq9RQBv89bP2XVUD",
+            "statement_descriptor": "alvarcarto.com",
+            "application_fee_amount": null,
+            "payment_method_details": {
+              "card": {
+                "brand": "visa",
+                "last4": "4242",
+                "checks": {
+                  "cvc_check": "pass",
+                  "address_line1_check": "pass",
+                  "address_postal_code_check": "pass"
+                },
+                "wallet": null,
+                "country": "US",
+                "funding": "credit",
+                "exp_year": 2020,
+                "exp_month": 12,
+                "fingerprint": "d8VX6OH4F2gwHCRJ",
+                "installments": null,
+                "three_d_secure": null
+              },
+              "type": "card"
+            },
+            "statement_descriptor_suffix": null
+          }
+        ],
+        "object": "list",
+        "has_more": false,
+        "total_count": 1
+      },
+      "created": 1570618063,
+      "invoice": null,
+      "currency": "eur",
+      "customer": null,
+      "livemode": false,
+      "metadata": {
+
+      },
+      "shipping": null,
+      "application": null,
+      "canceled_at": null,
+      "description": "Charge for brad.pitt@alvarcarto.com",
+      "next_action": null,
+      "on_behalf_of": null,
+      "client_secret": "pi_1FRchnCFQq9RQBv8kY2w1XHF_secret_khpNYERfG0ukjTfjtqDs7o4o3",
+      "receipt_email": null,
+      "transfer_data": null,
+      "capture_method": "automatic",
+      "payment_method": "pm_1FRchoCFQq9RQBv8sd96nbok",
+      "transfer_group": null,
+      "amount_received": 13700,
+      "amount_capturable": 0,
+      "last_payment_error": null,
+      "next_source_action": null,
+      "setup_future_usage": null,
+      "cancellation_reason": null,
+      "confirmation_method": "automatic",
+      "allowed_source_types": [
+        "card"
+      ],
+      "payment_method_types": [
+        "card"
+      ],
+      "statement_descriptor": "alvarcarto.com",
+      "application_fee_amount": null,
+      "payment_method_options": {
+        "card": {
+          "installments": null,
+          "request_three_d_secure": "automatic"
+        }
+      },
+      "statement_descriptor_suffix": null
+    }
+  },
+  "type": "payment_intent.succeeded",
+  "object": "event",
+  "created": 1570618065,
+  "request": "req_ANAs2vd1bQshx8",
+  "livemode": false,
+  "api_version": "2017-01-27",
+  "pending_webhooks": 0
+}

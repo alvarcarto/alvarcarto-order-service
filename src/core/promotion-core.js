@@ -14,7 +14,7 @@ function getPromotions() {
       promotions.label as label,
       promotions.expires_at as expires_at,
       promotions.description as description,
-      promotions.usage_count as usage_count,
+      (SELECT COUNT(*) FROM payments WHERE payments.promotion_id = promotions.id) as usage_count,
       promotions.max_allowed_usage_count as max_allowed_usage_count,
       promotions.created_at as created_at,
       promotions.updated_at as updated_at
@@ -40,7 +40,7 @@ function getPromotion(code) {
       promotions.promotion_code as promotion_code,
       promotions.label as label,
       promotions.expires_at as expires_at,
-      promotions.usage_count as usage_count,
+      (SELECT COUNT(*) FROM payments WHERE payments.promotion_id = promotions.id) as usage_count,
       promotions.description as description,
       promotions.max_allowed_usage_count as max_allowed_usage_count,
       promotions.created_at as created_at,
@@ -66,7 +66,6 @@ function createPromotion(promotion) {
     promotion_code: promotion.promotionCode,
     label: promotion.label,
     expires_at: promotion.expiresAt,
-    usage_count: promotion.usageCount,
     max_allowed_usage_count: promotion.maxAllowedUsageCount,
     description: promotion.description,
   })
@@ -74,20 +73,6 @@ function createPromotion(promotion) {
     .then((rows) => {
       return _rowToPromotionObject(rows[0]);
     });
-}
-
-// XXX: This is not the best DB design. The used promotion
-//      code is also saved with to the order table without
-//      a link to promotions. We could just always count the
-//      used prmotion code amount from order table instead
-//      of keeping a separate counter state.
-function increasePromotionUsageCount(code) {
-  return knex.raw(`
-    UPDATE promotions
-      SET usage_count = usage_count + 1
-    WHERE
-      promotion_code = :code
-  `, { code: code.toUpperCase() });
 }
 
 function _rowToPromotionObject(row, opts = {}) {
@@ -99,7 +84,7 @@ function _rowToPromotionObject(row, opts = {}) {
     promotionCode: row.promotion_code,
     label: row.label,
     description: row.description,
-    usageCount: row.usage_count,
+    usageCount: Number(row.usage_count),
     maxAllowedUsageCount: row.max_allowed_usage_count,
     updatedAt: moment(row.updated_at),
     createdAt: moment(row.created_at),
@@ -141,5 +126,4 @@ module.exports = {
   getPromotion,
   createPromotion,
   getPromotions,
-  increasePromotionUsageCount,
 };

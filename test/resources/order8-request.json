@@ -200,38 +200,5 @@
     "postalCode": "00100",
     "streetAddress": "Mannerheimintie 18",
     "streetAddressExtra": "A 129"
-  },
-  "stripeTokenResponse": {
-    "__THIS_OBJECT_IS_FAKED_FOR_TESTING_PURPOSES": true,
-    "card": {
-      "address_city": "Helsinki",
-      "address_country": "FI",
-      "address_line1": "Mannerheimintie 27",
-      "address_line1_check": "unchecked",
-      "address_line2": "B 9",
-      "address_state": null,
-      "address_zip": "00250",
-      "address_zip_check": "unchecked",
-      "brand": "Visa",
-      "country": "US",
-      "cvc_check": "unchecked",
-      "dynamic_last4": null,
-      "exp_month": 12,
-      "exp_year": 2020,
-      "funding": "credit",
-      "id": "card_1BXXdwCFQq9RQBv87ZJ7tLi1",
-      "last4": "4242",
-      "metadata": {},
-      "name": "Brad Pitt",
-      "object": "card",
-      "tokenization_method": null
-    },
-    "client_ip": "85.76.68.173",
-    "created": 1512923228,
-    "id": "tok_1BXXdwCFQq9RQBv818aCayQ8",
-    "livemode": false,
-    "object": "token",
-    "type": "card",
-    "used": false
   }
 }

@@ -1,12 +1,11 @@
-module.exports = knex =>
-  knex('promotions').insert([{
+module.exports = async (knex) => {
+  await knex('promotions').insert([{
     type: 'FIXED',
     value: 500,
     promotion_code: 'FIXED5',
     label: '-5€',
     currency: 'EUR',
     expires_at: null,
-    usage_count: 0,
     max_allowed_usage_count: null,
     description: 'Test -5€',
   }, {
@@ -16,7 +15,6 @@ module.exports = knex =>
     label: '-10%',
     currency: 'EUR',
     expires_at: null,
-    usage_count: 0,
     max_allowed_usage_count: null,
     description: 'Test -10%',
   }, {
@@ -25,8 +23,7 @@ module.exports = knex =>
     promotion_code: 'EXPIREDFIXED5',
     label: '-5€',
     currency: 'EUR',
-    expires_at: knex.fn.now(),
-    usage_count: 0,
+    expires_at: knex.raw('(SELECT NOW() - INTERVAL \'1\' day)'),
     max_allowed_usage_count: null,
     description: 'Test -5€',
   }, {
@@ -35,8 +32,7 @@ module.exports = knex =>
     promotion_code: 'EXPIREDPERCENTAGE10',
     label: '-10%',
     currency: 'EUR',
-    expires_at: knex.fn.now(),
-    usage_count: 0,
+    expires_at: knex.raw('(SELECT NOW() - INTERVAL \'1\' day)'),
     max_allowed_usage_count: null,
     description: 'Test -10%',
   }, {
@@ -46,7 +42,6 @@ module.exports = knex =>
     label: '-5€',
     currency: 'EUR',
     expires_at: null,
-    usage_count: 0,
     max_allowed_usage_count: 1,
     description: 'Test -5€',
   }, {
@@ -56,7 +51,7 @@ module.exports = knex =>
     label: '15€',
     currency: 'EUR',
     expires_at: null,
-    usage_count: 0,
     max_allowed_usage_count: null,
     description: 'Express Shipping',
   }]);
+};

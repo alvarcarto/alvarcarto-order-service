@@ -4,22 +4,17 @@ const _ = require('lodash');
 const sinon = require('sinon');
 const nock = require('nock');
 const request = require('./util/request');
-const stripe = require('../src/util/stripe');
 const bucketCore = require('../src/core/bucket-core');
 const sendToProductionWorker = require('../src/worker/send-posters-to-production');
 const fixturePromotions = require('./fixtures/promotions');
 const { runFixture } = require('./util/knex');
 const { expectDeepEqual } = require('./util');
-
-const stripeUtil = stripe.stripeInstance;
+const { createAndPayOrder } = require('./util/order');
 
 const sendToProduction = sendToProductionWorker.main;
 
 /* eslint-disable global-require */
 const data = {
-  order1: {
-    stripeResponse: require('./resources/order1-stripe-charge-response.json'),
-  },
   order5: {
     request: require('./resources/order5-request.json'),
     printmotorRequest: require('./resources/order5-printmotor-request.json'),
@@ -43,32 +38,26 @@ function test() {
     this.slow(30000);
 
     before(() => {
-      sinon.stub(stripeUtil.charges, 'create').callsFake(() => data.order1.stripeResponse);
       sinon.stub(bucketCore.s3, 'uploadBluebirdAsync')
         .callsFake(() => ({ Location: 'https://fake-s3-url.com/posters/order-item0.png' }));
     });
 
     after(() => {
-      stripeUtil.charges.create.restore();
       bucketCore.s3.uploadBluebirdAsync.restore();
     });
 
     it('sending order to production should work', async () => {
       await runFixture(fixturePromotions);
 
-      const res = await request()
-        .post('/api/orders')
-        .send(data.order5.request)
-        .expect(200);
-
+      const order = await createAndPayOrder(data.order5.request);
       const expectedBody = _.merge({}, data.order5.printmotorRequest, {
         meta: {
-          reference: res.body.orderId,
+          reference: order.orderId,
         },
       });
       const printmotorResponse = _.merge({}, data.order5.printmotorResponse, {
         meta: {
-          reference: res.body.orderId,
+          reference: order.orderId,
         },
       });
       nock('https://fakeuser:fakepassword@mocked-printmotor-not-real.com')
@@ -81,19 +70,16 @@ function test() {
     it('sending express order to production should work (via promotion code)', async () => {
       await runFixture(fixturePromotions);
 
-      const res = await request()
-        .post('/api/orders')
-        .send(data.order6.request)
-        .expect(200);
+      const order = await createAndPayOrder(data.order6.request);
 
       const expectedBody = _.merge({}, data.order6.printmotorRequest, {
         meta: {
-          reference: res.body.orderId,
+          reference: order.orderId,
         },
       });
       const printmotorResponse = _.merge({}, data.order6.printmotorResponse, {
         meta: {
-          reference: res.body.orderId,
+          reference: order.orderId,
         },
       });
       nock('https://fakeuser:fakepassword@mocked-printmotor-not-real.com')
@@ -106,19 +92,16 @@ function test() {
     it('sending express order to production should work (via cart items)', async () => {
       await runFixture(fixturePromotions);
 
-      const res = await request()
-        .post('/api/orders')
-        .send(data.order7.request)
-        .expect(200);
+      const order = await createAndPayOrder(data.order7.request);
 
       const expectedBody = _.merge({}, data.order7.printmotorRequest, {
         meta: {
-          reference: res.body.orderId,
+          reference: order.orderId,
         },
       });
       const printmotorResponse = _.merge({}, data.order7.printmotorResponse, {
         meta: {
-          reference: res.body.orderId,
+          reference: order.orderId,
         },
       });
       nock('https://fakeuser:fakepassword@mocked-printmotor-not-real.com')

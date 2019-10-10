@@ -42,7 +42,7 @@ function test() {
       await runFixture(fixturePromotions);
 
       const requestInstance = request();
-      for (let i = 0; i < 20; ++i) {
+      for (let i = 0; i < 30; ++i) {
         await requestInstance.get(`/api/promotions/PROMOCODE${i}`).expect(404);
       }
 

@@ -10,5 +10,6 @@
       "type": "shippingClass",
       "value": "EXPRESS"
     }
-  ]
+  ],
+  "paid": true
 }
