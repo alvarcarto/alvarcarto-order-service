@@ -6,10 +6,12 @@ const { stripeInstance } = require('../../src/util/stripe');
 const { createStripeMetadata } = require('../../src/core/checkout-core');
 const basePaymentIntentCreated = require('../resources/base-payment-intent-created.json');
 const basePaymentIntentSuccessEvent = require('../resources/base-payment-intent-success.json');
-const request = require('./request');
+const createRequestInstance = require('./request');
 const config = require('../../src/config');
 
 async function createAndPayOrder(clientOrder, opts) {
+  const request = opts.request || createRequestInstance;
+
   let postRes;
   await withStripePaymentIntentCreateStub(clientOrder, opts, async () => {
     postRes = await request()
@@ -27,11 +29,12 @@ async function createAndPayOrder(clientOrder, opts) {
     createdAt: createdOrder.createdAt,
   });
 
-  await sendStripePaymentIntentSuccess(fullClientOrder);
+  await sendStripePaymentIntentSuccess(fullClientOrder, opts);
 
   const getRes = await request().get(`/api/orders/${postRes.body.orderId}`).expect(200);
+  const expectedPaidStatus = !opts.skipPayment;
   const modifiedPostResBody = _.omit(
-    _.merge({}, postRes.body, { paid: true }),
+    _.merge({}, postRes.body, { paid: expectedPaidStatus }),
     ['stripePaymentIntent'],
   );
   // If a promotion code expired when the order was made, it may change
@@ -45,6 +48,8 @@ async function createAndPayOrder(clientOrder, opts) {
 }
 
 async function withStripePaymentIntentCreateStub(clientOrder, _opts, func) {
+  const request = _opts.request || createRequestInstance();
+
   let promotion;
   if (clientOrder.promotionCode) {
     const promotionRes = await request()
@@ -69,6 +74,8 @@ async function withStripePaymentIntentCreateStub(clientOrder, _opts, func) {
 }
 
 async function sendStripePaymentIntentSuccess(fullClientOrder, _opts) {
+  const request = _opts.request || createRequestInstance();
+
   let promotion;
   if (fullClientOrder.promotionCode) {
     const promotionRes = await request()

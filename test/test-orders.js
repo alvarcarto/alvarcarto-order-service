@@ -92,6 +92,20 @@ function test() {
       await requestInstance.get(`/api/orders/${order.orderId}`).expect(429);
     });
 
+    it('creating orders too fast and too many times should fail', async function() {
+      this.timeout(10000);
+
+      const requestInstance = request();
+
+      for (let i = 0; i < 30; ++i) {
+        await createAndPayOrder(data.order1.request, { request: () => requestInstance });
+      }
+
+      await withStripePaymentIntentCreateStub(data.order1.request, {}, async () => {
+        await requestInstance.post('/api/orders').send(data.order1.request).expect(429);
+      });
+    });
+
     it('gift card order should succeed', async () => {
       const order = await createAndPayOrder(data.order2.request);
       const expectedResponse = _.merge({}, data.order2.response, {
@@ -159,6 +173,20 @@ function test() {
         // Add backend generated fields
         orderId: order.orderId,
         createdAt: order.createdAt,
+      });
+
+      expect(order).to.deep.equal(expectedResponse);
+    });
+
+    it('ordering but leaving it unpaid should show as paid: false', async () => {
+      const order = await createAndPayOrder(data.order8.request, { skipPayment: true });
+      const expectedResponse = _.merge({}, data.order8.response, {
+        // Add backend generated fields
+        orderId: order.orderId,
+        createdAt: order.createdAt,
+
+        // This should be returned
+        paid: false,
       });
 
       expect(order).to.deep.equal(expectedResponse);

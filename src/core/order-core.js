@@ -538,7 +538,7 @@ async function _rowsToOrderObject(rows) {
       return 0;
     }
 
-    return payment.amount;
+    return Number(payment.amount);
   });
 
   order.paid = originalPrice.value - paidSum <= 0;
