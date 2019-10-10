@@ -11,7 +11,9 @@ function createErrorResponder(_opts) {
     },
   }, _opts);
 
-  return function errorResponder(err, req, res) {
+  // Express detects middlewares based on function signature, so we need to define next here
+  // eslint-disable-next-line
+  return function errorResponder(err, req, res, next) {
     let message;
     let status = err.status ? err.status : 500;
     switch (err.type) {

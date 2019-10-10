@@ -42,11 +42,12 @@ function logRequestDetails(logLevel, req) {
 
 function deepSupressLongStrings(obj) {
   const newObj = {};
+  // eslint-disable-next-line
   _.each(obj, (val, key) => {
     if (_.isString(val) && val.length > 100) {
       newObj[key] = `${val.slice(0, 100)}... [CONTENT SLICED]`;
     } else if (_.isPlainObject(val)) {
-      deepSupressLongStrings(val);
+      return deepSupressLongStrings(val);
     } else {
       newObj[key] = val;
     }

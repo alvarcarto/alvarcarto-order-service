@@ -9,7 +9,7 @@ const basePaymentIntentSuccessEvent = require('../resources/base-payment-intent-
 const createRequestInstance = require('./request');
 const config = require('../../src/config');
 
-async function createAndPayOrder(clientOrder, opts) {
+async function createAndPayOrder(clientOrder, opts = {}) {
   const request = opts.request || createRequestInstance;
 
   let postRes;
@@ -48,7 +48,7 @@ async function createAndPayOrder(clientOrder, opts) {
 }
 
 async function withStripePaymentIntentCreateStub(clientOrder, _opts, func) {
-  const request = _opts.request || createRequestInstance();
+  const request = _opts.request || createRequestInstance;
 
   let promotion;
   if (clientOrder.promotionCode) {
@@ -74,7 +74,7 @@ async function withStripePaymentIntentCreateStub(clientOrder, _opts, func) {
 }
 
 async function sendStripePaymentIntentSuccess(fullClientOrder, _opts) {
-  const request = _opts.request || createRequestInstance();
+  const request = _opts.request || createRequestInstance;
 
   let promotion;
   if (fullClientOrder.promotionCode) {
