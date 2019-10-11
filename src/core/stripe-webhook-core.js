@@ -61,7 +61,7 @@ async function processPaymentSucceeded(event) {
       amount: intent.amount_received,
       currency: intent.currency.toUpperCase(),
       stripePaymentIntentId: intent.id,
-      stripePaymentIntentSuccessEvent: event,
+      stripePaymentIntentEvent: event,
     }, { trx });
   });
 

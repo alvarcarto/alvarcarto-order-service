@@ -40,7 +40,7 @@ exports.up = (knex) => {
 
         // The stripe payment intent method data
         table.string('stripe_payment_intent_id', 64).index();
-        table.jsonb('stripe_payment_intent_success_event');
+        table.jsonb('stripe_payment_intent_event');
 
         table.timestamp('created_at').index().notNullable().defaultTo(knex.fn.now());
         table.timestamp('updated_at').index().notNullable().defaultTo(knex.fn.now());
@@ -54,20 +54,20 @@ exports.up = (knex) => {
     }))
     // Move all 100% stripe charges
     .then(() => knex.raw(`
-      INSERT INTO payments (order_id, type, amount, currency, payment_provider, payment_provider_method, stripe_token_id, stripe_token_response, stripe_charge_response)
-      SELECT orders.id, 'CHARGE', (orders.stripe_charge_response->>'amount')::int, 'EUR', 'STRIPE', 'STRIPE_CHARGE', orders.stripe_token_id, orders.stripe_token_response, orders.stripe_charge_response
+      INSERT INTO payments (order_id, type, amount, currency, payment_provider, payment_provider_method, stripe_token_id, stripe_token_response, stripe_charge_response, created_at)
+      SELECT orders.id, 'CHARGE', (orders.stripe_charge_response->>'amount')::int, 'EUR', 'STRIPE', 'STRIPE_CHARGE', orders.stripe_token_id, orders.stripe_token_response, orders.stripe_charge_response, orders.created_at
       FROM orders
       WHERE orders.stripe_token_id IS NOT NULL AND orders.promotion_code IS NULL
     `))
     // Move all stripe charges with promotion code usage
     .then(() => knex.raw(`
-      INSERT INTO payments (order_id, type, amount, currency, payment_provider, payment_provider_method, stripe_token_id, stripe_token_response, stripe_charge_response)
-      SELECT orders.id, 'CHARGE', (orders.stripe_charge_response->>'amount')::int, 'EUR', 'STRIPE', 'STRIPE_CHARGE', orders.stripe_token_id, orders.stripe_token_response, orders.stripe_charge_response
+      INSERT INTO payments (order_id, type, amount, currency, payment_provider, payment_provider_method, stripe_token_id, stripe_token_response, stripe_charge_response, created_at)
+      SELECT orders.id, 'CHARGE', (orders.stripe_charge_response->>'amount')::int, 'EUR', 'STRIPE', 'STRIPE_CHARGE', orders.stripe_token_id, orders.stripe_token_response, orders.stripe_charge_response, orders.created_at
       FROM orders
       WHERE orders.stripe_token_id IS NOT NULL AND orders.promotion_code IS NOT NULL
     `))
     .then(() => knex.raw(`
-      INSERT INTO payments (order_id, type, amount, currency, payment_provider, promotion_id)
+      INSERT INTO payments (order_id, type, amount, currency, payment_provider, promotion_id, created_at)
       SELECT
         orders.id,
         'CHARGE',
@@ -75,13 +75,14 @@ exports.up = (knex) => {
         (orders.stripe_charge_response->>'amount')::int,
         'EUR',
         'PROMOTION',
-        (SELECT id FROM promotions WHERE promotions.promotion_code = orders.promotion_code)
+        (SELECT id FROM promotions WHERE promotions.promotion_code = orders.promotion_code),
+        orders.created_at
       FROM orders
       WHERE orders.stripe_token_id IS NOT NULL AND orders.promotion_code IS NOT NULL
     `))
     // Move all 100% promotion purchases
     .then(() => knex.raw(`
-      INSERT INTO payments (order_id, type, amount, currency, payment_provider, promotion_id)
+      INSERT INTO payments (order_id, type, amount, currency, payment_provider, promotion_id, created_at)
       SELECT
         orders.id,
         'CHARGE',
@@ -92,7 +93,8 @@ exports.up = (knex) => {
         ),
         'EUR',
         'PROMOTION',
-        (SELECT id FROM promotions WHERE promotions.promotion_code = orders.promotion_code)
+        (SELECT id FROM promotions WHERE promotions.promotion_code = orders.promotion_code),
+        orders.created_at
       FROM orders
       WHERE orders.stripe_token_id IS NULL
     `))
