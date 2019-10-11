@@ -11,9 +11,18 @@ const orderCore = require('./order-core');
 const emailCore = require('./email-core');
 const config = require('../config');
 
-async function savePaymentIntentEvent(event) {
-  const intent = event.data.object;
-  const { prettyOrderId } = intent.metadata;
+async function saveStripeEvent(event) {
+  const stripeObj = event.data.object;
+  const { prettyOrderId } = stripeObj.metadata;
+
+  if (!prettyOrderId) {
+    logger.logEncrypted(
+      'error',
+      'alert-critical Received an event from stripe without pretty order id in the metadata!',
+      event,
+    );
+    throw new Error('Received an event from stripe without pretty order id in the metadata!');
+  }
 
   await orderCore.createOrderEvent(prettyOrderId, {
     source: ORDER_EVENT_SOURCE.STRIPE,
@@ -22,11 +31,12 @@ async function savePaymentIntentEvent(event) {
   });
 }
 
-async function processPaymentSucceeded(event) {
+async function processPaymentIntentSucceeded(event) {
   const intent = event.data.object;
-  logger.info(`Succeeded payment intent: ${intent.id}`);
-
   const { prettyOrderId } = intent.metadata;
+
+  logger.info(`Succeeded payment intent: ${intent.id} (${prettyOrderId})`);
+
   const order = await orderCore.getOrder(prettyOrderId, { allFields: true });
   const { promotion } = order;
   const originalPrice = calculateCartPrice(order.cart, { currency: order.currency });
@@ -61,7 +71,7 @@ async function processPaymentSucceeded(event) {
       amount: intent.amount_received,
       currency: intent.currency.toUpperCase(),
       stripePaymentIntentId: intent.id,
-      stripePaymentIntentEvent: event,
+      stripeEvent: event,
     }, { trx });
   });
 
@@ -69,13 +79,43 @@ async function processPaymentSucceeded(event) {
   await emailCore.sendReceipt(updatedOrder);
 }
 
-async function processPaymentFailed(event) {
+async function processChargeRefunded(event) {
+  const charge = event.data.object;
+  const { prettyOrderId } = charge.metadata;
+  logger.info(`Refund is related to charge: ${charge.id} (${prettyOrderId})`);
+
+  await knex.transaction(async (trx) => {
+    if (charge.refunds.has_more) {
+      logger.error('Refunds:', charge.refunds);
+      throw new Error('All refunds are not in the list, pagination support is needed!');
+    }
+
+    const succeededRefunds = _.filter(charge.refunds.data, r => r.status === 'succeeded');
+    const refund = _.last(_.sortBy(succeededRefunds, 'created'));
+
+    await orderCore.createPayment(prettyOrderId, {
+      type: PAYMENT_TYPE.REFUND,
+      paymentProvider: PAYMENT_PROVIDER.STRIPE,
+      paymentProviderMethod: charge.payment_intent
+        ? PAYMENT_PROVIDER_METHOD.STRIPE_PAYMENT_INTENT
+        : PAYMENT_PROVIDER_METHOD.STRIPE_CHARGE,
+      amount: refund.amount,
+      currency: refund.currency.toUpperCase(),
+      stripePaymentIntentId: charge.payment_intent,
+      stripeEvent: event,
+    }, { trx });
+  });
+
+  // TODO: Send refund receipt
+}
+
+async function processPaymentIntentFailed(event) {
   const intent = event.data.object;
   const message = _.get(intent, 'last_payment_error.message');
   logger.info(`Warning! Failed payment intent: ${intent.id} with message "${message}"`);
 }
 
-async function processPaymentCanceled(event) {
+async function processPaymentIntentCanceled(event) {
   const intent = event.data.object;
   const message = _.get(intent, 'cancellation_reason');
   logger.info(`Warning! Canceled payment intent: ${intent.id} with reason: "${message}"`);
@@ -93,19 +133,22 @@ async function processStripeEvent(event) {
     return;
   }
 
-  if (_.startsWith(event.type, 'payment_intent')) {
-    await savePaymentIntentEvent(event);
+  if (_.startsWith(event.type, 'payment_intent') || event.type === 'charge.refunded') {
+    await saveStripeEvent(event);
   }
 
   switch (event.type) {
     case 'payment_intent.succeeded':
-      await processPaymentSucceeded(event);
+      await processPaymentIntentSucceeded(event);
       return;
     case 'payment_intent.payment_failed':
-      await processPaymentFailed(event);
+      await processPaymentIntentFailed(event);
       return;
     case 'payment_intent.canceled':
-      await processPaymentCanceled(event);
+      await processPaymentIntentCanceled(event);
+      return;
+    case 'charge.refunded':
+      await processChargeRefunded(event);
       return;
     case 'payment_intent.created':
     case 'payment_intent.amount_capturable_updated':

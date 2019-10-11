@@ -314,7 +314,7 @@ function getPaymentMethodDescription(order) {
   if (payment.paymentProviderMethod === PAYMENT_PROVIDER_METHOD.STRIPE_CHARGE) {
     paymentMethodDetails = _.get(payment.stripeChargeResponse, 'payment_method_details');
   } else if (payment.paymentProviderMethod === PAYMENT_PROVIDER_METHOD.STRIPE_PAYMENT_INTENT) {
-    const charges = _.get(payment.stripePaymentIntentEvent, 'data.object.charges.data');
+    const charges = _.get(payment.stripeEvent, 'data.object.charges.data');
     const charge = _.find(charges, c => c.status === 'succeeded');
     paymentMethodDetails = _.get(charge, 'payment_method_details');
   } else {

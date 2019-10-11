@@ -37,7 +37,8 @@ function getLogLevel(status) {
 function logRequestDetails(logLevel, req) {
   logger[logLevel]('Request headers:', deepSupressLongStrings(req.headers));
   logger[logLevel]('Request parameters:', deepSupressLongStrings(req.params));
-  logger.logEncrypted(logLevel, 'Request body:', req.body);
+  const logBody = req.body instanceof Buffer ? req.body.toString('utf8') : req.body;
+  logger.logEncrypted(logLevel, 'Request body:', logBody);
 }
 
 function deepSupressLongStrings(obj) {

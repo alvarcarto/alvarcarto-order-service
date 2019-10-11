@@ -40,7 +40,7 @@ exports.up = (knex) => {
 
         // The stripe payment intent method data
         table.string('stripe_payment_intent_id', 64).index();
-        table.jsonb('stripe_payment_intent_event');
+        table.jsonb('stripe_event');
 
         table.timestamp('created_at').index().notNullable().defaultTo(knex.fn.now());
         table.timestamp('updated_at').index().notNullable().defaultTo(knex.fn.now());

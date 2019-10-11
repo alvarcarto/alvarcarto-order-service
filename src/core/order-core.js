@@ -334,7 +334,7 @@ function selectOrders(_opts = {}) {
       payments.stripe_token_response as payment_stripe_token_response,
       payments.stripe_charge_response as payment_stripe_charge_response,
       payments.stripe_payment_intent_id as payment_stripe_payment_intent_id,
-      payments.stripe_payment_intent_event as payment_stripe_payment_intent_event,
+      payments.stripe_event as payment_stripe_event,
       payments.created_at as payment_created_at,
       promotions.promotion_code as promotion_code,
       (SELECT SUM(amount) FROM payments WHERE payments.order_id = orders.id AND payments.type = '${PAYMENT_TYPE.CHARGE}') as order_paid_amount,
@@ -465,7 +465,7 @@ async function createPayment(orderId, payment, opts = {}) {
     amount: payment.amount,
     currency: payment.currency,
     stripe_payment_intent_id: payment.stripePaymentIntentId,
-    stripe_payment_intent_event: payment.stripePaymentIntentEvent,
+    stripe_event: payment.stripeEvent,
   };
 
   if (payment.promotionCode) {
@@ -612,7 +612,7 @@ async function _rowsToOrderObject(rows) {
     stripeTokenResponse: row.payment_stripe_token_response,
     stripeChargeResponse: row.payment_stripe_charge_response,
     stripePaymentIntentId: row.payment_stripe_payment_intent_id,
-    stripePaymentIntentEvent: row.payment_stripe_payment_intent_event,
+    stripeEvent: row.payment_stripe_event,
     createdAt: row.payment_created_at,
   }));
 
