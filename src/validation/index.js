@@ -40,7 +40,6 @@ const mapCartItemSchema = Joi.object({
     mapPitch: Joi.number().optional(),
     mapBearing: Joi.number().min(-360).max(360).optional(),
     orientation: Joi.string().valid(['landscape', 'portrait']).required(),
-    size: Joi.string().valid(['30x40cm', '50x70cm', '70x100cm', '12x18inch', '18x24inch', '24x36inch']).required(),
     labelsEnabled: Joi.boolean().required(),
     labelHeader: Joi.string().min(0).max(100).required(),
     labelSmallHeader: Joi.string().min(0).max(100).required(),

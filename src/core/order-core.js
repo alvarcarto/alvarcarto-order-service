@@ -1,6 +1,6 @@
 const util = require('util');
 const _ = require('lodash');
-const { calculateItemPrice, calculateCartPrice } = require('alvarcarto-price-util');
+const { calculateItemPrice, calculateCartPrice, getProduct } = require('alvarcarto-price-util');
 const promiseRetryify = require('promise-retryify');
 const BPromise = require('bluebird');
 const { moment } = require('../util/moment');
@@ -775,6 +775,8 @@ function _createOrderedPosters(orderId, order, opts = {}) {
       onlyUnitPrice: true,
     });
 
+    const { size } = getProduct(item.sku).metadata;
+
     return trx('ordered_posters')
       .insert({
         order_id: orderId,
@@ -792,7 +794,7 @@ function _createOrderedPosters(orderId, order, opts = {}) {
         poster_style: item.customisation.posterStyle,
         map_pitch: item.customisation.mapPitch,
         map_bearing: item.customisation.mapBearing,
-        size: item.customisation.size,
+        size,
         orientation: item.customisation.orientation,
         labels_enabled: item.customisation.labelsEnabled,
         label_header: item.customisation.labelHeader,
