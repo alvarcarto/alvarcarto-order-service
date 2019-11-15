@@ -9,9 +9,11 @@
   },
   "cart": [
     {
-      "type": "giftCardValue",
+      "sku": "gift-card-value",
       "quantity": 1,
-      "value": 4900
+      "customisation": {
+        "netValue": 4900
+      }
     }
   ],
   "email": "ryan.gosling@gmail.com",

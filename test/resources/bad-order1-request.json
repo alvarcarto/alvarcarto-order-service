@@ -9,34 +9,37 @@
   },
   "cart": [
     {
-      "autoUpdateCoordinates": true,
-      "labelHeader": "Barcelona",
-      "labelSmallHeader": "Catalonia",
-      "labelText": "41.382°N / 2.167°E",
-      "labelTextManual": null,
-      "labelsEnabled": true,
-      "mapBearing": 0,
-      "mapBounds": {
-        "northEast": {
-          "lat": 41.596342070634314,
-          "lng": 2.370559900917968
-        },
-        "southWest": {
-          "lat": 41.16792451716633,
-          "lng": 1.9627132772477298
-        }
-      },
-      "mapCenter": {
-        "lat": 41.382374,
-        "lng": 2.166612
-      },
-      "mapPitch": 0,
-      "mapStyle": "bw",
-      "mapZoom": 10.5,
-      "orientation": "portrait",
-      "posterStyle": "sharp",
+      "sku": "custom-map-print-50x70cm",
       "quantity": -2,
-      "size": "50x70cm"
+      "customisation": {
+        "autoUpdateCoordinates": true,
+        "labelHeader": "Barcelona",
+        "labelSmallHeader": "Catalonia",
+        "labelText": "41.382°N / 2.167°E",
+        "labelTextManual": null,
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapBounds": {
+          "northEast": {
+            "lat": 41.596342070634314,
+            "lng": 2.370559900917968
+          },
+          "southWest": {
+            "lat": 41.16792451716633,
+            "lng": 1.9627132772477298
+          }
+        },
+        "mapCenter": {
+          "lat": 41.382374,
+          "lng": 2.166612
+        },
+        "mapPitch": 0,
+        "mapStyle": "bw",
+        "mapZoom": 10.5,
+        "orientation": "portrait",
+        "posterStyle": "sharp",
+        "size": "50x70cm"
+      }
     }
   ],
   "differentBillingAddress": true,
