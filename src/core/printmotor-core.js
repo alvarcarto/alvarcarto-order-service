@@ -1,13 +1,12 @@
 const BPromise = require('bluebird');
 const _ = require('lodash');
-const { calculateItemPrice } = require('alvarcarto-price-util');
+const { calculateItemPrice, isEuCountry } = require('alvarcarto-price-util');
 const request = require('request-promise');
 const config = require('../config');
 const logger = require('../util/logger')(__filename);
 const {
   toLog, resolveProductionClass, resolveShippingClass, filterMapPosterCart,
 } = require('../util');
-const { isEuCountry } = require('./country-core');
 const { uploadPoster } = require('./bucket-core');
 
 const BASE_URL = [

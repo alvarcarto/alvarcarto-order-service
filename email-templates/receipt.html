@@ -468,14 +468,16 @@
                                   <p class="purchase_total">{{total}}</p>
                                 </td>
                               </tr>
+                              {{#receipt_taxes}}
                               <tr>
                                 <td width="80%" class="purchase_footer_vat" valign="middle">
-                                  <p class="purchase_total_vat purchase_total_vat--label">Includes VAT ({{vat_percentage}}%)</p>
+                                  <p class="purchase_total_vat purchase_total_vat--label">VAT {{vat_percentage}}%</p>
                                 </td>
                                 <td width="20%" class="purchase_footer_vat" valign="middle">
-                                  <p class="purchase_total_vat">{{total_vat_amount}}</p>
+                                  <p class="purchase_total_vat">{{amount}}</p>
                                 </td>
                               </tr>
+                              {{/receipt_taxes}}
                             </table>
                           </td>
                         </tr>

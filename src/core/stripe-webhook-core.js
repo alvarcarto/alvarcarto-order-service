@@ -6,6 +6,7 @@ const ORDER_EVENT_SOURCE = require('../enums/order-event-source');
 const PAYMENT_TYPE = require('../enums/payment-type');
 const PAYMENT_PROVIDER = require('../enums/payment-provider');
 const PAYMENT_PROVIDER_METHOD = require('../enums/payment-provider-method');
+const { getShipToCountry } = require('../util');
 const logger = require('../util/logger')(__filename);
 const orderCore = require('./order-core');
 const emailCore = require('./email-core');
@@ -39,8 +40,9 @@ async function processPaymentIntentSucceeded(event) {
 
   const order = await orderCore.getOrder(prettyOrderId, { allFields: true });
   const { promotion } = order;
-  const originalPrice = calculateCartPrice(order.cart, { currency: order.currency });
-  const discountPrice = calculateCartPrice(order.cart, { currency: order.currency, promotion });
+  const shipToCountry = getShipToCountry(order);
+  const originalPrice = calculateCartPrice(order.cart, { currency: order.currency, shipToCountry });
+  const discountPrice = calculateCartPrice(order.cart, { currency: order.currency, promotion, shipToCountry });
 
   await knex.transaction(async (trx) => {
     if (promotion) {
@@ -53,7 +55,9 @@ async function processPaymentIntentSucceeded(event) {
         type: PAYMENT_TYPE.CHARGE,
         paymentProvider,
         amount: amountPaidWithPromotion,
-        currency: promotion.currency.toUpperCase(),
+        // We use intent currency here, since percentage promotions can be used
+        // with multiple currencies. order.currency should be the same as the intent currency
+        currency: intent.currency.toUpperCase(),
         promotionCode: promotion.promotionCode,
       }, { trx });
     }
@@ -62,6 +66,12 @@ async function processPaymentIntentSucceeded(event) {
       logger.error('alert-business-critical The payment intent has different amount than calculated cart price!');
       logger.error(`Intent amount received ${util.inspect(intent.amount_received)}, cart price: ${util.inspect(discountPrice.value)}`);
       throw new Error('The payment intent has different amount than calculated cart price');
+    }
+
+    if (intent.currency.toUpperCase() !== order.currency.toUpperCase()) {
+      const diff = `intent: ${intent.currency.toUpperCase()}, order: ${order.currency.toUpperCase()}`;
+      logger.error(`alert-business-critical Payment intent and order had different currencies, ${diff}`);
+      throw new Error('The payment intent has different currency than the order');
     }
 
     await orderCore.createPayment(prettyOrderId, {

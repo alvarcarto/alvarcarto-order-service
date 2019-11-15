@@ -34,25 +34,33 @@ function createPosterUrlParameters(mapItem) {
 }
 
 function resolveProductionClass(cart) {
-  const found = _.find(cart, i => i.type === 'productionClass');
+  const found = _.find(cart, i => i.sku === 'production-high-priority');
   if (found) {
-    return found.value;
+    return 'HIGH';
   }
 
   return null;
 }
 
 function resolveShippingClass(cart) {
-  const found = _.find(cart, i => i.type === 'shippingClass');
+  const found = _.find(cart, i => i.sku === 'shipping-express');
   if (found) {
-    return found.value;
+    return 'EXPRESS';
   }
 
   return null;
 }
 
+function getShipToCountry(order) {
+  return _.get(order, 'shippingAddress.countryCode', undefined);
+}
+
 function filterMapPosterCart(cart) {
-  return _.filter(cart, item => !item.type || item.type === 'mapPoster');
+  return _.filter(cart, item => _.startsWith(item.sku, 'custom-map'));
+}
+
+function filterOtherItemsCart(cart) {
+  return _.filter(cart, item => !_.startsWith(item.sku, 'custom-map'));
 }
 
 function toLog(obj) {
@@ -100,5 +108,7 @@ module.exports = {
   resolveShippingClass,
   toLog,
   filterMapPosterCart,
+  filterOtherItemsCart,
   createRandomOrderId,
+  getShipToCountry,
 };

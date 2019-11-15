@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { getSupportedCurrencies } = require('alvarcarto-price-util');
 
 const addressSchema = Joi.object({
   personName: Joi.string().min(1).max(300).required(),
@@ -16,75 +17,54 @@ const latLngSchema = Joi.object({
   lng: Joi.number().min(-180).max(180).required(),
 });
 
+const mapIds = [
+  'custom-map-print-30x40cm',
+  'custom-map-print-50x70cm',
+  'custom-map-print-70x100cm',
+  'custom-map-print-12x18inch',
+  'custom-map-print-18x24inch',
+  'custom-map-print-24x36inch',
+];
 const mapCartItemSchema = Joi.object({
-  type: Joi.string().valid(['mapPoster']).optional(),
+  id: Joi.string().valid(mapIds).optional(),
   quantity: Joi.number().min(1).max(100000),
-  mapBounds: Joi.object({
-    southWest: latLngSchema.required(),
-    northEast: latLngSchema.required(),
-  }).required(),
-  mapCenter: latLngSchema.optional(),
-  mapZoom: Joi.number().min(0).max(30).optional(),
-  posterStyle: Joi.string().valid([
-    'sharp', 'classic', 'sans', 'bw',
-    'pacific', 'summer', 'round',
-  ]).required(),
-  mapStyle: Joi.string().valid([
-    'bw', 'gray', 'black', 'petrol',
-    'iceberg', 'marshmellow', 'copper',
-    'madang',
-  ]).required(),
-  mapPitch: Joi.number().optional(),
-  mapBearing: Joi.number().min(-360).max(360).optional(),
-  orientation: Joi.string().valid(['landscape', 'portrait']).required(),
-  size: Joi.string().valid(['30x40cm', '50x70cm', '70x100cm', '12x18inch', '18x24inch', '24x36inch']).required(),
-  labelsEnabled: Joi.boolean().required(),
-  labelHeader: Joi.string().min(0).max(100).required(),
-  labelSmallHeader: Joi.string().min(0).max(100).required(),
-  labelText: Joi.string().min(0).max(500).required(),
+  customisation: Joi.object({
+    mapBounds: Joi.object({
+      southWest: latLngSchema.required(),
+      northEast: latLngSchema.required(),
+    }).required(),
+    mapCenter: latLngSchema.optional(),
+    mapZoom: Joi.number().min(0).max(30).optional(),
+    posterStyle: Joi.string().required(),
+    mapStyle: Joi.string().required(),
+    mapPitch: Joi.number().optional(),
+    mapBearing: Joi.number().min(-360).max(360).optional(),
+    orientation: Joi.string().valid(['landscape', 'portrait']).required(),
+    size: Joi.string().valid(['30x40cm', '50x70cm', '70x100cm', '12x18inch', '18x24inch', '24x36inch']).required(),
+    labelsEnabled: Joi.boolean().required(),
+    labelHeader: Joi.string().min(0).max(100).required(),
+    labelSmallHeader: Joi.string().min(0).max(100).required(),
+    labelText: Joi.string().min(0).max(500).required(),
+  }),
 }).unknown(); // Ignore additional fields
 
-const physicalGiftCardCartItemSchema = Joi.object({
-  type: Joi.string().valid(['physicalGiftCard']).required(),
-  quantity: Joi.number().integer().min(1).max(1000),
-});
-
 const giftCardValueCartItemSchema = Joi.object({
-  type: Joi.string().valid(['giftCardValue']).required(),
-  value: Joi.number().integer().min(1).max(5000000),
-  quantity: Joi.number().integer().min(1).max(1000),
-});
-
-const productionClassCartItemSchema = Joi.object({
-  type: Joi.string().valid(['productionClass']).required(),
-  value: Joi.string().valid(['REGULAR', 'HIGH']).required(),
-  quantity: Joi.number().integer().min(1).max(1),
-});
-
-const shippingClassCartItemSchema = Joi.object({
-  type: Joi.string().valid(['shippingClass']).required(),
-  value: Joi.string().valid(['EXPRESS']).required(),
+  id: Joi.string().valid(['gift-card-value']).required(),
+  customisation: Joi.object({
+    netValue: Joi.number().integer().min(1).max(5000000),
+  }),
   quantity: Joi.number().integer().min(1).max(1),
 });
 
 const cartItemSchema = Joi.alternatives()
-  .when(Joi.object({ type: Joi.string().valid('productionClass').required() }).unknown().required(), {
-    then: productionClassCartItemSchema,
-  })
-  .when(Joi.object({ type: Joi.string().valid('shippingClass').required() }).unknown().required(), {
-    then: shippingClassCartItemSchema,
-  })
-  .when(Joi.object({ type: Joi.string().valid('giftCardValue').required() }).unknown().required(), {
+  .when(Joi.object({ type: Joi.string().valid('gift-card-value').required() }).unknown().required(), {
     then: giftCardValueCartItemSchema,
   })
-  .when(Joi.object({ type: Joi.string().valid('physicalGiftCard').required() }).unknown().required(), {
-    then: physicalGiftCardCartItemSchema,
-  })
-  .when(Joi.object({ type: Joi.string().valid('mapPoster').required() }).unknown().required(), {
+  .when(Joi.object({ type: Joi.string().valid(mapIds).required() }).unknown().required(), {
     then: mapCartItemSchema,
   })
-  // Default to mapPoster type
-  .when(Joi.any(), { then: mapCartItemSchema });
+  // Allow any other cart item such as shipping
+  .when(Joi.any(), { then: Joi.any() });
 
 const cartSchema = Joi.array().items(cartItemSchema).min(1).max(1000);
 
@@ -107,7 +87,7 @@ const promotionSchema = Joi.object({
   promotionCode: promotionCodeSchema,
   type: Joi.string().valid(['FIXED', 'PERCENTAGE']).required(),
   value: Joi.number().min(-100000).max(100000).required(),
-  currency: Joi.string().valid(['EUR']).required(),
+  currency: Joi.string().valid(getSupportedCurrencies()).required(),
   label: Joi.string().min(1).max(30).required(),
   description: Joi.string().min(0).max(10000).optional(),
   maxAllowedUsageCount: Joi.number().integer().min(1).max(30)
@@ -118,7 +98,7 @@ const promotionSchema = Joi.object({
 const orderSchema = Joi.object({
   email: Joi.string().email().required(),
   differentBillingAddress: Joi.boolean().optional(),
-  currency: Joi.string().valid(['EUR', 'USD']).optional(),
+  currency: Joi.string().length(3).required(),
   emailSubscription: Joi.boolean().optional(),
   shippingAddress: addressSchema.optional(),
   billingAddress: addressSchema.optional(),
