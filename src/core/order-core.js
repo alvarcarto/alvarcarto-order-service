@@ -135,6 +135,7 @@ function getOrder(orderId, opts = {}) {
       const partialOrder = {
         orderId: fullOrder.orderId,
         cart: fullOrder.cart,
+        currency: fullOrder.currency,
         paid: fullOrder.paid,
         promotion: fullOrder.promotion,
         createdAt: fullOrder.createdAt,
@@ -590,10 +591,14 @@ async function _rowsToOrderObject(rows) {
   const firstRow = rows[0];
 
   // Always add shippingClass as the cart item to. This way it will show up on receipt etc
-  const shippingId = `shipping-${firstRow.shipping_class.toLowerCase()}`;
+  const shippingClass = firstRow.shipping_class
+    ? firstRow.shipping_class
+    : 'EXPRESS';
+
+  const shippingId = `shipping-${shippingClass.toLowerCase()}`;
   sortedCart.push({ sku: shippingId, quantity: 1 });
 
-  if (firstRow.production_class) {
+  if (firstRow.production_class === 'HIGH') {
     const productionId = `production-${firstRow.production_class.toLowerCase()}-priority`;
     sortedCart.push({ sku: productionId, quantity: 1 });
   }
@@ -644,7 +649,7 @@ async function _rowsToOrderObject(rows) {
   if (order.promotionCode) {
     order.promotion = await promotionCore.getPromotion(order.promotionCode);
   }
-  console.log(order.cart)
+
   const originalPrice = calculateCartPrice(order.cart, {
     currency: order.currency,
     shipToCountry: getShipToCountry(order),

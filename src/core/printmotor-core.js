@@ -164,9 +164,10 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
 
 function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
   const price = calculateItemPrice(item, { onlyUnitPrice: true, currency });
+  const mapItem = item.customisation;
   return {
     amount: item.quantity,
-    layoutName: _getLayoutName(item.size, item.orientation),
+    layoutName: _getLayoutName(mapItem.size, mapItem.orientation),
     customization: [
       {
         fieldName: 'image',

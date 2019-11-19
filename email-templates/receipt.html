@@ -412,7 +412,7 @@
     </style>
   </head>
   <body>
-    <span class="preheader">This is a receipt and order confirmation for your recent purchase on {{ purchase_date }}. The posters will be printed and delivered soon, we'll keep you up to date via email.</span>
+    <span class="preheader">This is a receipt and order confirmation for your recent purchase on {{ purchase_date }}.</span>
     <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td align="center">
@@ -432,7 +432,7 @@
                   <tr>
                     <td class="content-cell">
                       <h1>Hi, {{name}}!</h1>
-                      <p>Thank you so much for ordering from Alvar Carto. This email is a receipt and order confirmation for your purchase. The posters will be printed and shipped soon, we'll keep you up to date via email. In our estimation, you should get the posters in {{min_delivery_business_days}} - {{max_delivery_business_days}} business days.</p>
+                      <p>Thank you so much for ordering from Alvar Carto. This email is a receipt and order confirmation for your purchase. {{delivery_info_text}}</p>
 
                       <p>{{purchase_information}}</p>
 

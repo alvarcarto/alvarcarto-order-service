@@ -11,12 +11,13 @@ function readFileSync(filePath) {
   return fs.readFileSync(path.join(rootDir, filePath), { encoding: 'utf8' });
 }
 
-function createPosterImageUrl(mapItem) {
-  const query = qs.stringify(createPosterUrlParameters(mapItem));
+function createPosterImageUrl(item) {
+  const query = qs.stringify(createPosterUrlParameters(item));
   return `${config.RENDER_API_URL}/api/raster/render?${query}`;
 }
 
-function createPosterUrlParameters(mapItem) {
+function createPosterUrlParameters(item) {
+  const mapItem = item.customisation;
   return {
     swLat: mapItem.mapBounds.southWest.lat,
     swLng: mapItem.mapBounds.southWest.lng,
@@ -39,7 +40,7 @@ function resolveProductionClass(cart) {
     return 'HIGH';
   }
 
-  return null;
+  return 'REGULAR';
 }
 
 function resolveShippingClass(cart) {
@@ -48,7 +49,7 @@ function resolveShippingClass(cart) {
     return 'EXPRESS';
   }
 
-  return null;
+  return 'EXPRESS';
 }
 
 function getShipToCountry(order) {

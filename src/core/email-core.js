@@ -1,6 +1,7 @@
 const BPromise = require('bluebird');
 const postmark = require('postmark');
 const Mustache = require('mustache');
+const { stripIndent } = require('common-tags');
 const _ = require('lodash');
 const countries = require('i18n-iso-countries');
 const { oneLine } = require('common-tags');
@@ -138,7 +139,7 @@ function renderReceiptToHtml(order) {
 
 function createDeliveryStartedTemplateModel(order, trackingInfo) {
   const customerName = getBuyerCustomerName(order);
-  const countryCode = _.get(order, 'shippingAddress.countryCode');
+  const countryCode = getShipToCountry(order);
   const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
   return {
     name: getFirstName(customerName),
@@ -200,10 +201,11 @@ function createReceiptTemplateModel(order) {
   const otherCart = filterOtherItemsCart(order.cart);
   receiptItems = receiptItems.concat(cartToReceiptItems(otherCart));
   const customerName = getBuyerCustomerName(order);
-  const countryCode = getShipToCountry(order);
-  const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
+  const deliveryText = getDeliveryInfoTextForReceipt(order);
+
   return {
     purchase_date: order.createdAt.format('MMMM Do YYYY'),
+    delivery_info_text: deliveryText,
     name: getFirstName(customerName),
     purchase_information: getPurchaseInformation(order),
     order_id: order.orderId,
@@ -215,8 +217,6 @@ function createReceiptTemplateModel(order) {
     shipping_postal_code: getPostalCode(order),
     shipping_country: getCountry(order),
     web_version_url: getOrderUrl(order),
-    min_delivery_business_days: timeEstimate.total.min,
-    max_delivery_business_days: timeEstimate.total.max,
     support_url: 'https://alvarcarto.com/help',
     year: moment().format('YYYY'),
     receipt_taxes: taxesToReceiptItems(totalPrice.taxes),
@@ -249,6 +249,20 @@ function getBuyerCustomerName(order) {
 
 function getReceiverCustomerName(order) {
   return _.get(order, 'shippingAddress.personName', 'Poster Designer');
+}
+
+function getDeliveryInfoTextForReceipt(order) {
+  const countryCode = getShipToCountry(order);
+  if (!countryCode) {
+    return 'You should receive the digital items soon.';
+  }
+
+  const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
+  return stripIndent`
+    The posters will be printed and shipped soon, we'll keep you up to date via email.
+    In our estimation, you should get the posters in ${timeEstimate.total.min} -
+    ${timeEstimate.total.max} business days.
+  `;
 }
 
 function getFirstName(fullName) {

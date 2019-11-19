@@ -67,7 +67,7 @@ function main(opts = {}) {
 
 function assertMapCentersInsideBounds(order) {
   return BPromise.each(filterMapPosterCart(order.cart), (item) => {
-    const { mapCenter, mapBounds } = item;
+    const { mapCenter, mapBounds } = item.customisation;
     // This is not accurate but it's a safe measure to prevent missync
     // between map center and bounds
     const isInside = geolib.isPointInside(mapCenter, [

@@ -1,6 +1,8 @@
 const Joi = require('joi');
 const { getSupportedCurrencies } = require('alvarcarto-price-util');
 
+const MAX_QUANTITY = 100000;
+
 const addressSchema = Joi.object({
   personName: Joi.string().min(1).max(300).required(),
   streetAddress: Joi.string().min(1).max(300).required(),
@@ -26,8 +28,8 @@ const mapIds = [
   'custom-map-print-24x36inch',
 ];
 const mapCartItemSchema = Joi.object({
-  id: Joi.string().valid(mapIds).optional(),
-  quantity: Joi.number().min(1).max(100000),
+  sku: Joi.string().valid(mapIds).required(),
+  quantity: Joi.number().min(1).max(MAX_QUANTITY),
   customisation: Joi.object({
     mapBounds: Joi.object({
       southWest: latLngSchema.required(),
@@ -48,22 +50,27 @@ const mapCartItemSchema = Joi.object({
 }).unknown(); // Ignore additional fields
 
 const giftCardValueCartItemSchema = Joi.object({
-  id: Joi.string().valid(['gift-card-value']).required(),
+  sku: Joi.string().valid(['gift-card-value']).required(),
   customisation: Joi.object({
     netValue: Joi.number().integer().min(1).max(5000000),
   }),
-  quantity: Joi.number().integer().min(1).max(1),
+  quantity: Joi.number().integer().min(1).max(MAX_QUANTITY),
 });
 
+const otherCartItemSchema = Joi.object({
+  sku: Joi.string().required(),
+  quantity: Joi.number().integer().min(1).max(MAX_QUANTITY),
+}).unknown();
+
 const cartItemSchema = Joi.alternatives()
-  .when(Joi.object({ type: Joi.string().valid('gift-card-value').required() }).unknown().required(), {
+  .when(Joi.object({ sku: Joi.string().valid('gift-card-value').required() }).unknown().required(), {
     then: giftCardValueCartItemSchema,
   })
-  .when(Joi.object({ type: Joi.string().valid(mapIds).required() }).unknown().required(), {
+  .when(Joi.object({ sku: Joi.string().valid(mapIds).required() }).unknown().required(), {
     then: mapCartItemSchema,
   })
   // Allow any other cart item such as shipping
-  .when(Joi.any(), { then: Joi.any() });
+  .when(Joi.any(), { then: otherCartItemSchema });
 
 const cartSchema = Joi.array().items(cartItemSchema).min(1).max(1000);
 
@@ -97,7 +104,7 @@ const promotionSchema = Joi.object({
 const orderSchema = Joi.object({
   email: Joi.string().email().required(),
   differentBillingAddress: Joi.boolean().optional(),
-  currency: Joi.string().length(3).required(),
+  currency: Joi.string().valid(getSupportedCurrencies()).required(),
   emailSubscription: Joi.boolean().optional(),
   shippingAddress: addressSchema.optional(),
   billingAddress: addressSchema.optional(),
