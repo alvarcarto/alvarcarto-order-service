@@ -1,4 +1,5 @@
 {
+  "currency": "EUR",
   "billingAddress": {
     "city": "Helsinki",
     "countryCode": "FI",
@@ -70,8 +71,7 @@
         "mapStyle": "gray",
         "mapZoom": 10,
         "orientation": "landscape",
-        "posterStyle": "sans",
-        "size": "30x40cm"
+        "posterStyle": "sans"
       }
     }
   ],

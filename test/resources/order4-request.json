@@ -1,4 +1,5 @@
 {
+  "currency": "EUR",
   "billingAddress": {
     "city": "Helsinki",
     "countryCode": "FI",

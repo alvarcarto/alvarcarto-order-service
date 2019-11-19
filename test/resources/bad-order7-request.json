@@ -37,8 +37,7 @@
         "mapStyle": "bw",
         "mapZoom": 10.5,
         "orientation": "portrait",
-        "posterStyle": "sharp",
-        "size": "50x70cm"
+        "posterStyle": "sharp"
       }
     }
   ],
@@ -54,5 +53,5 @@
     "streetAddress": "Sörnäisten rantatie 18",
     "streetAddressExtra": "A 129"
   },
-  "currency": "JPY"
+  "currency": "ABC"
 }

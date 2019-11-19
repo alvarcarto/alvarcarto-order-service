@@ -1,56 +1,62 @@
 {
+  "currency": "EUR",
   "cart": [
     {
-      "type": "giftCardValue",
-      "quantity": 1,
-      "value": 4900
-    },
-    {
-      "type": "giftCardValue",
+      "sku": "custom-map-print-50x70cm",
       "quantity": 2,
-      "value": 6900
-    },
-    {
-      "type": "mapPoster",
-      "quantity": 2,
-      "mapCenter": {
-        "lat": 41.3824,
-        "lng": 2.16661
-      },
-      "mapBounds": {
-        "southWest": {
-          "lat": 41.1679,
-          "lng": 1.96271
+      "customisation": {
+        "labelHeader": "Barcelona",
+        "labelSmallHeader": "Catalonia",
+        "labelText": "41.382°N / 2.167°E",
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapCenter": {
+          "lat": 41.3824,
+          "lng": 2.16661
         },
-        "northEast": {
-          "lat": 41.5963,
-          "lng": 2.37056
-        }
-      },
-      "mapZoom": 10.5,
-      "mapStyle": "bw",
-      "posterStyle": "sharp",
-      "mapPitch": 0,
-      "mapBearing": 0,
-      "orientation": "portrait",
-      "size": "50x70cm",
-      "labelsEnabled": true,
-      "labelHeader": "Barcelona",
-      "labelSmallHeader": "Catalonia",
-      "labelText": "41.382°N / 2.167°E"
+        "mapBounds": {
+          "southWest": {
+            "lat": 41.1679,
+            "lng": 1.96271
+          },
+          "northEast": {
+            "lat": 41.5963,
+            "lng": 2.37056
+          }
+        },
+        "mapPitch": 0,
+        "mapStyle": "bw",
+        "mapZoom": 10.5,
+        "orientation": "portrait",
+        "posterStyle": "sharp",
+        "size": "50x70cm"
+      }
     },
     {
-      "type": "physicalGiftCard",
+      "sku": "gift-card-value",
+      "quantity": 1,
+      "customisation": {
+        "netValue": 4900
+      }
+    },
+    {
+      "sku": "gift-card-value",
+      "quantity": 2,
+      "customisation": {
+        "netValue": 6900
+      }
+    },
+    {
+      "sku": "physical-gift-card",
       "quantity": 1
     },
     {
-      "type": "physicalGiftCard",
+      "sku": "physical-gift-card",
       "quantity": 2
     },
     {
-      "quantity": 1,
-      "type": "shippingClass",
-      "value": "EXPRESS"
+      "sku": "shipping-express",
+      "quantity": 1
     }
   ],
   "shippingAddress": {

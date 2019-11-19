@@ -1,14 +1,16 @@
 {
+  "currency": "EUR",
   "cart": [
     {
-      "type": "giftCardValue",
-      "quantity": 1,
-      "value": 4900
+      "sku": "gift-card-value",
+      "customisation": {
+        "netValue": 4900
+      },
+      "quantity": 1
     },
     {
       "quantity": 1,
-      "type": "shippingClass",
-      "value": "EXPRESS"
+      "sku": "shipping-express"
     }
   ],
   "paid": true
