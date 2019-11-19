@@ -42,7 +42,11 @@ async function processPaymentIntentSucceeded(event) {
   const { promotion } = order;
   const shipToCountry = getShipToCountry(order);
   const originalPrice = calculateCartPrice(order.cart, { currency: order.currency, shipToCountry });
-  const discountPrice = calculateCartPrice(order.cart, { currency: order.currency, promotion, shipToCountry });
+  const discountPrice = calculateCartPrice(order.cart, {
+    currency: order.currency,
+    promotion,
+    shipToCountry,
+  });
 
   await knex.transaction(async (trx) => {
     if (promotion) {
