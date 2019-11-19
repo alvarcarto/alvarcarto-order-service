@@ -1,0 +1,65 @@
+{
+  "currency": "JPY",
+  "billingAddress": {
+    "city": "Helsinki",
+    "countryCode": "FI",
+    "personName": "Brad Pitt",
+    "postalCode": "00250",
+    "streetAddress": "Mannerheimintie 27",
+    "streetAddressExtra": "B 9"
+  },
+  "cart": [
+    {
+      "sku": "custom-map-print-30x40cm",
+      "quantity": 1,
+      "customisation": {
+        "autoUpdateCoordinates": true,
+        "labelHeader": "香港",
+        "labelSmallHeader": "Hong Kong",
+        "labelText": "22.280°N / 114.174°E",
+        "labelTextManual": null,
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapBounds": {
+          "northEast": {
+            "lat": 22.517631421923777,
+            "lng": 114.51736450195314
+          },
+          "southWest": {
+            "lat": 22.041094579914038,
+            "lng": 113.83071899414064
+          }
+        },
+        "mapCenter": {
+          "lat": 22.279565983835266,
+          "lng": 114.17404174804689
+        },
+        "mapPitch": 0,
+        "mapStyle": "gray",
+        "mapZoom": 10,
+        "orientation": "landscape",
+        "posterStyle": "sans"
+      }
+    },
+    {
+      "sku": "shipping-express",
+      "quantity": 1
+    },
+    {
+      "sku": "production-high-priority",
+      "quantity": 1
+    }
+  ],
+  "differentBillingAddress": true,
+  "email": "brad.pitt@gmail.com",
+  "emailSubscription": true,
+  "shippingAddress": {
+    "city": "Helsinki",
+    "contactPhone": "0501234567",
+    "countryCode": "FI",
+    "personName": "Brad Pitt",
+    "postalCode": "00100",
+    "streetAddress": "Mannerheimintie 18",
+    "streetAddressExtra": "A 129"
+  }
+}

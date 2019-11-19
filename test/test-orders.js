@@ -33,6 +33,10 @@ const data = {
     request: require('./resources/order8-request.json'),
     response: require('./resources/order8-response.json'),
   },
+  order9: {
+    request: require('./resources/order9-request.json'),
+    response: require('./resources/order9-response.json'),
+  },
 };
 
 function test() {
@@ -177,6 +181,17 @@ function test() {
 
         // This should be returned
         paid: false,
+      });
+
+      expect(order).to.deep.equal(expectedResponse);
+    });
+
+    it('order with JPY currency', async () => {
+      const order = await createAndPayOrder(data.order9.request);
+      const expectedResponse = _.merge({}, data.order9.response, {
+        // Add backend generated fields
+        orderId: order.orderId,
+        createdAt: order.createdAt,
       });
 
       expect(order).to.deep.equal(expectedResponse);
