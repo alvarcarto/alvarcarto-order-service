@@ -61,16 +61,6 @@ function test() {
       expect(order).to.deep.equal(expectedResponse);
     });
 
-    it('order with too high price should be rejected', () => {
-      const modifiedRequest = _.cloneDeep(data.order1.request);
-      modifiedRequest.cart[0].quantity = 300;
-
-      return request()
-        .post('/api/orders')
-        .send(modifiedRequest)
-        .expect(400);
-    });
-
     it('order with an expired promotion code should be rejected', async () => {
       await runFixture(fixturePromotions);
 
