@@ -6,7 +6,7 @@ const { knex } = require('../util/database');
 const config = require('../config');
 
 const PROMOTION_PERIODS = [
-  { start: moment('2019-10-28T23:00:00Z'), end: moment('2019-12-02T12:00:00Z'), promotionCode: 'FIXED5' },
+  { start: moment('2019-11-28T23:00:00Z'), end: moment('2019-12-02T12:00:00Z'), promotionCode: 'BLACKFRIDAY19' },
 ];
 
 if (config.NODE_ENV === 'test') {
