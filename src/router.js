@@ -86,6 +86,8 @@ function createJsonRouter() {
     promotion.getPromotion,
   );
 
+  router.get('/api/currentPromotion', promotion.getCurrentPromotion);
+
   const postWebhookPrintmotor = {
     body: printmotorWebhookPayloadSchema,
   };
