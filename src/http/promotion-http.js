@@ -37,8 +37,20 @@ const getPromotion = ex.createJsonRoute((req) => {
     });
 });
 
+const getCurrentPromotion = ex.createJsonRoute(() => {
+  return promotionCore.getCurrentPromotion()
+    .then((promotion) => {
+      if (!promotion) {
+        return ex.throwStatus(404, 'Promotion not found');
+      }
+
+      return promotion;
+    });
+});
+
 module.exports = {
   getPromotion,
+  getCurrentPromotion,
   postPromotion,
   getPromotions,
 };

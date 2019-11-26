@@ -1,7 +1,22 @@
 const BPromise = require('bluebird');
 const _ = require('lodash');
+const logger = require('../util/logger')(__filename);
 const { moment } = require('../util/moment');
 const { knex } = require('../util/database');
+const config = require('../config');
+
+const PROMOTION_PERIODS = [
+  { start: moment('2019-11-28T23:00:00Z'), end: moment('2019-12-02T12:00:00Z'), promotionCode: 'BLACKFRIDAY19' },
+];
+
+if (config.NODE_ENV === 'test') {
+  // Insert a test code before everything else in test mode.
+  PROMOTION_PERIODS.unshift({
+    start: moment('2010-01-01T00:00:00Z'),
+    end: moment('2030-01-01T00:00:00Z'),
+    promotionCode: 'FIXED5',
+  });
+}
 
 function getPromotions() {
   return knex.raw(`
@@ -56,6 +71,25 @@ function getPromotion(code) {
 
       return _rowToPromotionObject(result.rows[0]);
     });
+}
+
+async function getCurrentPromotion() {
+  const now = moment();
+  const currentPeriod = _.find(PROMOTION_PERIODS, (period) => {
+    return now.isBetween(period.start, period.end);
+  });
+
+  if (!_.isPlainObject(currentPeriod)) {
+    return undefined;
+  }
+
+  const promotion = await getPromotion(currentPeriod.promotionCode);
+  if (_.isPlainObject(promotion) && promotion.hasExpired) {
+    logger.warn(`Warning: promotion code ${currentPeriod.promotionCode} has expired!`);
+    return undefined;
+  }
+
+  return promotion;
 }
 
 function createPromotion(promotion) {
@@ -124,6 +158,7 @@ function _hasPromotionExpired(obj) {
 
 module.exports = {
   getPromotion,
+  getCurrentPromotion,
   createPromotion,
   getPromotions,
 };

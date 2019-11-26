@@ -69,6 +69,31 @@ function test() {
         .expect(401);
     });
 
+    it('current promotion should return 404 when not found', async () => {
+      // No fixtures run here
+      await request()
+        .get('/api/currentPromotion')
+        .expect(404);
+    });
+
+    it('current promotion should work', async () => {
+      await runFixture(fixturePromotions);
+
+      const res = await request()
+        .get('/api/currentPromotion')
+        .expect(200);
+
+      const withoutDynamic = _.omit(res.body, ['createdAt']);
+      expect(withoutDynamic).to.deep.equal({
+        currency: 'EUR',
+        hasExpired: false,
+        label: '-5€',
+        promotionCode: 'FIXED5',
+        type: 'FIXED',
+        value: 500,
+      });
+    });
+
     it('creating a promotion should work', async () => {
       const res = await request()
         .post('/api/promotions')
