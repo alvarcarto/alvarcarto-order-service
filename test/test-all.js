@@ -6,6 +6,7 @@ const appConfig = require('../src/config');
 const testHealth = require('./test-health');
 const testProducts = require('./test-products');
 const testOrders = require('./test-orders');
+const testMessages = require('./test-messages');
 const testBadOrders = require('./test-bad-orders');
 const testPromotions = require('./test-promotions');
 const testPrintmotor = require('./test-printmotor');
@@ -24,5 +25,6 @@ describe('Alvar Carto Order API', () => {
   testOrders();
   testBadOrders();
   testPromotions();
+  testMessages();
   testPrintmotor();
 });

@@ -10,6 +10,7 @@ const product = require('./http/product-http');
 const health = require('./http/health-http');
 const receipt = require('./http/receipt-http');
 const webhook = require('./http/webhook-http');
+const message = require('./http/message-http');
 const promotion = require('./http/promotion-http');
 const {
   printmotorWebhookPayloadSchema,
@@ -87,6 +88,8 @@ function createJsonRouter() {
   );
 
   router.get('/api/currentPromotion', promotion.getCurrentPromotion);
+
+  router.get('/api/currentMessage', message.getCurrentMessage);
 
   const postWebhookPrintmotor = {
     body: printmotorWebhookPayloadSchema,
