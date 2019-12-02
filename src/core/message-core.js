@@ -8,7 +8,16 @@ const MESSAGES = [
     end: moment('2019-12-02T12:00:00Z'),
     title: 'Black Weekend is here!',
     message: 'Get -20% off from all our products during the weekend.',
+    // Supported icons here: https://ant.design/components/icon/
+    // (make sure you check the correct antd version)
     icon: 'fire',
+  },
+  {
+    start: moment('2019-01-12T00:00:00Z'),
+    end: moment('2019-12-24T00:00:00Z'),
+    title: 'Order Christmas presents in time',
+    message: 'Place your order at latest 14th of December to make sure your presents arrive in time!',
+    icon: 'gift',
   },
 ];
 
