@@ -15,8 +15,8 @@ const MESSAGES = [
   {
     start: moment('2019-01-12T00:00:00Z'),
     end: moment('2019-12-24T00:00:00Z'),
-    title: 'Order Christmas presents in time',
-    message: 'Place your order at latest 14th of December to make sure your presents arrive in time!',
+    title: 'Order your Christmas presents in time!',
+    message: 'Place your order on 14th of December at latest to make sure your presents arrive in time.',
     icon: 'gift',
   },
 ];
