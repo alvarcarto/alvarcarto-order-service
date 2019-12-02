@@ -76,7 +76,7 @@ const reactions = {
     const deliveryUpdates = _.filter(order.sentEmails, mail => mail.type === 'delivery-update');
     // Delivery started has been sent if we are here, so subtract 1 from max emails
     if (deliveryUpdates.length > (MAX_DELIVERY_EMAILS - 1)) {
-      const msg = `USER_ORDER_DELIVERED called ${MAX_DELIVERY_EMAILS} times`;
+      const msg = `Refusing to send over ${MAX_DELIVERY_EMAILS} emails (${prettyOrderId})`;
       logger.logEncrypted('error', msg, payload);
       throw new Error(msg);
     }
