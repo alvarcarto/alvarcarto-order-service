@@ -297,7 +297,7 @@ function getCountry(order) {
 
 function getOrderDestinationDescription(order) {
   const countryCode = _.get(order, 'shippingAddress.countryCode', 'FI');
-  if (countryCode === 'FI') {
+  if (countryCode === 'FI' || countryCode === 'AX') {
     return 'a Matkahuolto service point near the following address';
   }
 
