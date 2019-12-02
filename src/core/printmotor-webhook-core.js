@@ -7,6 +7,10 @@ const orderCore = require('../core/order-core');
 const emailCore = require('../core/email-core');
 const config = require('../config');
 
+// How many emails is maximum that we will send to our customers.
+// Includes delivery-started and delivery-update emails
+const MAX_DELIVERY_EMAILS = 3;
+
 const reactions = {
   USER_ORDER_CREATED: (payload) => {
     const printmotorOrderId = _.get(payload, 'userOrder.orderNumber');
@@ -20,7 +24,7 @@ const reactions = {
     return BPromise.resolve();
   },
 
-  USER_ORDER_DELIVERED: (payload) => {
+  USER_ORDER_DELIVERED: async (payload) => {
     const trackingCode = _.get(payload, 'userOrder.meta.trackingCode');
     if (!trackingCode) {
       const err = new Error('No tracking code found from payload');
@@ -28,61 +32,56 @@ const reactions = {
       throw err;
     }
 
-    const { userOrder } = payload;
-    const printmotorId = String(userOrder.orderNumber);
+    const printmotorUserOrder = payload.userOrder;
+    const printmotorId = String(printmotorUserOrder.orderNumber);
 
-    return knex('orders')
+    const rows = await knex('orders')
       .select('pretty_order_id')
-      .where({ printmotor_order_id: printmotorId })
-      .then((rows) => {
-        const prettyOrderId = _.get(rows, '0.pretty_order_id');
-        if (!prettyOrderId) {
-          const msg = `Pretty order id not found from printmotor id: ${printmotorId}`;
-          logger.logEncrypted('warn', msg, payload);
-          const err = new Error(msg);
-          throw err;
-        }
+      .where({ printmotor_order_id: printmotorId });
 
-        return BPromise.props({
-          order: orderCore.getOrder(prettyOrderId, { allFields: true }),
-          prettyOrderId,
-        });
-      })
-      .then(({ order, prettyOrderId }) => {
-        if (!order) {
-          throw new Error(`Order not found with pretty id: ${prettyOrderId}`);
-        }
+    const prettyOrderId = _.get(rows, '0.pretty_order_id');
+    if (!prettyOrderId) {
+      const msg = `Pretty order id not found from printmotor id: ${printmotorId}`;
+      logger.logEncrypted('warn', msg, payload);
+      throw new Error(msg);
+    }
 
-        return BPromise.props({
-          rows: knex('order_events')
-            .select('*')
-            .where({
-              order_id: knex.raw('(SELECT id FROM orders WHERE printmotor_order_id = ?)', [printmotorId]),
-              source: 'PRINTMOTOR',
-              event: 'USER_ORDER_DELIVERED',
-            }),
-          order,
-        });
-      })
-      .tap(({ order, rows }) => {
-        if (_.isArray(rows) && rows.length > 1) {
-          throw new Error('USER_ORDER_DELIVERED called multiple times');
-        }
+    const order = await orderCore.getOrder(prettyOrderId, { allFields: true });
 
-        const link = _.get(userOrder, 'meta.externalTrackingLinks.0.absoluteUrl');
-        if (!link) {
-          const err = new Error('No tracking url found from webhook payload');
-          err.status = 400;
-          throw err;
-        }
+    if (!order) {
+      throw new Error(`Order not found with pretty id: ${prettyOrderId}`);
+    }
 
-        const trackingInfo = {
-          code: _.get(userOrder, 'meta.trackingCode'),
-          url: link,
-        };
+    const link = _.get(printmotorUserOrder, 'meta.externalTrackingLinks.0.absoluteUrl');
+    if (!link) {
+      const err = new Error('No tracking url found from webhook payload');
+      err.status = 400;
+      throw err;
+    }
 
-        return emailCore.sendDeliveryStarted(order, trackingInfo);
-      });
+    const trackingInfo = {
+      code: _.get(printmotorUserOrder, 'meta.trackingCode'),
+      url: link,
+    };
+
+    const deliveryStartedSent = _.findIndex(
+      order.sentEmails,
+      mail => mail.type === 'delivery-started',
+    ) !== -1;
+    if (!deliveryStartedSent) {
+      await emailCore.sendDeliveryStarted(order, trackingInfo);
+      return;
+    }
+
+    const deliveryUpdates = _.filter(order.sentEmails, mail => mail.type === 'delivery-update');
+    // Delivery started has been sent if we are here, so subtract 1 from max emails
+    if (deliveryUpdates.length > (MAX_DELIVERY_EMAILS - 1)) {
+      const msg = `Refusing to send over ${MAX_DELIVERY_EMAILS} emails (${prettyOrderId})`;
+      logger.logEncrypted('error', msg, payload);
+      throw new Error(msg);
+    }
+
+    await emailCore.sendDeliveryUpdate(order, trackingInfo);
   },
 };
 

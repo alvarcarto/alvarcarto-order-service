@@ -24,6 +24,7 @@ const client = config.MOCK_EMAIL || config.NODE_ENV === 'test'
 const receiptHtmlTemplate = readFileSync('email-templates/receipt.inlined.html');
 const receiptTextTemplate = readFileSync('email-templates/receipt.txt');
 const deliveryStartedHtmlTemplate = readFileSync('email-templates/delivery-started.inlined.html');
+const deliveryUpdateHtmlTemplate = readFileSync('email-templates/delivery-update.inlined.html');
 const deliveryStartedTextTemplate = readFileSync('email-templates/delivery-started.txt');
 const deliveryLateHtmlTemplate = readFileSync('email-templates/delivery-late.inlined.html');
 const deliveryLateTextTemplate = readFileSync('email-templates/delivery-late.txt');
@@ -68,6 +69,20 @@ function sendDeliveryStarted(order, trackingInfo) {
   };
   return sendEmailAsync(messageObject)
     .tap(response => saveEmailEvent('delivery-started', [order], messageObject, response));
+}
+
+function sendDeliveryUpdate(order, trackingInfo) {
+  logger.logEncrypted('info', 'Sending delivery started email to', order.email);
+
+  const templateModel = createDeliveryStartedTemplateModel(order, trackingInfo);
+  const messageObject = {
+    From: 'help@alvarcarto.com',
+    To: order.email,
+    Subject: `Update to your order's shipping details (#${order.orderId})`,
+    HtmlBody: Mustache.render(deliveryUpdateHtmlTemplate, templateModel),
+  };
+  return sendEmailAsync(messageObject)
+    .tap(response => saveEmailEvent('delivery-update', [order], messageObject, response));
 }
 
 function sendDeliveryReminderToPrintmotor(lateOrders) {
@@ -383,6 +398,7 @@ function sendEmailAsync(messageObject) {
 module.exports = {
   sendReceipt,
   sendDeliveryStarted,
+  sendDeliveryUpdate,
   sendDeliveryReminderToPrintmotor,
   sendDeliveryLate,
   renderReceiptToText,
