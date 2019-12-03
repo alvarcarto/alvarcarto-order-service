@@ -1,6 +1,6 @@
 const util = require('util');
 const _ = require('lodash');
-const { calculateItemPrice, calculateCartPrice } = require('alvarcarto-price-util');
+const { calculateItemPrice, calculateCartPrice, getProduct } = require('alvarcarto-price-util');
 const promiseRetryify = require('promise-retryify');
 const BPromise = require('bluebird');
 const { moment } = require('../util/moment');
@@ -17,6 +17,7 @@ const printmotorCore = require('./printmotor-core');
 const config = require('../config');
 const { retryingSaveFailedOrder } = require('./fail-safe-core');
 const { diffInWorkingDays } = require('../util/time');
+const { filterMapPosterCart, getShipToCountry } = require('../util');
 
 // Creates a guaranteed unique ID by checking that it's not written to orders
 // table yet. Retries to create a new order ID if the previously generated was
@@ -70,8 +71,8 @@ function createOrder(order) {
 
       return _createOrder(fullOrder, { trx });
     })
-    .tap(orderRow => _createOrderedPosters(orderRow.id, order.cart, { trx }))
-    .tap(orderRow => _createOrderedGiftItems(orderRow.id, order.cart, { trx }))
+    .tap(orderRow => _createOrderedPosters(orderRow.id, order, { trx }))
+    .tap(orderRow => _createOrderedGiftItems(orderRow.id, order, { trx }))
     .tap((orderRow) => {
       if (!order.shippingAddress) {
         return BPromise.resolve();
@@ -134,6 +135,7 @@ function getOrder(orderId, opts = {}) {
       const partialOrder = {
         orderId: fullOrder.orderId,
         cart: fullOrder.cart,
+        currency: fullOrder.currency,
         paid: fullOrder.paid,
         promotion: fullOrder.promotion,
         createdAt: fullOrder.createdAt,
@@ -541,49 +543,64 @@ async function _rowsToOrderObject(rows) {
 
   const cart = _.map(uniqueCartRows, (row) => {
     if (row.gift_item_id !== null) {
-      return _.omitBy({
+      const giftObj = {
         id: row.gift_item_id,
-        type: row.gift_item_type,
+        sku: row.gift_item_type,
         quantity: row.gift_item_quantity,
-        value: row.gift_item_value,
-      }, _.isNil);
+      };
+
+      if (row.gift_item_value) {
+        giftObj.customisation = {
+          netValue: row.gift_item_value,
+        };
+      }
+
+      return _.omitBy(giftObj, _.isNil);
     }
 
     return {
       id: row.ordered_poster_id,
-      type: 'mapPoster',
+      sku: `custom-map-print-${row.size}`,
       quantity: row.quantity,
-      mapCenter: { lat: row.map_center_lat, lng: row.map_center_lng },
-      mapBounds: {
-        southWest: { lat: row.map_south_west_lat, lng: row.map_south_west_lng },
-        northEast: { lat: row.map_north_east_lat, lng: row.map_north_east_lng },
+      customisation: {
+        mapCenter: { lat: row.map_center_lat, lng: row.map_center_lng },
+        mapBounds: {
+          southWest: { lat: row.map_south_west_lat, lng: row.map_south_west_lng },
+          northEast: { lat: row.map_north_east_lat, lng: row.map_north_east_lng },
+        },
+        mapZoom: row.map_zoom,
+        mapStyle: row.map_style,
+        posterStyle: row.poster_style,
+        mapPitch: row.map_pitch,
+        mapBearing: row.map_bearing,
+        orientation: row.orientation,
+        size: row.size,
+        labelsEnabled: row.labels_enabled,
+        labelHeader: row.label_header,
+        labelSmallHeader: row.label_small_header,
+        labelText: row.label_text,
       },
-      mapZoom: row.map_zoom,
-      mapStyle: row.map_style,
-      posterStyle: row.poster_style,
-      mapPitch: row.map_pitch,
-      mapBearing: row.map_bearing,
-      orientation: row.orientation,
-      size: row.size,
-      labelsEnabled: row.labels_enabled,
-      labelHeader: row.label_header,
-      labelSmallHeader: row.label_small_header,
-      labelText: row.label_text,
     };
   });
 
   // Sort cart items so that they are in the same order as they were saved in
   // inside one type
-  const sortedCart = _.orderBy(cart, ['type', 'id']);
+  const sortedCart = _.orderBy(cart, ['sku', 'id']);
 
   // All rows should contain same info `orders` table rows, so we just pick first
   const firstRow = rows[0];
 
   // Always add shippingClass as the cart item to. This way it will show up on receipt etc
-  sortedCart.push({ type: 'shippingClass', value: firstRow.shipping_class || 'EXPRESS', quantity: 1 });
+  const shippingClass = firstRow.shipping_class
+    ? firstRow.shipping_class
+    : 'EXPRESS';
 
-  if (firstRow.production_class) {
-    sortedCart.push({ type: 'productionClass', value: firstRow.production_class, quantity: 1 });
+  const shippingId = `shipping-${shippingClass.toLowerCase()}`;
+  sortedCart.push({ sku: shippingId, quantity: 1 });
+
+  if (firstRow.production_class === 'HIGH') {
+    const productionId = `production-${firstRow.production_class.toLowerCase()}-priority`;
+    sortedCart.push({ sku: productionId, quantity: 1 });
   }
 
   const sentEmailsRows = _.uniqBy(_.filter(rows, row => row.sent_email_id !== null), (row) => {
@@ -633,7 +650,10 @@ async function _rowsToOrderObject(rows) {
     order.promotion = await promotionCore.getPromotion(order.promotionCode);
   }
 
-  const originalPrice = calculateCartPrice(order.cart, { currency: order.currency });
+  const originalPrice = calculateCartPrice(order.cart, {
+    currency: order.currency,
+    shipToCountry: getShipToCountry(order),
+  });
   const paidSum = _.sumBy(order.payments, (payment) => {
     if (payment.type !== PAYMENT_TYPE.CHARGE) {
       return 0;
@@ -700,7 +720,10 @@ function _saveErrorInBackgroundAndRethrow(err, fullOrder) {
 function _createOrder(order, opts = {}) {
   const trx = opts.trx || knex;
 
-  const originalPrice = calculateCartPrice(order.cart, { currency: order.currency });
+  const originalPrice = calculateCartPrice(order.cart, {
+    currency: order.currency,
+    shipToCountry: getShipToCountry(order),
+  });
 
   const insertObj = {
     pretty_order_id: order.prettyOrderId,
@@ -746,12 +769,18 @@ function _createAddress(orderId, address, opts = {}) {
     .then(rows => rows[0]);
 }
 
-function _createOrderedPosters(orderId, cart, opts = {}) {
+function _createOrderedPosters(orderId, order, opts = {}) {
   const trx = opts.trx || knex;
 
-  const posterItems = _.filter(cart, item => _.isNil(item.type) || item.type === 'mapPoster');
+  const posterItems = filterMapPosterCart(order.cart);
   return BPromise.mapSeries(posterItems, (item) => {
-    const unitPrice = calculateItemPrice(item, { onlyUnitPrice: true });
+    const unitPrice = calculateItemPrice(item, {
+      currency: order.currency,
+      shipToCountry: getShipToCountry(order),
+      onlyUnitPrice: true,
+    });
+
+    const { size } = getProduct(item.sku).metadata;
 
     return trx('ordered_posters')
       .insert({
@@ -759,42 +788,46 @@ function _createOrderedPosters(orderId, cart, opts = {}) {
         quantity: item.quantity,
         customer_unit_price_value: unitPrice.value,
         customer_unit_price_currency: unitPrice.currency,
-        map_south_west_lat: item.mapBounds.southWest.lat,
-        map_south_west_lng: item.mapBounds.southWest.lng,
-        map_north_east_lat: item.mapBounds.northEast.lat,
-        map_north_east_lng: item.mapBounds.northEast.lng,
-        map_center_lat: item.mapCenter.lat,
-        map_center_lng: item.mapCenter.lng,
-        map_zoom: item.mapZoom,
-        map_style: item.mapStyle,
-        poster_style: item.posterStyle,
-        map_pitch: item.mapPitch,
-        map_bearing: item.mapBearing,
-        size: item.size,
-        orientation: item.orientation,
-        labels_enabled: item.labelsEnabled,
-        label_header: item.labelHeader,
-        label_small_header: item.labelSmallHeader,
-        label_text: item.labelText,
+        map_south_west_lat: item.customisation.mapBounds.southWest.lat,
+        map_south_west_lng: item.customisation.mapBounds.southWest.lng,
+        map_north_east_lat: item.customisation.mapBounds.northEast.lat,
+        map_north_east_lng: item.customisation.mapBounds.northEast.lng,
+        map_center_lat: item.customisation.mapCenter.lat,
+        map_center_lng: item.customisation.mapCenter.lng,
+        map_zoom: item.customisation.mapZoom,
+        map_style: item.customisation.mapStyle,
+        poster_style: item.customisation.posterStyle,
+        map_pitch: item.customisation.mapPitch,
+        map_bearing: item.customisation.mapBearing,
+        size,
+        orientation: item.customisation.orientation,
+        labels_enabled: item.customisation.labelsEnabled,
+        label_header: item.customisation.labelHeader,
+        label_small_header: item.customisation.labelSmallHeader,
+        label_text: item.customisation.labelText,
       })
       .returning('*')
       .then(rows => rows[0]);
   });
 }
 
-function _createOrderedGiftItems(orderId, cart, opts = {}) {
+function _createOrderedGiftItems(orderId, order, opts = {}) {
   const trx = opts.trx || knex;
 
-  const giftItems = _.filter(cart, item => _.includes(['giftCardValue', 'physicalGiftCard'], item.type));
+  const giftItems = _.filter(order.cart, item => _.includes(['gift-card-value', 'physical-gift-card'], item.sku));
   return BPromise.mapSeries(giftItems, (item) => {
-    const unitPrice = calculateItemPrice(item, { onlyUnitPrice: true });
+    const unitPrice = calculateItemPrice(item, {
+      currency: order.currency,
+      shipToCountry: getShipToCountry(order),
+      onlyUnitPrice: true,
+    });
 
     return trx('ordered_gift_items')
       .insert({
         order_id: orderId,
         quantity: item.quantity,
-        type: item.type,
-        value: item.value,
+        type: item.sku,
+        value: _.get(item, 'customisation.netValue'),
         customer_unit_price_value: unitPrice.value,
         customer_unit_price_currency: unitPrice.currency,
       })

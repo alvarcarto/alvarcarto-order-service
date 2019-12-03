@@ -1,20 +1,15 @@
 const _ = require('lodash');
-const { oneLine } = require('common-tags');
-const { calculateCartPrice } = require('alvarcarto-price-util');
-const logger = require('../util/logger')(__filename);
+const { calculateCartPrice, isSupportedCurrency } = require('alvarcarto-price-util');
 const { throwStatus } = require('../util/express');
 const orderCore = require('../core/order-core');
 const emailCore = require('../core/email-core');
 const promotionCore = require('../core/promotion-core');
 const { stripeInstance } = require('../util/stripe');
-const { filterMapPosterCart } = require('../util');
+const { filterMapPosterCart, getShipToCountry } = require('../util');
 const config = require('../config');
 
 const STRIPE_META_KEY_MAX_LEN = 40;
 const STRIPE_META_VALUE_MAX_LEN = 500;
-const HARD_LIMIT_MAX = 10000 * 100;
-const ALERT_LIMIT_MIN = 25 * 100;
-const ALERT_LIMIT_MAX = 500 * 100;
 
 async function executeCheckout(inputOrder) {
   const promotion = await promotionCore.getPromotion(inputOrder.promotionCode);
@@ -22,31 +17,26 @@ async function executeCheckout(inputOrder) {
     throwStatus(400, `Promotion code ${promotion.promotionCode} has expired`);
   }
 
+  if (!isSupportedCurrency(inputOrder.currency)) {
+    throwStatus(400, `Unaccepted currency: ${inputOrder.currency}`);
+  }
+
+  const shipToCountry = getShipToCountry(inputOrder);
   // Promotion is either null or promotion object
-  const price = calculateCartPrice(inputOrder.cart, { currency: inputOrder.currency, promotion });
-  if (price.value >= HARD_LIMIT_MAX) {
-    logger.error(`Calculated price exceeded maximum safe limit: ${price}`);
-    throwStatus(400, oneLine`
-      The total price of the order is very high.
-      Please contact help@alvarcarto.com to continue with the order.
-    `);
-  }
-
-  if (price.value >= ALERT_LIMIT_MAX) {
-    logger.warn(`alert-business-critical Calculated price was over alert limit: ${price.label}`);
-    logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
-  }
-
-  if (price.value <= ALERT_LIMIT_MIN) {
-    logger.warn(`Calculated price was under low alert limit: ${price.label}`);
-    logger.logEncrypted('warn', 'Full incoming order:', inputOrder);
-  }
+  const price = calculateCartPrice(inputOrder.cart, {
+    currency: inputOrder.currency,
+    shipToCountry,
+    promotion,
+  });
 
   const createdOrder = await orderCore.createOrder(inputOrder);
 
   const isFreeOrder = price.value <= 0;
   if (isFreeOrder) {
-    const originalPrice = calculateCartPrice(inputOrder.cart, { currency: inputOrder.currency });
+    const originalPrice = calculateCartPrice(inputOrder.cart, {
+      currency: inputOrder.currency,
+      shipToCountry: getShipToCountry(inputOrder),
+    });
     await orderCore.createPayment(createdOrder.orderId, {
       paymentProvider: 'PROMOTION',
       type: 'CHARGE',
@@ -107,7 +97,6 @@ function createStripeMetadata(fullOrder) {
 
 function _createCartMetas(cart) {
   return {
-    itemTypes: _.map(cart, item => _.get(item, 'type')).join('; '),
     posterQuantities: _.map(cart, item => `${_.get(item, 'quantity')}x`).join('; '),
     sizes: _.map(cart, item => _.get(item, 'size')).join('; '),
     orientations: _.map(cart, item => _.get(item, 'orientation')).join('; '),

@@ -1,4 +1,5 @@
 {
+  "currency": "EUR",
   "billingAddress": {
     "city": "Helsinki",
     "countryCode": "FI",
@@ -9,65 +10,69 @@
   },
   "cart": [
     {
-      "type": "mapPoster",
-      "autoUpdateCoordinates": true,
-      "labelHeader": "Barcelona",
-      "labelSmallHeader": "Catalonia",
-      "labelText": "41.382°N / 2.167°E",
-      "labelTextManual": null,
-      "labelsEnabled": true,
-      "mapBearing": 0,
-      "mapBounds": {
-        "northEast": {
-          "lat": 41.596342070634314,
-          "lng": 2.370559900917968
-        },
-        "southWest": {
-          "lat": 41.16792451716633,
-          "lng": 1.9627132772477298
-        }
-      },
-      "mapCenter": {
-        "lat": 41.382374,
-        "lng": 2.166612
-      },
-      "mapPitch": 0,
-      "mapStyle": "bw",
-      "mapZoom": 10.5,
-      "orientation": "portrait",
-      "posterStyle": "sharp",
+      "sku": "custom-map-print-50x70cm",
       "quantity": 2,
-      "size": "50x70cm"
+      "customisation": {
+        "autoUpdateCoordinates": true,
+        "labelHeader": "Barcelona",
+        "labelSmallHeader": "Catalonia",
+        "labelText": "41.382°N / 2.167°E",
+        "labelTextManual": null,
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapBounds": {
+          "northEast": {
+            "lat": 41.596342070634314,
+            "lng": 2.370559900917968
+          },
+          "southWest": {
+            "lat": 41.16792451716633,
+            "lng": 1.9627132772477298
+          }
+        },
+        "mapCenter": {
+          "lat": 41.382374,
+          "lng": 2.166612
+        },
+        "mapPitch": 0,
+        "mapStyle": "bw",
+        "mapZoom": 10.5,
+        "orientation": "portrait",
+        "posterStyle": "sharp",
+        "size": "50x70cm"
+      }
     },
     {
-      "autoUpdateCoordinates": true,
-      "labelHeader": "香港",
-      "labelSmallHeader": "Hong Kong",
-      "labelText": "22.280°N / 114.174°E",
-      "labelTextManual": null,
-      "labelsEnabled": true,
-      "mapBearing": 0,
-      "mapBounds": {
-        "northEast": {
-          "lat": 22.517631421923777,
-          "lng": 114.51736450195314
-        },
-        "southWest": {
-          "lat": 22.041094579914038,
-          "lng": 113.83071899414064
-        }
-      },
-      "mapCenter": {
-        "lat": 22.279565983835266,
-        "lng": 114.17404174804689
-      },
-      "mapPitch": 0,
-      "mapStyle": "gray",
-      "mapZoom": 10,
-      "orientation": "landscape",
-      "posterStyle": "sans",
+      "sku": "custom-map-print-30x40cm",
       "quantity": 1,
-      "size": "30x40cm"
+      "customisation": {
+        "autoUpdateCoordinates": true,
+        "labelHeader": "香港",
+        "labelSmallHeader": "Hong Kong",
+        "labelText": "22.280°N / 114.174°E",
+        "labelTextManual": null,
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapBounds": {
+          "northEast": {
+            "lat": 22.517631421923777,
+            "lng": 114.51736450195314
+          },
+          "southWest": {
+            "lat": 22.041094579914038,
+            "lng": 113.83071899414064
+          }
+        },
+        "mapCenter": {
+          "lat": 22.279565983835266,
+          "lng": 114.17404174804689
+        },
+        "mapPitch": 0,
+        "mapStyle": "gray",
+        "mapZoom": 10,
+        "orientation": "landscape",
+        "posterStyle": "sans"
+      }
     }
   ],
   "differentBillingAddress": true,

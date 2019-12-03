@@ -62,8 +62,12 @@ async function withStripePaymentIntentCreateStub(clientOrder, _opts, func) {
   }
 
   const opts = _.merge({
-    currency: clientOrder.currency || 'eur',
-    amount: calculateCartPrice(clientOrder.cart, { promotion, ignorePromotionExpiry: true }).value,
+    currency: clientOrder.currency.toLowerCase() || 'eur',
+    amount: calculateCartPrice(clientOrder.cart, {
+      currency: clientOrder.currency,
+      promotion,
+      ignorePromotionExpiry: true,
+    }).value,
   }, _opts);
 
   const intent = createPaymentIntent(clientOrder, opts);
@@ -88,6 +92,7 @@ async function sendStripePaymentIntentSuccess(fullClientOrder, _opts) {
   }
 
   const price = calculateCartPrice(fullClientOrder.cart, {
+    currency: fullClientOrder.currency,
     promotion,
     ignorePromotionExpiry: true,
   });

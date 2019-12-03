@@ -1,15 +1,19 @@
 const BPromise = require('bluebird');
 const postmark = require('postmark');
 const Mustache = require('mustache');
+const { stripIndent } = require('common-tags');
 const _ = require('lodash');
 const countries = require('i18n-iso-countries');
 const { oneLine } = require('common-tags');
-const {
-  calculateItemPrice, calculateCartPrice, getCurrencySymbol, getItemLabel,
-} = require('alvarcarto-price-util');
+const { calculateItemPrice, calculateCartPrice, getProduct } = require('alvarcarto-price-util');
 const moment = require('../util/moment').momentTimezone;
 const logger = require('../util/logger')(__filename);
-const { readFileSync } = require('../util');
+const {
+  readFileSync,
+  getShipToCountry,
+  filterMapPosterCart,
+  filterOtherItemsCart,
+} = require('../util');
 const PAYMENT_PROVIDER = require('../enums/payment-provider');
 const PAYMENT_PROVIDER_METHOD = require('../enums/payment-provider-method');
 const config = require('../config');
@@ -135,7 +139,7 @@ function renderReceiptToHtml(order) {
 
 function createDeliveryStartedTemplateModel(order, trackingInfo) {
   const customerName = getBuyerCustomerName(order);
-  const countryCode = _.get(order, 'shippingAddress.countryCode');
+  const countryCode = getShipToCountry(order);
   const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
   return {
     name: getFirstName(customerName),
@@ -177,37 +181,31 @@ function createDeliveryReminderToPrintmotorTemplateModel(lateOrders) {
 }
 
 function createReceiptTemplateModel(order) {
-  const customerName = getBuyerCustomerName(order);
-
   const totalPrice = calculateCartPrice(order.cart, {
     promotion: order.promotion,
-    shipToCountry: _.get(order, 'shippingAddress.countryCode', 'FI'),
+    shipToCountry: getShipToCountry(order),
     currency: order.currency,
     ignorePromotionExpiry: true,
   });
 
-  const mapCart = _.filter(order.cart, item => !item.type || item.type === 'mapPoster');
-  let receiptItems = cartToReceiptItems(mapCart);
+  const mapCart = filterMapPosterCart(order.cart);
+  let receiptItems = cartToReceiptItems(mapCart, order.currency);
 
   if (order.promotion) {
-    const discountCurrencySymbol = getCurrencySymbol(totalPrice.discount.currency);
-    const discountHumanValue = (-totalPrice.discount.value / 100).toFixed(2);
-    const discountPriceLabel = `${discountHumanValue}${discountCurrencySymbol}`;
-
     receiptItems.push({
-      description: `${order.promotion.label}`,
-      amount: discountPriceLabel,
+      description: order.promotion.label,
+      amount: `-${totalPrice.discount.label}`,
     });
   }
 
-  const otherCart = _.filter(order.cart, item => item.type && item.type !== 'mapPoster');
+  const otherCart = filterOtherItemsCart(order.cart);
   receiptItems = receiptItems.concat(cartToReceiptItems(otherCart));
-
-  const countryCode = _.get(order, 'shippingAddress.countryCode');
-  const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
+  const customerName = getBuyerCustomerName(order);
+  const deliveryText = getDeliveryInfoTextForReceipt(order);
 
   return {
     purchase_date: order.createdAt.format('MMMM Do YYYY'),
+    delivery_info_text: deliveryText,
     name: getFirstName(customerName),
     purchase_information: getPurchaseInformation(order),
     order_id: order.orderId,
@@ -219,21 +217,25 @@ function createReceiptTemplateModel(order) {
     shipping_postal_code: getPostalCode(order),
     shipping_country: getCountry(order),
     web_version_url: getOrderUrl(order),
-    min_delivery_business_days: timeEstimate.total.min,
-    max_delivery_business_days: timeEstimate.total.max,
     support_url: 'https://alvarcarto.com/help',
     year: moment().format('YYYY'),
-    vat_percentage: totalPrice.tax.taxPercentage,
-    total_vat_amount: totalPrice.tax.label,
+    receipt_taxes: taxesToReceiptItems(totalPrice.taxes),
   };
 }
 
-function cartToReceiptItems(cart) {
+function cartToReceiptItems(cart, currency) {
   return _.map(cart, item => ({
-    description: getItemLabel(item),
+    description: getProduct(item.sku).name,
     amount: item.quantity > 1
-      ? `${item.quantity}x ${getUnitPrice(item)}`
-      : `${getUnitPrice(item)}`,
+      ? `${item.quantity}x ${getUnitPriceLabel(item, currency)}`
+      : `${getUnitPriceLabel(item, currency)}`,
+  }));
+}
+
+function taxesToReceiptItems(taxes) {
+  return _.map(taxes, tax => ({
+    vat_percentage: tax.taxPercentage,
+    amount: tax.label,
   }));
 }
 
@@ -249,15 +251,27 @@ function getReceiverCustomerName(order) {
   return _.get(order, 'shippingAddress.personName', 'Poster Designer');
 }
 
+function getDeliveryInfoTextForReceipt(order) {
+  const countryCode = getShipToCountry(order);
+  if (!countryCode) {
+    return 'You should receive the digital items soon.';
+  }
+
+  const timeEstimate = getDeliveryEstimate(countryCode, order.cart);
+  return stripIndent`
+    The posters will be printed and shipped soon, we'll keep you up to date via email.
+    In our estimation, you should get the posters in ${timeEstimate.total.min} -
+    ${timeEstimate.total.max} business days.
+  `;
+}
+
 function getFirstName(fullName) {
   return _.head(fullName.split(' '));
 }
 
-function getUnitPrice(cartItem) {
-  const price = calculateItemPrice(cartItem, { onlyUnitPrice: true });
-  const value = (price.value / 100.0).toFixed(2);
-  const symbol = getCurrencySymbol(price.currency);
-  return `${value}${symbol}`;
+function getUnitPriceLabel(cartItem, currency) {
+  const price = calculateItemPrice(cartItem, { currency, onlyUnitPrice: true });
+  return price.label;
 }
 
 function getOrderUrl(order) {
@@ -404,12 +418,5 @@ module.exports = {
   renderReceiptToText,
   renderReceiptToHtml,
   createReceiptTemplateModel,
-  getFirstName,
-  getUnitPrice,
-  getOrderUrl,
-  getAddress,
-  getCity,
-  getPostalCode,
-  getCountry,
   sendEmailAsync,
 };

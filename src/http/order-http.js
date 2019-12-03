@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const { getProduct } = require('alvarcarto-price-util');
 const ex = require('../util/express');
 const orderCore = require('../core/order-core');
 const checkoutCore = require('../core/checkout-core');
@@ -24,7 +25,7 @@ const getOrder = ex.createJsonRoute((req) => {
 });
 
 function _hasShippableProducts(cart) {
-  return _.some(cart, item => item.type !== 'giftCardValue');
+  return _.some(cart, item => getProduct(item.sku).shippable);
 }
 
 module.exports = {

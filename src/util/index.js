@@ -11,12 +11,13 @@ function readFileSync(filePath) {
   return fs.readFileSync(path.join(rootDir, filePath), { encoding: 'utf8' });
 }
 
-function createPosterImageUrl(mapItem) {
-  const query = qs.stringify(createPosterUrlParameters(mapItem));
+function createPosterImageUrl(item) {
+  const query = qs.stringify(createPosterUrlParameters(item));
   return `${config.RENDER_API_URL}/api/raster/render?${query}`;
 }
 
-function createPosterUrlParameters(mapItem) {
+function createPosterUrlParameters(item) {
+  const mapItem = item.customisation;
   return {
     swLat: mapItem.mapBounds.southWest.lat,
     swLng: mapItem.mapBounds.southWest.lng,
@@ -34,25 +35,33 @@ function createPosterUrlParameters(mapItem) {
 }
 
 function resolveProductionClass(cart) {
-  const found = _.find(cart, i => i.type === 'productionClass');
+  const found = _.find(cart, i => i.sku === 'production-high-priority');
   if (found) {
-    return found.value;
+    return 'HIGH';
   }
 
-  return null;
+  return 'REGULAR';
 }
 
 function resolveShippingClass(cart) {
-  const found = _.find(cart, i => i.type === 'shippingClass');
+  const found = _.find(cart, i => i.sku === 'shipping-express');
   if (found) {
-    return found.value;
+    return 'EXPRESS';
   }
 
-  return null;
+  return 'EXPRESS';
+}
+
+function getShipToCountry(order) {
+  return _.get(order, 'shippingAddress.countryCode', undefined);
 }
 
 function filterMapPosterCart(cart) {
-  return _.filter(cart, item => !item.type || item.type === 'mapPoster');
+  return _.filter(cart, item => _.startsWith(item.sku, 'custom-map'));
+}
+
+function filterOtherItemsCart(cart) {
+  return _.filter(cart, item => !_.startsWith(item.sku, 'custom-map'));
 }
 
 function toLog(obj) {
@@ -100,5 +109,7 @@ module.exports = {
   resolveShippingClass,
   toLog,
   filterMapPosterCart,
+  filterOtherItemsCart,
   createRandomOrderId,
+  getShipToCountry,
 };

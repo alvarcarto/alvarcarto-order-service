@@ -80,7 +80,7 @@ function test() {
       assertErrorIsForField(res, 'cart.0.quantity');
     });
 
-    it('cart item type should default to mapPoster', async () => {
+    it('invalid orientation should not be accepted', async () => {
       const res = await request()
         .post('/api/orders')
         // The first cart item has invalid orientation value
@@ -89,28 +89,32 @@ function test() {
         .expect(400);
 
       assertIsErrorResponse(res);
-      assertErrorIsForField(res, 'cart.0.orientation');
+      assertErrorIsForField(res, 'cart.0.customisation.orientation');
     });
 
     // This is something we may want to allow later, but not currently supported
-    it('cart item type=mapPoster should not allow empty labels', async () => {
+    it('map poster item should not allow empty labels', async () => {
       const res = await request()
         .post('/api/orders')
         .send(data.badOrder4)
         .expect(400);
 
       assertIsErrorResponse(res);
-      assertErrorIsForFields(res, ['cart.0.labelHeader', 'cart.0.labelSmallHeader', 'cart.0.labelText']);
+      assertErrorIsForFields(res, [
+        'cart.0.customisation.labelHeader',
+        'cart.0.customisation.labelSmallHeader',
+        'cart.0.customisation.labelText',
+      ]);
     });
 
-    it('cart item type=giftCardValue should not allow negative value', async () => {
+    it('cart item gift-card-value should not allow negative value', async () => {
       const res = await request()
         .post('/api/orders')
         .send(data.badOrder5)
         .expect(400);
 
       assertIsErrorResponse(res);
-      assertErrorIsForField(res, 'cart.0.value');
+      assertErrorIsForField(res, 'cart.0.customisation.netValue');
     });
 
     it('order without shipping address with shippable products in cart should fail', async () => {
@@ -122,7 +126,7 @@ function test() {
       assertIsErrorResponse(res);
     });
 
-    it('order without unaccepted currency should fail', async () => {
+    it('order with unaccepted currency should fail', async () => {
       const res = await request()
         .post('/api/orders')
         .send(data.badOrder7)

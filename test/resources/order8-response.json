@@ -1,183 +1,195 @@
 {
+  "currency": "EUR",
   "orderId": "2018-1007-5078-7741",
   "cart": [
     {
-      "type": "mapPoster",
+      "sku": "custom-map-print-12x18inch",
       "quantity": 1,
-      "mapCenter": {
-        "lat": 22.2796,
-        "lng": 114.174
-      },
-      "mapBounds": {
-        "southWest": {
-          "lat": 22.0411,
-          "lng": 113.831
+      "customisation": {
+        "labelHeader": "香港",
+        "labelSmallHeader": "Hong Kong",
+        "labelText": "22.280°N / 114.174°E",
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapCenter": {
+          "lat": 22.2796,
+          "lng": 114.174
         },
-        "northEast": {
-          "lat": 22.5176,
-          "lng": 114.517
-        }
-      },
-      "mapZoom": 10,
-      "mapStyle": "gray",
-      "posterStyle": "sans",
-      "mapPitch": 0,
-      "mapBearing": 0,
-      "orientation": "portrait",
-      "size": "12x18inch",
-      "labelsEnabled": true,
-      "labelHeader": "香港",
-      "labelSmallHeader": "Hong Kong",
-      "labelText": "22.280°N / 114.174°E"
+        "mapBounds": {
+          "southWest": {
+            "lat": 22.0411,
+            "lng": 113.831
+          },
+          "northEast": {
+            "lat": 22.5176,
+            "lng": 114.517
+          }
+        },
+        "mapPitch": 0,
+        "mapStyle": "gray",
+        "mapZoom": 10,
+        "orientation": "portrait",
+        "posterStyle": "sans",
+        "size": "12x18inch"
+      }
     },
     {
-      "type": "mapPoster",
+      "sku": "custom-map-print-12x18inch",
       "quantity": 1,
-      "mapCenter": {
-        "lat": 22.2796,
-        "lng": 114.174
-      },
-      "mapBounds": {
-        "southWest": {
-          "lat": 22.0411,
-          "lng": 113.831
+      "customisation": {
+        "labelHeader": "香港",
+        "labelSmallHeader": "Hong Kong",
+        "labelText": "22.280°N / 114.174°E",
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapCenter": {
+          "lat": 22.2796,
+          "lng": 114.174
         },
-        "northEast": {
-          "lat": 22.5176,
-          "lng": 114.517
-        }
-      },
-      "mapZoom": 10,
-      "mapStyle": "gray",
-      "posterStyle": "sans",
-      "mapPitch": 0,
-      "mapBearing": 0,
-      "orientation": "landscape",
-      "size": "12x18inch",
-      "labelsEnabled": true,
-      "labelHeader": "香港",
-      "labelSmallHeader": "Hong Kong",
-      "labelText": "22.280°N / 114.174°E"
+        "mapBounds": {
+          "southWest": {
+            "lat": 22.0411,
+            "lng": 113.831
+          },
+          "northEast": {
+            "lat": 22.5176,
+            "lng": 114.517
+          }
+        },
+        "mapPitch": 0,
+        "mapStyle": "gray",
+        "mapZoom": 10,
+        "orientation": "landscape",
+        "posterStyle": "sans",
+        "size": "12x18inch"
+      }
     },
     {
-      "type": "mapPoster",
+      "sku": "custom-map-print-18x24inch",
       "quantity": 1,
-      "mapCenter": {
-        "lat": 22.2796,
-        "lng": 114.174
-      },
-      "mapBounds": {
-        "southWest": {
-          "lat": 22.0411,
-          "lng": 113.831
+      "customisation": {
+        "labelHeader": "香港",
+        "labelSmallHeader": "Hong Kong",
+        "labelText": "22.280°N / 114.174°E",
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapCenter": {
+          "lat": 22.2796,
+          "lng": 114.174
         },
-        "northEast": {
-          "lat": 22.5176,
-          "lng": 114.517
-        }
-      },
-      "mapZoom": 10,
-      "mapStyle": "gray",
-      "posterStyle": "sans",
-      "mapPitch": 0,
-      "mapBearing": 0,
-      "orientation": "portrait",
-      "size": "18x24inch",
-      "labelsEnabled": true,
-      "labelHeader": "香港",
-      "labelSmallHeader": "Hong Kong",
-      "labelText": "22.280°N / 114.174°E"
+        "mapBounds": {
+          "southWest": {
+            "lat": 22.0411,
+            "lng": 113.831
+          },
+          "northEast": {
+            "lat": 22.5176,
+            "lng": 114.517
+          }
+        },
+        "mapPitch": 0,
+        "mapStyle": "gray",
+        "mapZoom": 10,
+        "orientation": "portrait",
+        "posterStyle": "sans",
+        "size": "18x24inch"
+      }
     },
     {
-      "type": "mapPoster",
+      "sku": "custom-map-print-18x24inch",
       "quantity": 1,
-      "mapCenter": {
-        "lat": 22.2796,
-        "lng": 114.174
-      },
-      "mapBounds": {
-        "southWest": {
-          "lat": 22.0411,
-          "lng": 113.831
+      "customisation": {
+        "labelHeader": "香港",
+        "labelSmallHeader": "Hong Kong",
+        "labelText": "22.280°N / 114.174°E",
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapCenter": {
+          "lat": 22.2796,
+          "lng": 114.174
         },
-        "northEast": {
-          "lat": 22.5176,
-          "lng": 114.517
-        }
-      },
-      "mapZoom": 10,
-      "mapStyle": "gray",
-      "posterStyle": "sans",
-      "mapPitch": 0,
-      "mapBearing": 0,
-      "orientation": "landscape",
-      "size": "18x24inch",
-      "labelsEnabled": true,
-      "labelHeader": "香港",
-      "labelSmallHeader": "Hong Kong",
-      "labelText": "22.280°N / 114.174°E"
+        "mapBounds": {
+          "southWest": {
+            "lat": 22.0411,
+            "lng": 113.831
+          },
+          "northEast": {
+            "lat": 22.5176,
+            "lng": 114.517
+          }
+        },
+        "mapPitch": 0,
+        "mapStyle": "gray",
+        "mapZoom": 10,
+        "orientation": "landscape",
+        "posterStyle": "sans",
+        "size": "18x24inch"
+      }
     },
     {
-      "type": "mapPoster",
+      "sku": "custom-map-print-24x36inch",
       "quantity": 1,
-      "mapCenter": {
-        "lat": 22.2796,
-        "lng": 114.174
-      },
-      "mapBounds": {
-        "southWest": {
-          "lat": 22.0411,
-          "lng": 113.831
+      "customisation": {
+        "labelHeader": "香港",
+        "labelSmallHeader": "Hong Kong",
+        "labelText": "22.280°N / 114.174°E",
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapCenter": {
+          "lat": 22.2796,
+          "lng": 114.174
         },
-        "northEast": {
-          "lat": 22.5176,
-          "lng": 114.517
-        }
-      },
-      "mapZoom": 10,
-      "mapStyle": "gray",
-      "posterStyle": "sans",
-      "mapPitch": 0,
-      "mapBearing": 0,
-      "orientation": "portrait",
-      "size": "24x36inch",
-      "labelsEnabled": true,
-      "labelHeader": "香港",
-      "labelSmallHeader": "Hong Kong",
-      "labelText": "22.280°N / 114.174°E"
+        "mapBounds": {
+          "southWest": {
+            "lat": 22.0411,
+            "lng": 113.831
+          },
+          "northEast": {
+            "lat": 22.5176,
+            "lng": 114.517
+          }
+        },
+        "mapPitch": 0,
+        "mapStyle": "gray",
+        "mapZoom": 10,
+        "orientation": "portrait",
+        "posterStyle": "sans",
+        "size": "24x36inch"
+      }
     },
     {
-      "type": "mapPoster",
+      "sku": "custom-map-print-24x36inch",
       "quantity": 1,
-      "mapCenter": {
-        "lat": 22.2796,
-        "lng": 114.174
-      },
-      "mapBounds": {
-        "southWest": {
-          "lat": 22.0411,
-          "lng": 113.831
+      "customisation": {
+        "labelHeader": "香港",
+        "labelSmallHeader": "Hong Kong",
+        "labelText": "22.280°N / 114.174°E",
+        "labelsEnabled": true,
+        "mapBearing": 0,
+        "mapCenter": {
+          "lat": 22.2796,
+          "lng": 114.174
         },
-        "northEast": {
-          "lat": 22.5176,
-          "lng": 114.517
-        }
-      },
-      "mapZoom": 10,
-      "mapStyle": "gray",
-      "posterStyle": "sans",
-      "mapPitch": 0,
-      "mapBearing": 0,
-      "orientation": "landscape",
-      "size": "24x36inch",
-      "labelsEnabled": true,
-      "labelHeader": "香港",
-      "labelSmallHeader": "Hong Kong",
-      "labelText": "22.280°N / 114.174°E"
+        "mapBounds": {
+          "southWest": {
+            "lat": 22.0411,
+            "lng": 113.831
+          },
+          "northEast": {
+            "lat": 22.5176,
+            "lng": 114.517
+          }
+        },
+        "mapPitch": 0,
+        "mapStyle": "gray",
+        "mapZoom": 10,
+        "orientation": "landscape",
+        "posterStyle": "sans",
+        "size": "24x36inch"
+      }
     },
     {
-      "type": "shippingClass",
-      "value": "EXPRESS",
+      "sku": "shipping-express",
       "quantity": 1
     }
   ],
