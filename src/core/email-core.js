@@ -189,7 +189,7 @@ function createReceiptTemplateModel(order) {
   });
 
   const mapCart = filterMapPosterCart(order.cart);
-  let receiptItems = cartToReceiptItems(mapCart);
+  let receiptItems = cartToReceiptItems(mapCart, order.currency);
 
   if (order.promotion) {
     receiptItems.push({
@@ -223,12 +223,12 @@ function createReceiptTemplateModel(order) {
   };
 }
 
-function cartToReceiptItems(cart) {
+function cartToReceiptItems(cart, currency) {
   return _.map(cart, item => ({
     description: getProduct(item.sku).name,
     amount: item.quantity > 1
-      ? `${item.quantity}x ${getUnitPriceLabel(item)}`
-      : `${getUnitPriceLabel(item)}`,
+      ? `${item.quantity}x ${getUnitPriceLabel(item, currency)}`
+      : `${getUnitPriceLabel(item, currency)}`,
   }));
 }
 
@@ -269,8 +269,8 @@ function getFirstName(fullName) {
   return _.head(fullName.split(' '));
 }
 
-function getUnitPriceLabel(cartItem) {
-  const price = calculateItemPrice(cartItem, { onlyUnitPrice: true });
+function getUnitPriceLabel(cartItem, currency) {
+  const price = calculateItemPrice(cartItem, { currency, onlyUnitPrice: true });
   return price.label;
 }
 
