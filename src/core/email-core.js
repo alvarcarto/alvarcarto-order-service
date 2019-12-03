@@ -199,7 +199,7 @@ function createReceiptTemplateModel(order) {
   }
 
   const otherCart = filterOtherItemsCart(order.cart);
-  receiptItems = receiptItems.concat(cartToReceiptItems(otherCart));
+  receiptItems = receiptItems.concat(cartToReceiptItems(otherCart, order.currency));
   const customerName = getBuyerCustomerName(order);
   const deliveryText = getDeliveryInfoTextForReceipt(order);
 
