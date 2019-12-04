@@ -43,9 +43,6 @@
       border: none;
     }
 
-    td {
-      word-break: break-word;
-    }
     /* Layout ------------------------------ */
 
     .email-wrapper {
@@ -456,24 +453,24 @@
                               </tr>
                               {{#receipt_details}}
                               <tr>
-                                <td width="80%" class="purchase_item">{{description}}</td>
-                                <td class="align-right" width="20%" class="purchase_item">{{amount}}</td>
+                                <td width="70%" class="purchase_item">{{description}}</td>
+                                <td class="align-right" width="30%" class="purchase_item">{{amount}}</td>
                               </tr>
                               {{/receipt_details}}
                               <tr>
-                                <td width="80%" class="purchase_footer" valign="middle">
+                                <td width="70%" class="purchase_footer" valign="middle">
                                   <p class="purchase_total purchase_total--label">Total</p>
                                 </td>
-                                <td width="20%" class="purchase_footer" valign="middle">
+                                <td width="30%" class="purchase_footer" valign="middle">
                                   <p class="purchase_total">{{total}}</p>
                                 </td>
                               </tr>
                               {{#receipt_taxes}}
                               <tr>
-                                <td width="80%" class="purchase_footer_vat" valign="middle">
+                                <td width="70%" class="purchase_footer_vat" valign="middle">
                                   <p class="purchase_total_vat purchase_total_vat--label">VAT {{vat_percentage}}%</p>
                                 </td>
-                                <td width="20%" class="purchase_footer_vat" valign="middle">
+                                <td width="30%" class="purchase_footer_vat" valign="middle">
                                   <p class="purchase_total_vat">{{amount}}</p>
                                 </td>
                               </tr>
