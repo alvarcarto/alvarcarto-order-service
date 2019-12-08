@@ -7,7 +7,7 @@ const config = require('../config');
 
 const PROMOTION_PERIODS = [
   { start: moment('2019-11-28T23:00:00Z'), end: moment('2019-12-02T12:00:00Z'), promotionCode: 'BLACKFRIDAY19' },
-  { start: moment('2019-12-05T03:00:00Z'), end: moment('2019-12-08T08:00:00Z'), promotionCode: 'DECEMBER5TH' },
+  { start: moment('2019-12-05T03:00:00Z'), end: moment('2019-12-09T08:00:00Z'), promotionCode: 'DECEMBER5TH' },
 ];
 
 if (config.NODE_ENV === 'test') {
