@@ -8,7 +8,7 @@
   "author": "Alvar Carto",
   "license": "UNLICENSED",
   "dependencies": {
-    "alvarcarto-price-util": "git+https://alvarcarto-integration:c20a4fe9a8771c17eab5f0470fba434ab2fcf901@github.com/kimmobrunfeldt/alvarcarto-price-util.git#v7.2.0",
+    "alvarcarto-price-util": "git+https://alvarcarto-integration:c20a4fe9a8771c17eab5f0470fba434ab2fcf901@github.com/kimmobrunfeldt/alvarcarto-price-util.git#v7.3.0",
     "aws-sdk": "^2.536.0",
     "bluebird": "^3.4.6",
     "body-parser": "^1.15.2",

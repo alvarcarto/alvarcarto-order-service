@@ -29,7 +29,8 @@
         "mapZoom": 10,
         "orientation": "landscape",
         "posterStyle": "sans",
-        "size": "30x40cm"
+        "size": "30x40cm",
+        "material": "paper"
       }
     },
     {

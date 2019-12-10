@@ -29,6 +29,11 @@ const data = {
     printmotorRequest: require('./resources/order7-printmotor-request.json'),
     printmotorResponse: require('./resources/order7-printmotor-response.json'),
   },
+  order10: {
+    request: require('./resources/order10-request.json'),
+    printmotorRequest: require('./resources/order10-printmotor-request.json'),
+    printmotorResponse: require('./resources/order10-printmotor-response.json'),
+  },
 };
 
 function test() {
@@ -55,6 +60,27 @@ function test() {
         },
       });
       const printmotorResponse = _.merge({}, data.order5.printmotorResponse, {
+        meta: {
+          reference: order.orderId,
+        },
+      });
+      nock('https://fakeuser:fakepassword@mocked-printmotor-not-real.com')
+        .post('/api/v1/order', body => expectDeepEqual(body, expectedBody))
+        .reply(200, printmotorResponse);
+
+      await sendToProduction({ throwOnError: true });
+    });
+
+    it('sending plywood order to production should work', async () => {
+      await runFixture(fixturePromotions);
+
+      const order = await createAndPayOrder(data.order10.request);
+      const expectedBody = _.merge({}, data.order10.printmotorRequest, {
+        meta: {
+          reference: order.orderId,
+        },
+      });
+      const printmotorResponse = _.merge({}, data.order10.printmotorResponse, {
         meta: {
           reference: order.orderId,
         },

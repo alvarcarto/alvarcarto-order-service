@@ -30,7 +30,8 @@
         "mapZoom": 10,
         "orientation": "portrait",
         "posterStyle": "sans",
-        "size": "12x18inch"
+        "size": "12x18inch",
+        "material": "paper"
       }
     },
     {
@@ -61,7 +62,8 @@
         "mapZoom": 10,
         "orientation": "landscape",
         "posterStyle": "sans",
-        "size": "12x18inch"
+        "size": "12x18inch",
+        "material": "paper"
       }
     },
     {
@@ -92,7 +94,8 @@
         "mapZoom": 10,
         "orientation": "portrait",
         "posterStyle": "sans",
-        "size": "18x24inch"
+        "size": "18x24inch",
+        "material": "paper"
       }
     },
     {
@@ -123,7 +126,8 @@
         "mapZoom": 10,
         "orientation": "landscape",
         "posterStyle": "sans",
-        "size": "18x24inch"
+        "size": "18x24inch",
+        "material": "paper"
       }
     },
     {
@@ -154,7 +158,8 @@
         "mapZoom": 10,
         "orientation": "portrait",
         "posterStyle": "sans",
-        "size": "24x36inch"
+        "size": "24x36inch",
+        "material": "paper"
       }
     },
     {
@@ -185,7 +190,8 @@
         "mapZoom": 10,
         "orientation": "landscape",
         "posterStyle": "sans",
-        "size": "24x36inch"
+        "size": "24x36inch",
+        "material": "paper"
       }
     },
     {

@@ -1,8 +1,8 @@
 {
-  "currency": "EUR",
+  "currency": "JPY",
   "cart": [
     {
-      "sku": "custom-map-print-30x40cm",
+      "sku": "custom-map-plywood-30x40cm",
       "quantity": 1,
       "customisation": {
         "labelHeader": "香港",
@@ -30,7 +30,7 @@
         "orientation": "landscape",
         "posterStyle": "sans",
         "size": "30x40cm",
-        "material": "paper"
+        "material": "plywood"
       }
     },
     {

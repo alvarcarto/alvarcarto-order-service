@@ -1,0 +1,10 @@
+{
+  "estimatedDeliveryTime": "1970-01-01T12:00",
+  "meta": {
+    "reference": "DYNAMICALLY_GENERATED_IN_TESTS"
+  },
+  "orderNumber": 1,
+  "postalClass": "EXPRESS",
+  "processingStatusDescription": "Received, waiting for production",
+  "productionClass": "REGULAR"
+}
