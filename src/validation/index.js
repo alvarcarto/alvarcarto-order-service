@@ -26,6 +26,10 @@ const mapIds = [
   'custom-map-print-12x18inch',
   'custom-map-print-18x24inch',
   'custom-map-print-24x36inch',
+  'custom-map-plywood-30x40cm',
+  'custom-map-plywood-50x70cm',
+  'custom-map-plywood-12x18inch',
+  'custom-map-plywood-18x24inch',
 ];
 const mapCartItemSchema = Joi.object({
   sku: Joi.string().valid(mapIds).required(),

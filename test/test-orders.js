@@ -37,6 +37,10 @@ const data = {
     request: require('./resources/order9-request.json'),
     response: require('./resources/order9-response.json'),
   },
+  order10: {
+    request: require('./resources/order10-request.json'),
+    response: require('./resources/order10-response.json'),
+  },
 };
 
 function test() {
@@ -57,6 +61,18 @@ function test() {
       const order = await createAndPayOrder(data.order7.request);
 
       const expectedResponse = _.merge({}, data.order7.response, {
+        // Add backend generated fields
+        orderId: order.orderId,
+        createdAt: order.createdAt,
+      });
+
+      expect(order).to.deep.equal(expectedResponse);
+    });
+
+    it('Brad Pitt orders plywood map', async () => {
+      const order = await createAndPayOrder(data.order10.request);
+
+      const expectedResponse = _.merge({}, data.order10.response, {
         // Add backend generated fields
         orderId: order.orderId,
         createdAt: order.createdAt,

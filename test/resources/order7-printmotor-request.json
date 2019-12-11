@@ -34,7 +34,9 @@
         "currencyIso4217": "EUR",
         "priceValue": "39.00"
       },
-      "layoutName": "api-poster-40x30"
+      "size": "30x40cm",
+      "orientation": "landscape",
+      "product": "matt-poster"
     }
   ]
 }

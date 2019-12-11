@@ -165,9 +165,13 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
 function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
   const price = calculateItemPrice(item, { onlyUnitPrice: true, currency });
   const mapItem = item.customisation;
+
   return {
+    product: mapItem.material === 'plywood' ? 'plywood-sheet-6mm' : 'matt-poster',
     amount: item.quantity,
-    layoutName: _getLayoutName(mapItem.size, mapItem.orientation),
+    size: mapItem.size,
+    orientation: mapItem.orientation,
+    // layoutName: _getLayoutName(mapItem.size, mapItem.orientation),
     customization: [
       {
         fieldName: 'image',

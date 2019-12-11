@@ -20,10 +20,10 @@
     "phone": "0501234567"
   },
   "postalClass": "EXPRESS",
-  "productionClass": "REGULAR",
+  "productionClass": "HIGH",
   "products": [
     {
-      "amount": 2,
+      "amount": 1,
       "customization": [
         {
           "fieldName": "image",
@@ -31,12 +31,12 @@
         }
       ],
       "endUserPrice": {
-        "currencyIso4217": "EUR",
-        "priceValue": "39.00"
+        "currencyIso4217": "JPY",
+        "priceValue": "7099"
       },
-      "size": "30x40cm",
-      "orientation": "portrait",
-      "product": "matt-poster"
+      "orientation": "landscape",
+      "product": "plywood-sheet-6mm",
+      "size": "30x40cm"
     }
   ]
 }

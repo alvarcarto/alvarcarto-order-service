@@ -355,6 +355,7 @@ function selectOrders(_opts = {}) {
         ordered_posters.map_bearing as map_bearing,
         ordered_posters.map_pitch as map_pitch,
         ordered_posters.size as size,
+        ordered_posters.material as material,
         ordered_posters.orientation as orientation,
         ordered_posters.labels_enabled as labels_enabled,
         ordered_posters.label_header as label_header,
@@ -382,6 +383,7 @@ function selectOrders(_opts = {}) {
         null as map_bearing,
         null as map_pitch,
         null as size,
+        null as material,
         null as orientation,
         null as labels_enabled,
         null as label_header,
@@ -560,7 +562,7 @@ async function _rowsToOrderObject(rows) {
 
     return {
       id: row.ordered_poster_id,
-      sku: `custom-map-print-${row.size}`,
+      sku: cartRowToSku(row),
       quantity: row.quantity,
       customisation: {
         mapCenter: { lat: row.map_center_lat, lng: row.map_center_lng },
@@ -575,6 +577,7 @@ async function _rowsToOrderObject(rows) {
         mapBearing: row.map_bearing,
         orientation: row.orientation,
         size: row.size,
+        material: row.material,
         labelsEnabled: row.labels_enabled,
         labelHeader: row.label_header,
         labelSmallHeader: row.label_small_header,
@@ -691,6 +694,11 @@ async function _rowsToOrderObject(rows) {
   return order;
 }
 
+function cartRowToSku(row) {
+  const materialWord = row.material === 'plywood' ? 'plywood' : 'print';
+  return `custom-map-${materialWord}-${row.size}`;
+}
+
 // Yes, not good.. but knex doesn't provide better options.
 // https://github.com/tgriesser/knex/issues/272
 function _isUniqueConstraintError(err) {
@@ -780,7 +788,7 @@ function _createOrderedPosters(orderId, order, opts = {}) {
       onlyUnitPrice: true,
     });
 
-    const { size } = getProduct(item.sku).metadata;
+    const { size, material } = getProduct(item.sku).metadata;
 
     return trx('ordered_posters')
       .insert({
@@ -800,6 +808,7 @@ function _createOrderedPosters(orderId, order, opts = {}) {
         map_pitch: item.customisation.mapPitch,
         map_bearing: item.customisation.mapBearing,
         size,
+        material,
         orientation: item.customisation.orientation,
         labels_enabled: item.customisation.labelsEnabled,
         label_header: item.customisation.labelHeader,
