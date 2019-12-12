@@ -14,9 +14,23 @@ const MESSAGES = [
   },
   {
     start: moment('2019-01-12T00:00:00Z'),
-    end: moment('2019-12-24T00:00:00Z'),
+    end: moment('2019-12-16T10:00:00Z'),
     title: 'Order your Christmas presents in time!',
     message: 'Place your order on 15th of December at latest to make sure your presents arrive in time.',
+    icon: 'gift',
+  },
+  {
+    start: moment('2019-12-16T10:00:00Z'),
+    end: moment('2019-12-19T10:00:00Z'),
+    title: 'There might still be time!',
+    message: 'Order your Christmas presents now, and they might still make it in time.',
+    icon: 'gift',
+  },
+  {
+    start: moment('2019-12-19T10:00:00Z'),
+    end: moment('2019-12-25T10:00:00Z'),
+    title: 'Last-minute gift shopping?',
+    message: 'We can\'t guarantee that your order will make it in time for Christmas but better late than never!',
     icon: 'gift',
   },
 ];
