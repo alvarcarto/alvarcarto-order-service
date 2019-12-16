@@ -98,14 +98,14 @@ function createStripeMetadata(fullOrder) {
 function _createCartMetas(cart) {
   return {
     posterQuantities: _.map(cart, item => `${_.get(item, 'quantity')}x`).join('; '),
-    sizes: _.map(cart, item => _.get(item, 'size')).join('; '),
-    orientations: _.map(cart, item => _.get(item, 'orientation')).join('; '),
-    mapStyles: _.map(cart, item => _.get(item, 'mapStyle')).join('; '),
-    posterStyles: _.map(cart, item => _.get(item, 'posterStyle')).join('; '),
-    headers: _.map(cart, item => _.get(item, 'labelHeader')).join('; '),
-    smallHeaders: _.map(cart, item => _.get(item, 'labelSmallHeader')).join('; '),
-    texts: _.map(cart, item => _.get(item, 'labelText')).join('; '),
-    coords: _.map(cart, item => mapBoundsToStr(_.get(item, 'mapBounds'))).join('; '),
+    sizes: _.map(cart, item => _.get(item, 'customisation.size')).join('; '),
+    orientations: _.map(cart, item => _.get(item, 'customisation.orientation')).join('; '),
+    mapStyles: _.map(cart, item => _.get(item, 'customisation.mapStyle')).join('; '),
+    posterStyles: _.map(cart, item => _.get(item, 'customisation.posterStyle')).join('; '),
+    headers: _.map(cart, item => _.get(item, 'customisation.labelHeader')).join('; '),
+    smallHeaders: _.map(cart, item => _.get(item, 'customisation.labelSmallHeader')).join('; '),
+    texts: _.map(cart, item => _.get(item, 'customisation.labelText')).join('; '),
+    coords: _.map(cart, item => mapBoundsToStr(_.get(item, 'customisation.mapBounds'))).join('; '),
   };
 }
 
