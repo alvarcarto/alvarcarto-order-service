@@ -162,14 +162,25 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
   };
 }
 
+function sizeToPrintmotorSize(size) {
+  if (size.indexOf('cm') !== -1) {
+    return size.split('cm')[0];
+  }
+  if (size.indexOf('inch') !== -1) {
+    return size.split('inch')[0];
+  }
+
+  throw new Error(`Size doesn't have inch or cm: ${size}`);
+}
+
 function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
   const price = calculateItemPrice(item, { onlyUnitPrice: true, currency });
   const mapItem = item.customisation;
 
   return {
-    // product: mapItem.material === 'plywood' ? 'plywood-sheet-6mm' : 'matt-poster',
+    product: mapItem.material === 'plywood' ? 'plywood-sheet-6mm' : 'matt-poster',
     amount: item.quantity,
-    // size: mapItem.size,
+    size: sizeToPrintmotorSize(mapItem.size),
     // orientation: mapItem.orientation,
     layoutName: _getLayoutName(mapItem.size, mapItem.orientation),
     customization: [
