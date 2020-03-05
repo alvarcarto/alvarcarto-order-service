@@ -41,6 +41,11 @@ function test() {
     this.timeout(120000);
     this.slow(30000);
 
+    beforeEach(() => {
+      nock.cleanAll();
+      nock.abortPendingRequests();
+    });
+
     before(() => {
       sinon.stub(bucketCore.s3, 'uploadBluebirdAsync')
         .callsFake(() => ({ Location: 'https://fake-s3-url.com/posters/order-item0.png' }));
@@ -65,7 +70,7 @@ function test() {
         },
       });
       nock('https://fakeuser:fakepassword@mocked-printmotor-not-real.com')
-        .post('/api/v1/order', body => expectDeepEqual(body, expectedBody))
+        .post('/api/v1/order', body => expectDeepEqual(expectedBody, body))
         .reply(200, printmotorResponse);
 
       await sendToProduction({ throwOnError: true });
@@ -86,7 +91,7 @@ function test() {
         },
       });
       nock('https://fakeuser:fakepassword@mocked-printmotor-not-real.com')
-        .post('/api/v1/order', body => expectDeepEqual(body, expectedBody))
+        .post('/api/v1/order', body => expectDeepEqual(expectedBody, body))
         .reply(200, printmotorResponse);
 
       await sendToProduction({ throwOnError: true });
@@ -108,7 +113,7 @@ function test() {
         },
       });
       nock('https://fakeuser:fakepassword@mocked-printmotor-not-real.com')
-        .post('/api/v1/order', body => expectDeepEqual(body, expectedBody))
+        .post('/api/v1/order', body => expectDeepEqual(expectedBody, body))
         .reply(200, printmotorResponse);
 
       await sendToProduction({ throwOnError: true });
@@ -130,7 +135,7 @@ function test() {
         },
       });
       nock('https://fakeuser:fakepassword@mocked-printmotor-not-real.com')
-        .post('/api/v1/order', body => expectDeepEqual(body, expectedBody))
+        .post('/api/v1/order', body => expectDeepEqual(expectedBody, body))
         .reply(200, printmotorResponse);
 
       await sendToProduction({ throwOnError: true });

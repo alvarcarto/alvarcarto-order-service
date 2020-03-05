@@ -162,15 +162,15 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
   };
 }
 
+// From Printmotor error:
+// Possible sizes: 'A4', '30x40', 'A3', '40x50', 'A2', '50x70', 'A1', '70x100',
+//                 '12x18inch', '16x20inch', '18x24inch', '24x36inch'.
 function sizeToPrintmotorSize(size) {
   if (size.indexOf('cm') !== -1) {
     return size.split('cm')[0];
   }
-  if (size.indexOf('inch') !== -1) {
-    return size.split('inch')[0];
-  }
 
-  throw new Error(`Size doesn't have inch or cm: ${size}`);
+  return size;
 }
 
 function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
@@ -181,8 +181,8 @@ function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
     product: mapItem.material === 'plywood' ? 'plywood-sheet-6mm' : 'matt-poster',
     amount: item.quantity,
     size: sizeToPrintmotorSize(mapItem.size),
-    // orientation: mapItem.orientation,
-    layoutName: _getLayoutName(mapItem.size, mapItem.orientation),
+    orientation: mapItem.orientation,
+    // layoutName: _getLayoutName(mapItem.size, mapItem.orientation),
     customization: [
       {
         fieldName: 'image',
