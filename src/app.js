@@ -1,5 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
+const _ = require('lodash');
 const bodyParser = require('body-parser');
 const compression = require('compression');
 const cors = require('cors');
@@ -34,12 +35,14 @@ function createApp() {
     app.use(morgan('dev'));
   }
 
+  const allowedOrigins = config.CORS_ORIGIN.split(',');
   const corsOpts = {
-    origin: config.CORS_ORIGIN,
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH'],
   };
   logger.info('Using CORS options:', corsOpts);
   app.use(cors(corsOpts));
+
   app.use(compression({
     // Compress everything over 10 bytes
     threshold: 10,
