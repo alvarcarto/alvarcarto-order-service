@@ -1,6 +1,5 @@
 const express = require('express');
 const morgan = require('morgan');
-const _ = require('lodash');
 const bodyParser = require('body-parser');
 const compression = require('compression');
 const cors = require('cors');
