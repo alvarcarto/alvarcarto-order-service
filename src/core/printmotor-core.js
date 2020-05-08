@@ -183,7 +183,7 @@ function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
     // product: mapItem.material === 'plywood' ? 'plywood-sheet-6mm' : 'matt-poster',
     amount: item.quantity,
     // size: sizeToPrintmotorSize(mapItem.size),
-    orientation: mapItem.orientation,
+    // orientation: mapItem.orientation,
     layoutName: _getLayoutName(mapItem.size, mapItem.orientation),
     customization: [
       {
