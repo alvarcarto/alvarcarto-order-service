@@ -180,8 +180,9 @@ function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
   return {
     product: mapItem.material === 'plywood' ? 'plywood-sheet-6mm' : 'matt-poster',
     amount: item.quantity,
-    size: sizeToPrintmotorSize(mapItem.size),
+    // size: sizeToPrintmotorSize(mapItem.size),
     orientation: mapItem.orientation,
+    layoutName: _getLayoutName(mapItem.size, mapItem.orientation),
     customization: [
       {
         fieldName: 'image',
@@ -202,6 +203,54 @@ function _splitFullName(name) {
     first: splitted.join(' '),
     last: lastName,
   };
+}
+
+function _getLayoutName(size, orientation) {
+  if (orientation === 'landscape') {
+    return _getLandscapeLayoutName(size);
+  }
+
+  return _getPortraitLayoutName(size);
+}
+
+function _getLandscapeLayoutName(size) {
+  switch (size) {
+    case '30x40cm':
+      return 'api-poster-40x30';
+    case '50x70cm':
+      return 'api-poster-70x50';
+    case '70x100cm':
+      return 'api-poster-100x70';
+    case '12x18inch':
+      return 'api-poster-18inchx12inch';
+    case '18x24inch':
+      return 'api-poster-24inchx18inch';
+    case '24x36inch':
+      return 'api-poster-36inchx24inch';
+    default:
+  }
+
+  throw new Error(`Unknown size: ${size}`);
+}
+
+function _getPortraitLayoutName(size) {
+  switch (size) {
+    case '30x40cm':
+      return 'api-poster-30x40';
+    case '50x70cm':
+      return 'api-poster-50x70';
+    case '70x100cm':
+      return 'api-poster-70x100';
+    case '12x18inch':
+      return 'api-poster-12inchx18inch';
+    case '18x24inch':
+      return 'api-poster-18inchx24inch';
+    case '24x36inch':
+      return 'api-poster-24inchx36inch';
+    default:
+  }
+
+  throw new Error(`Unknown size: ${size}`);
 }
 
 function _getPostalClass(internalOrder) {
