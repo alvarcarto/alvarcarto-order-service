@@ -165,6 +165,7 @@ function _internalOrderToPrintmotorOrder(internalOrder, imageUrls) {
 // From Printmotor error:
 // Possible sizes: 'A4', '30x40', 'A3', '40x50', 'A2', '50x70', 'A1', '70x100',
 //                 '12x18inch', '16x20inch', '18x24inch', '24x36inch'.
+/*
 function sizeToPrintmotorSize(size) {
   if (size.indexOf('cm') !== -1) {
     return size.split('cm')[0];
@@ -172,6 +173,7 @@ function sizeToPrintmotorSize(size) {
 
   return size;
 }
+*/
 
 function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
   const price = calculateItemPrice(item, { onlyUnitPrice: true, currency });
