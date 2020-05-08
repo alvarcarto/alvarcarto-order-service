@@ -180,7 +180,7 @@ function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
   const mapItem = item.customisation;
 
   return {
-    product: mapItem.material === 'plywood' ? 'plywood-sheet-6mm' : 'matt-poster',
+    // product: mapItem.material === 'plywood' ? 'plywood-sheet-6mm' : 'matt-poster',
     amount: item.quantity,
     // size: sizeToPrintmotorSize(mapItem.size),
     orientation: mapItem.orientation,
