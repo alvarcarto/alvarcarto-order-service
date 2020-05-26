@@ -184,7 +184,7 @@ function _internalCartItemToPrintmotorProduct(item, imageUrl, currency) {
     amount: item.quantity,
     // size: sizeToPrintmotorSize(mapItem.size),
     // orientation: mapItem.orientation,
-    layoutName: _getLayoutName(mapItem.size, mapItem.orientation),
+    layoutName: _getLayoutName(mapItem.material, mapItem.size, mapItem.orientation),
     customization: [
       {
         fieldName: 'image',
@@ -207,15 +207,30 @@ function _splitFullName(name) {
   };
 }
 
-function _getLayoutName(size, orientation) {
+function _getLayoutName(material, size, orientation) {
   if (orientation === 'landscape') {
-    return _getLandscapeLayoutName(size);
+    return _getLandscapeLayoutName(material, size);
   }
 
-  return _getPortraitLayoutName(size);
+  return _getPortraitLayoutName(material, size);
 }
 
-function _getLandscapeLayoutName(size) {
+function _getLandscapeLayoutName(material, size) {
+  if (material === 'plywood') {
+    switch (size) {
+      case '30x40cm':
+        return 'default-plywood-sheet-30x40-landscape';
+      case '50x70cm':
+        return 'default-plywood-sheet-50x70-landscape';
+      case '12x18inch':
+        return 'default-plywood-sheet-12inchx18inch-landscape';
+      case '18x24inch':
+        return 'default-plywood-sheet-18inchx24inch-landscape';
+      default:
+        throw new Error(`Incorrect size for plywood material: ${size}`);
+    }
+  }
+
   switch (size) {
     case '30x40cm':
       return 'api-poster-40x30';
@@ -235,7 +250,22 @@ function _getLandscapeLayoutName(size) {
   throw new Error(`Unknown size: ${size}`);
 }
 
-function _getPortraitLayoutName(size) {
+function _getPortraitLayoutName(material, size) {
+  if (material === 'plywood') {
+    switch (size) {
+      case '30x40cm':
+        return 'default-plywood-sheet-30x40-portrait';
+      case '50x70cm':
+        return 'default-plywood-sheet-50x70-portrait';
+      case '12x18inch':
+        return 'default-plywood-sheet-12inchx18inch-portrait';
+      case '18x24inch':
+        return 'default-plywood-sheet-18inchx24inch-portrait';
+      default:
+        throw new Error(`Incorrect size for plywood material: ${size}`);
+    }
+  }
+
   switch (size) {
     case '30x40cm':
       return 'api-poster-30x40';
