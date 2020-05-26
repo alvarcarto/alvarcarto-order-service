@@ -33,6 +33,13 @@ const MESSAGES = [
     message: 'We can\'t guarantee that your order will make it in time for Christmas but better late than never!',
     icon: 'gift',
   },
+  {
+    start: moment('2020-05-27T23:00:00Z'),
+    end: moment('2020-06-29T10:00:00Z'),
+    title: 'Plywood maps are here!',
+    message: 'Maps are printed on a high-quality Finnish birch plywood. Built-in hanging system allows you to hang your maps easily. Order yours now!',
+    icon: 'bell',
+  },
 ];
 
 if (config.NODE_ENV === 'test') {
