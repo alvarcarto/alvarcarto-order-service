@@ -34,7 +34,7 @@ const MESSAGES = [
     icon: 'gift',
   },
   {
-    start: moment('2020-05-27T23:00:00Z'),
+    start: moment('2020-06-03T23:00:00Z'),
     end: moment('2020-06-29T10:00:00Z'),
     title: 'Plywood maps are here!',
     message: 'Maps are printed on a high-quality Finnish birch plywood. Built-in hanging system allows you to hang your maps easily. Order yours now!',
