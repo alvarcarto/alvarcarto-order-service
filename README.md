@@ -57,6 +57,11 @@ Dependencies:
   docker-compose down
   docker volume rm postgres
   ```
+* Decrypt logs with `cat logfile.log | dcr --key=$(heroku config:get LOG_ENCRYPT_KEY -a alvarcarto-order-prod)`
+
+    Copy paste some encrypted stream first from papertrail to a local file. Note that papertrail might split the encrypted part into two lines and then it won't work.
+
+    See more options at: https://github.com/kimmobrunfeldt/dcr.
 
 ## Techstack
 
